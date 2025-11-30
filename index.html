@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V19.2</title>
+    <title>Life Dashboard V19.3</title>
     <style>
         /* --- 全域風格 --- */
         body {
@@ -195,7 +195,7 @@
         <div class="stats-container">
             <div class="stat-item">
                 <div id="stat1-val" class="stat-val">0</div>
-                <div id="stat1-label" class="stat-label">連續達標 (天)</div>
+                <div id="stat1-label" class="stat-label">連續紀錄 (天)</div>
             </div>
             <div class="stat-item">
                 <div id="stat2-val" class="stat-val">---</div>
@@ -294,69 +294,30 @@
         let weekOffset = 0;
         let comparisonTicker = null; 
 
-        // V19.2: 綜合電影名言庫 (Love + Inspiration)
+        // Mega Quotes Library
         const DEFAULT_QUOTES = [
-            // Love (PopDaily)
             { text: "只要記住你的名字，不管你在世界的哪個地方，我一定會去見你。", author: "你的名字" },
             { text: "幸福是每一個微小的生活願望達成。\nHappiness is having each tiny wish come true.", author: "天外奇蹟" },
-            { text: "世界這麼大，人生這麼長，總會有這麼一個人，讓你想要溫柔的對待。", author: "霍爾的移動城堡" },
             { text: "I love you. I knew it the minute I met you.\n我愛你，當我遇見你的那一刻就知道了。", author: "派特的幸福劇本" },
-            { text: "Life is not the amount of breaths you take, it's the moments that take your breath away.\n人生並不是你呼吸的次數，而是那些令你屏息的時刻。", author: "全民情聖" },
-            { text: "I'm just a girl, standing in front of a boy, asking him to love her.\n我只是一個女孩，站在一個男孩的面前，請求他愛她。", author: "新娘百分百" },
             { text: "Whatever happens tomorrow, we had today.\n無論明天發生什麼事，至少我們擁有當下。", author: "真愛挑日子" },
             { text: "Call me by your name, and I'll call you by mine.\n以你的名字呼喚我，而我也將以我的名字喚你。", author: "以你的名字呼喚我" },
-            { text: "We're all traveling through time together, every day of our lives.\n我們生活的每一天，都是在穿越時空。", author: "真愛每一天" },
             { text: "You complete me！\n你完整了我的人生。", author: "征服情海" },
-            { text: "You have bewitched me, body and soul, and… I love you.\n你對我下了魔咒，讓我的心靈與身體都為你著迷。", author: "傲慢與偏見" },
             { text: "I want all of you, forever, you and me, every day.\n我想要全部的你，一輩子、每一天就只有你跟我。", author: "手札情緣" },
-            { text: "I want it all. And to have it all, we have to risk it all.\n我想全部擁有。而要擁有一切，我們就必須放手一博。", author: "愛的過去進行式" },
-            { text: "Love heals what logic or reason cannot.\n愛能癒合那些，邏輯或理由所不能的。", author: "愛的萬物論" },
-            
-            // Inspiration & Perseverance (PrepEdu)
             { text: "Our greatest glory is not in never falling, but in rising every time we fall.\n我們最大的榮耀不在於從未跌倒，而在於每次跌倒後都能重新站起。", author: "蝙蝠俠：開戰時刻" },
             { text: "It's not about how hard you hit. It's about how hard you can get hit and keep moving forward.\n重點不在於你能打得多重，而在於你能承受多重的打擊，並持續前進。", author: "洛基：勇者無懼" },
-            { text: "The only thing standing between you and your goal is the story you keep telling yourself as to why you can't achieve it.\n橫亙在你與目標之間的唯一障礙，就是你不斷告訴自己無法達成的那個故事。", author: "華爾街之狼" },
-            { text: "I have not failed. I've just found 10,000 ways that won't work.\n我沒有失敗，我只是找到了一萬種行不通的方法。", author: "當幸福來敲門" },
-            { text: "Pain is temporary. Quitting lasts forever.\n痛苦是暫時的，放棄卻是永恆的。", author: "面對巨人" },
-            { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.\n成功不是終點，失敗也非致命，重要的是繼續前進的勇氣。", author: "至暗時刻" },
-            { text: "You must do the things you think you cannot do.\n你必須去做那些你認為自己做不到的事。", author: "永不妥協" },
-            { text: "It always seems impossible until it's done.\n在完成之前，一切總是看似不可能。", author: "打不倒的勇者" },
-            { text: "Fall seven times, stand up eight.\n跌倒七次，第八次站起來。", author: "末代武士" },
             { text: "Don't ever let somebody tell you you can't do something.\n永遠不要讓任何人告訴你，你做不到某件事。", author: "當幸福來敲門" },
-            { text: "If you're going through hell, keep going.\n如果你正在經歷地獄，那就繼續前進。", author: "至暗時刻" },
-            { text: "Every champion was once a contender who refused to give up.\n每個冠軍都曾是拒絕放棄的挑戰者。", author: "洛基：勇者無懼" },
             { text: "Keep your eyes on the stars, and your feet on the ground.\n仰望星空，腳踏實地。", author: "登月先鋒" },
-            
-            // Dreams & Potential
             { text: "Your time is limited, don't waste it living someone else's life.\n你的時間有限，別浪費在過別人的生活上。", author: "賈伯斯" },
-            { text: "Go confidently in the direction of your dreams. Live the life you have imagined.\n自信地朝著夢想前進，過你想像中的生活。", author: "白日夢冒險王" },
             { text: "If you can dream it, you can do it.\n如果你能夢想它，你就能實現它。", author: "明日世界" },
-            { text: "Believe you can and you're halfway there.\n相信你可以，你就已經成功一半了。", author: "奇蹟男孩" },
-            { text: "The best way to predict the future is to create it.\n預測未來的最好方法就是創造它。", author: "回到未來" },
-            { text: "Start where you are. Use what you have. Do what you can.\n從你所在之處開始，用你擁有的，做你能做的。", author: "當幸福來敲門" },
-            { text: "It does not matter how slowly you go as long as you do not stop.\n只要不停止，走得多慢都無所謂。", author: "功夫熊貓" },
-            { text: "Believe in yourself. You are braver than you think, more talented than you know, and capable of more than you imagine.\n相信自己，你比想像中更勇敢、更有才華、更有能力。", author: "小熊維尼" },
-            { text: "Magic is believing in yourself. If you can do that, you can make anything happen.\n魔法就是相信自己，如果你能做到這點，就能讓任何事發生。", author: "小飛象" },
-            { text: "You are the one thing you have power over.\n你是唯一能掌控的事物。", author: "魔法滿屋" },
-            
-            // Wisdom & Growth
             { text: "Life is like a box of chocolates. You never know what you're gonna get.\n人生就像一盒巧克力，你永遠不知道會得到什麼。", author: "阿甘正傳" },
             { text: "After all, tomorrow is another day.\n畢竟，明天又是新的一天。", author: "亂世佳人" },
-            { text: "Hope is a good thing, maybe the best of things, and no good thing ever dies.\n希望是好東西，也許是最好的東西，好東西永遠不會消逝。", author: "刺激1995" },
-            { text: "The past can hurt. But the way I see it, you can either run from it or learn from it.\n過去會傷人，但我認為，你可以選擇逃避或從中學習。", author: "獅子王" },
-            { text: "Happiness can be found even in the darkest of times, if one only remembers to turn on the light.\n即使在最黑暗的時刻也能找到快樂，只要記得點亮燈光。", author: "哈利波特：阿茲卡班的逃犯" },
-            { text: "It is our choices that show what we truly are, far more than our abilities.\n展現我們真實本質的，是我們的選擇，遠勝於我們的能力。", author: "哈利波特：消失的密室" },
-            { text: "We are who we choose to be.\n我們是我們選擇成為的人。", author: "蜘蛛人" },
-            { text: "The flower that blooms in adversity is the rarest and most beautiful of all.\n在逆境中綻放的花朵，是最稀有也最美麗的。", author: "花木蘭" },
-            { text: "Change is nature's way of giving us a chance to try something new.\n改變是大自然給我們嘗試新事物的機會。", author: "功夫熊貓3" },
-            { text: "The only thing predictable about life is its unpredictability.\n人生唯一可預測的就是它的不可預測性。", author: "料理鼠王" },
-            { text: "Sometimes the right path is not the easiest one.\n有時候正確的道路不是最容易的那條。", author: "風中奇緣" }
+            { text: "Happiness can be found even in the darkest of times, if one only remembers to turn on the light.\n即使在最黑暗的時刻也能找到快樂，只要記得點亮燈光。", author: "哈利波特" }
         ];
 
         const THEMES = {
             health: { 
                 colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], 
-                statLabels: ['連續達標 (天)', '今日赤字 (CAL)', '總紀錄天數'], 
+                statLabels: ['連續紀錄 (天)', '今日赤字 (CAL)', '總紀錄天數'], 
                 isDeficitGood: true, 
                 thresholds: [-600, -300, 0, 300, 600], 
                 unit: 'cal',
@@ -452,7 +413,7 @@
             }
         }
 
-        // V19.1: 點擊刷新 (圖片+文字)
+        // V19.3: 點擊刷新 (圖片+文字)
         function refreshBanner() {
             setRandomFallbackQuote();
             if (CONFIG.bgStyle !== 'nature') return;
@@ -655,7 +616,8 @@
 
         async function fetchData(id, sheetName, theme) {
             const encodedSheet = encodeURIComponent(sheetName);
-            const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=SELECT B, C OFFSET 1`;
+            // V19.3: Add anti-caching parameter
+            const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=SELECT B, C OFFSET 1&_=${Date.now()}`;
             try {
                 const res = await fetch(url); const text = await res.text();
                 const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
@@ -671,6 +633,7 @@
             globalDataMap = {}; 
             
             let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
+            // V19.3: Timezone fix for "Today"
             const offset = now.getTimezoneOffset() * 60000;
             const todayStr = new Date(now.getTime() - offset).toISOString().split('T')[0];
             
@@ -700,14 +663,25 @@
                 count++;
             });
 
-            if (sortedDates.length > 0) {
-                for (let i = sortedDates.length - 1; i >= 0; i--) {
-                    const d = sortedDates[i]; const val = globalDataMap[d].value;
-                    if (new Date(d) > new Date()) continue; 
-                    let isSuccess = false;
-                    if (theme.isDeficitGood) isSuccess = (val < 0);
-                    else isSuccess = (val <= theme.budgetLimit && val > 0) || (val <= theme.goldLimit);
-                    if (isSuccess) { streak++; if (i > 0) { const curr = new Date(d); const prev = new Date(sortedDates[i-1]); if (Math.abs(curr - prev) / (1000*60*60*24) > 1.5) break; }} else { break; }
+            // V19.3 Streak Logic: Logging Streak (Any data counts)
+            // Check Today first
+            let checkDate = new Date(now.getTime() - offset);
+            let checkStr = checkDate.toISOString().split('T')[0];
+            
+            if (globalDataMap[checkStr]) {
+                streak = 1; // Today is logged
+            } else {
+                streak = 0; // Today not yet logged
+            }
+            
+            // Iterate backwards
+            while (true) {
+                checkDate.setDate(checkDate.getDate() - 1);
+                checkStr = checkDate.toISOString().split('T')[0];
+                if (globalDataMap[checkStr]) {
+                    streak++;
+                } else {
+                    break;
                 }
             }
 
@@ -759,6 +733,7 @@
         function drawHeatmap(data, theme) {
             const container = document.getElementById('heatmap'); container.innerHTML = '';
             const today = new Date(); const startDate = new Date(); startDate.setDate(today.getDate() - 365);
+            // V17.2: Heatmap Monday Start
             while (startDate.getDay() !== 1) startDate.setDate(startDate.getDate() - 1);
             
             let currentDate = new Date(startDate);
@@ -802,10 +777,6 @@
         }
 
         async function fetchQuotes(id, sheetName) {
-            // V19.1: 即使有 ID，也將隨機名言作為 Fallback，或混用
-            // 這裡邏輯改為：如果有 Google Sheet 資料，優先使用，失敗則用隨機庫
-            // 但使用者希望「點擊切換」，所以我們可以在 refreshBanner 函式中做手腳
-            
             if (!id || !sheetName) { 
                 setRandomFallbackQuote(); 
                 return; 
@@ -816,17 +787,22 @@
                 const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
                 const data = JSON.parse(jsonString);
                 if (data.table.rows.length > 0) {
-                    // 如果有 Sheet 資料，將其加入 DEFAULT_QUOTES 擴充名言庫
-                    data.table.rows.forEach(row => {
-                        const qText = row.c[0] ? row.c[0].v : "";
-                        const qAuth = row.c[1] ? row.c[1].v : "";
-                        if(qText) DEFAULT_QUOTES.push({ text: qText, author: qAuth });
-                    });
+                    // 如果有 Sheet 資料，優先使用
+                    // V19.3: 這裡的邏輯是: 如果使用者有自己的 Quotes Sheet，就只用那個
+                    // 如果沒有，就用內建的。若想混用，可以取消註解 push
                     
-                    // 然後隨機顯示一個
-                    setRandomFallbackQuote();
+                    const row = data.table.rows[Math.floor(Math.random() * data.table.rows.length)];
+                    const qText = row.c[0] ? row.c[0].v : "";
+                    const qAuth = row.c[1] ? row.c[1].v : "";
+                    const qImg  = row.c[2] ? row.c[2].v : null;
+                    
+                    if(qText) {
+                        document.getElementById('q-text').innerText = qText;
+                        document.getElementById('q-author').innerText = qAuth;
+                    } else {
+                        setRandomFallbackQuote();
+                    }
 
-                    const qImg  = data.table.rows[0].c[2] ? data.table.rows[0].c[2].v : null; // 取第一張圖或隨機? 這裡維持原邏輯
                     if (CONFIG.bgStyle === 'custom' && qImg) { 
                         const card = document.getElementById('quote-card');
                         const overlay = document.getElementById('q-overlay');
