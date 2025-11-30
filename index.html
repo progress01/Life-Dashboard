@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V15.1</title>
+    <title>Life Dashboard V16</title>
     <style>
         /* --- 全域風格 --- */
         body {
@@ -77,29 +77,31 @@
         }
         .graph-wrapper { padding: 15px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; width: 100%; box-sizing: border-box; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .graph-container { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; gap: 3px; }
-        
         .day-cell { width: 12px; height: 12px; border-radius: 2px; background-color: #21262d; outline: 1px solid rgba(255,255,255,0.05); cursor: crosshair; transition: transform 0.1s; }
         .color-gold { background-color: #ffd700 !important; z-index: 2; }
         @media (hover: hover) { .day-cell:hover { transform: scale(1.4); z-index: 10; border: 1px solid #fff; } }
 
-        /* --- 本週具體戰績 Bar --- */
-        .weekly-insight-bar {
-            width: 100%;
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(56, 139, 253, 0.1);
-            border: 1px solid rgba(56, 139, 253, 0.4);
-            border-radius: 8px;
-            text-align: center;
-            color: #58a6ff;
-            font-size: 1.1rem;
-            font-weight: 600;
-            display: none; 
+        /* --- V16 週次導航與戰績 Bar --- */
+        .weekly-container {
+            width: 100%; margin-top: 15px;
+            background: rgba(22, 27, 34, 0.8);
+            border: 1px solid #30363d; border-radius: 8px;
+            display: flex; flex-direction: column; overflow: hidden;
             animation: fadeIn 0.5s ease;
-            box-sizing: border-box;
+        }
+        .week-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 15px; background: #21262d; border-bottom: 1px solid #30363d;
+        }
+        .nav-arrow { background: none; border: none; color: #8b949e; font-size: 18px; cursor: pointer; padding: 0 10px; transition: 0.2s; }
+        .nav-arrow:hover { color: #fff; transform: scale(1.2); }
+        .week-label { font-size: 14px; font-weight: bold; color: #e6edf3; }
+        
+        .weekly-insight-content {
+            padding: 15px; text-align: center; color: #58a6ff; font-size: 1.1rem; font-weight: 600;
         }
         .insight-highlight { color: #fff; font-weight: 800; margin: 0 5px; }
-        
+
         /* --- 預算血條 --- */
         .budget-bar-container { width: 100%; box-sizing: border-box; margin-bottom: 20px; display: none; flex-direction: column; gap: 8px; background: #161b22; padding: 15px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .budget-header { display: flex; justify-content: space-between; align-items: flex-end; }
@@ -194,8 +196,15 @@
             <div id="heatmap" class="graph-container"></div>
         </div>
         
-        <div id="weekly-equivalents" class="weekly-insight-bar">
-            📅 本週累積: 計算中...
+        <div class="weekly-container" id="weekly-container">
+            <div class="week-nav">
+                <button class="nav-arrow" onclick="changeWeek(-1)">◀</button>
+                <div class="week-label" id="week-label">本週</div>
+                <button class="nav-arrow" onclick="changeWeek(1)">▶</button>
+            </div>
+            <div id="weekly-equivalents" class="weekly-insight-content">
+                計算中...
+            </div>
         </div>
     </div>
 
@@ -208,7 +217,7 @@
 
             <div class="reward-period" id="reward-period-display"></div>
             
-            <div class="balance-info" id="reward-title">本週累積成果</div>
+            <div class="balance-info" id="reward-title">該週累積成果</div>
             <div class="balance-amount" id="reward-balance">---</div>
             
             <div class="result-box" id="reward-result">?</div>
@@ -258,8 +267,11 @@
         
         let currentMode = 'health';
         let lastActiveMode = 'health'; 
-        let balanceHealth = 0;
-        let balanceMoney = 0;
+        let globalDataMap = {}; // V16: 儲存全域資料以便切換週次
+        let globalTheme = {};
+        
+        // V16: 週次偏移量 (0 = 本週, -1 = 上週)
+        let weekOffset = 0;
         let comparisonTicker = null; 
 
         const THEMES = {
@@ -341,12 +353,10 @@
             localStorage.setItem('dashboard_config_v11', JSON.stringify(CONFIG));
         }
 
-        // V15.1 修復：改用 loremflickr 作為圖源
         function applyDefaultBackground() {
             const card = document.getElementById('quote-card');
             const overlay = document.getElementById('q-overlay');
             if (CONFIG.bgStyle === 'nature') {
-                // 使用 loremflickr，鎖定日期以防一直跳動
                 const day = new Date().getDate();
                 card.style.backgroundImage = `url('https://loremflickr.com/800/300/nature,landscape?lock=${day}')`; 
                 overlay.style.display = 'block';
@@ -358,9 +368,9 @@
 
         function switchApp(mode) {
             currentMode = mode;
+            weekOffset = 0; // 切換模式時重置為本週
             document.querySelectorAll('.switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
             
-            // 清除之前的輪播
             if (comparisonTicker) { clearInterval(comparisonTicker); comparisonTicker = null; }
 
             const dashView = document.getElementById('dashboard-view');
@@ -371,8 +381,13 @@
                 rewardView.classList.remove('hidden');
                 document.getElementById('app-title').innerText = "🎲 Reward Center";
                 
-                if(lastActiveMode) switchRewardContext(lastActiveMode);
-                else switchRewardContext('health');
+                // V16: 進入獎勵頁面時，預設顯示上次模式的數據
+                if(lastActiveMode) {
+                    currentMode = lastActiveMode; // 暫時切換 context 變數以便計算
+                    updateWeeklyInsight(0); // 呼叫這個來更新獎勵數據
+                    switchRewardContext(lastActiveMode);
+                    currentMode = 'reward'; // 切回來
+                }
                 return;
             }
 
@@ -380,7 +395,7 @@
             dashView.classList.remove('hidden');
             rewardView.classList.add('hidden');
             
-            const theme = THEMES[mode];
+            globalTheme = THEMES[mode]; // V16: 更新全域主題
             const sheetId = (mode === 'health') ? CONFIG.healthId : CONFIG.moneyId;
             const sheetName = (mode === 'health') ? CONFIG.healthSheet : CONFIG.moneySheet;
             
@@ -388,45 +403,146 @@
             document.getElementById('heatmap').innerHTML = 'Loading data...';
             document.getElementById('hover-info').innerText = '👆 滑動熱力圖查看詳情'; 
             
-            document.getElementById('stat1-label').innerText = theme.statLabels[0];
-            document.getElementById('stat2-label').innerText = theme.statLabels[1];
-            document.getElementById('stat3-label').innerText = theme.statLabels[2];
+            document.getElementById('stat1-label').innerText = globalTheme.statLabels[0];
+            document.getElementById('stat2-label').innerText = globalTheme.statLabels[1];
+            document.getElementById('stat3-label').innerText = globalTheme.statLabels[2];
             document.getElementById('budget-container').style.display = (mode === 'money') ? 'flex' : 'none';
             
-            // 預設隱藏下方資訊列
-            document.getElementById('weekly-equivalents').style.display = 'none';
-
             if (sheetId) {
-                fetchData(sheetId, sheetName, theme);
+                fetchData(sheetId, sheetName, globalTheme);
                 fetchQuotes(sheetId, CONFIG.quoteSheet);
             } else {
                 document.getElementById('heatmap').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">請點擊右上角 ⚙️ 設定 Sheet ID</div>';
             }
         }
 
+        // V16: 切換週次功能
+        function changeWeek(offset) {
+            weekOffset += offset;
+            updateWeeklyInsight(weekOffset);
+        }
+
+        // V16: 更新週次洞察與獎勵數據 (核心邏輯)
+        function updateWeeklyInsight(offset) {
+            const now = new Date();
+            // 計算該週的起始與結束
+            const targetToday = new Date(now);
+            targetToday.setDate(now.getDate() + (offset * 7));
+            
+            const startOfWeek = new Date(targetToday);
+            startOfWeek.setDate(targetToday.getDate() - targetToday.getDay()); // 週日
+            startOfWeek.setHours(0,0,0,0);
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6); // 週六
+            endOfWeek.setHours(23,59,59,999);
+
+            // 更新 UI 標籤
+            const fmt = (d) => `${d.getMonth()+1}/${d.getDate()}`;
+            const label = (offset === 0) ? `本週 (${fmt(startOfWeek)} - ${fmt(endOfWeek)})` : 
+                          (offset === -1) ? `上週 (${fmt(startOfWeek)} - ${fmt(endOfWeek)})` : 
+                          `週 (${fmt(startOfWeek)} - ${fmt(endOfWeek)})`;
+            document.getElementById('week-label').innerText = label;
+            document.getElementById('reward-period-display').innerText = `📅 結算週期: ${label}`;
+
+            // 計算該週數據
+            let weekSum = 0;
+            let hasData = false;
+            
+            // 遍歷該週每一天
+            let ptr = new Date(startOfWeek);
+            while(ptr <= endOfWeek) {
+                const dStr = ptr.toISOString().split('T')[0];
+                if (globalDataMap[dStr]) {
+                    if (globalTheme.isDeficitGood) {
+                         // 熱量模式：只加總赤字 (負數)
+                         if(globalDataMap[dStr].value < 0) weekSum += globalDataMap[dStr].value;
+                    } else {
+                         // 記帳模式：加總花費
+                         weekSum += globalDataMap[dStr].value;
+                    }
+                    hasData = true;
+                }
+                ptr.setDate(ptr.getDate() + 1);
+            }
+
+            const weeklyBar = document.getElementById('weekly-equivalents');
+            if (comparisonTicker) { clearInterval(comparisonTicker); comparisonTicker = null; }
+
+            // 根據模式顯示 insight
+            if (currentMode === 'health' || (currentMode === 'reward' && lastActiveMode === 'health')) {
+                // 熱量模式
+                const weeklyDeficit = Math.abs(weekSum);
+                if (weekSum < 0) {
+                     const comparisons = [
+                        { text: '🥤 少喝了', unit: '杯珍奶', val: Math.round(weeklyDeficit / 650) },
+                        { text: '🍗 少吃了', unit: '塊雞排', val: Math.round(weeklyDeficit / 600) },
+                        { text: '🍔 少吃了', unit: '個大麥克', val: Math.round(weeklyDeficit / 550) },
+                        { text: '🍚 少吃了', unit: '碗白飯', val: Math.round(weeklyDeficit / 280) }
+                    ];
+                    let cIndex = 0;
+                    const updateBar = () => {
+                        const item = comparisons[cIndex];
+                        weeklyBar.innerHTML = `${label}戰績：${item.text} <span class="insight-highlight">${item.val}</span> ${item.unit}`;
+                        cIndex = (cIndex + 1) % comparisons.length;
+                    };
+                    updateBar();
+                    comparisonTicker = setInterval(updateBar, 3000);
+                } else {
+                    weeklyBar.innerHTML = `${label}：尚未累積赤字`;
+                }
+                // 更新獎勵 UI
+                updateRewardUI(Math.abs(weekSum), globalTheme.unit, true);
+
+            } else {
+                // 記帳模式
+                const weeklyBudget = CONFIG.monthlyBudget / 4;
+                // 注意：如果該週完全沒資料(hasData=false)，代表花費為0，即省下全額預算。
+                // 若覺得這樣不合理，可判斷 if(!hasData) weekSum = weeklyBudget (視為沒紀錄=沒省錢)
+                // 這裡假設沒紀錄 = 沒花錢 (0)
+                
+                const saved = weeklyBudget - weekSum;
+                if (saved > 0) {
+                     const comparisons = [
+                        { text: '☕ 省下了', unit: '杯星巴克', val: Math.round(saved / 150) },
+                        { text: '🍱 省下了', unit: '個便當', val: Math.round(saved / 100) },
+                        { text: '🎬 省下了', unit: '張電影票', val: Math.round(saved / 300) },
+                        { text: '🎮 省下了', unit: '片遊戲', val: (saved / 1500).toFixed(1) }
+                    ];
+                    let cIndex = 0;
+                    const updateBar = () => {
+                        const item = comparisons[cIndex];
+                        weeklyBar.innerHTML = `${label}戰績：${item.text} <span class="insight-highlight">${item.val}</span> ${item.unit}`;
+                        cIndex = (cIndex + 1) % comparisons.length;
+                    };
+                    updateBar();
+                    comparisonTicker = setInterval(updateBar, 3000);
+                } else {
+                     const over = Math.abs(saved);
+                     weeklyBar.innerHTML = `${label}戰績：💸 超支了 <span class="insight-highlight">${over}</span> 元 (少吃 ${Math.round(over/100)} 個便當)`;
+                }
+                // 更新獎勵 UI
+                updateRewardUI(Math.round(saved), globalTheme.unit, saved >= 0);
+            }
+        }
+
+        function updateRewardUI(val, unit, isGood) {
+            const el = document.getElementById('reward-balance');
+            if(el) {
+                el.innerText = `${val} ${unit}`;
+                el.style.color = isGood ? '#3fb950' : '#ff4d4d';
+            }
+        }
+
         function switchRewardContext(type) {
             document.getElementById('reward-health-btn').classList.toggle('active-h', type === 'health');
             document.getElementById('reward-money-btn').classList.toggle('active-m', type === 'money');
-
-            const now = new Date();
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay()); 
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6); 
             
-            const fmt = (d) => `${d.getMonth()+1}/${d.getDate()}`;
-            document.getElementById('reward-period-display').innerText = `📅 結算週期: ${fmt(startOfWeek)} ~ ${fmt(endOfWeek)}`;
-
-            const title = (type === 'health') ? '🔥 本週熱量赤字' : '💰 本週剩餘預算';
-            const unit = (type === 'health') ? 'cal' : '$';
-            const val = (type === 'health') ? balanceHealth : balanceMoney;
-            const rewardList = (type === 'health') ? CONFIG.rewardsHealth : CONFIG.rewardsMoney;
-
+            const title = (type === 'health') ? '🔥 該週熱量赤字' : '💰 該週剩餘預算';
             document.getElementById('reward-title').innerText = title;
-            document.getElementById('reward-balance').innerText = `${val} ${unit}`;
-            document.getElementById('reward-balance').style.color = (val >= 0) ? '#3fb950' : '#ff4d4d';
-
-            document.getElementById('reward-list-input').value = rewardList || "";
+            document.getElementById('reward-list-input').value = (type === 'health') ? CONFIG.rewardsHealth : CONFIG.rewardsMoney;
+            
+            // 這裡不需要重新計算數值，因為 updateWeeklyInsight 已經做了，或是切換時會自動帶入
         }
 
         function spinWheel() {
@@ -469,12 +585,11 @@
         }
 
         function processData(rows, theme) {
-            const dataMap = {}; let totalSum = 0; let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
-            let weekSum = 0;
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay());
-            startOfWeek.setHours(0,0,0,0);
-
+            // V16: 重置全域資料
+            globalDataMap = {}; 
+            
+            let totalSum = 0; let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
+            
             rows.forEach(row => {
                 if (!row.c[0] || row.c[1] === null) return;
                 let dateStr = ""; let dateVal = row.c[0].v;
@@ -488,13 +603,14 @@
                 } catch(e) { return; }
 
                 const value = row.c[1].v; 
-                if (dataMap[dateStr]) { dataMap[dateStr].value += value; } 
-                else { dataMap[dateStr] = { value: value }; }
+                // V16: 存入 globalDataMap
+                if (globalDataMap[dateStr]) { globalDataMap[dateStr].value += value; } 
+                else { globalDataMap[dateStr] = { value: value }; }
             });
             
-            const sortedDates = Object.keys(dataMap).sort();
+            const sortedDates = Object.keys(globalDataMap).sort();
             sortedDates.forEach(dateStr => {
-                const item = dataMap[dateStr];
+                const item = globalDataMap[dateStr];
                 const value = item.value;
                 const itemDate = new Date(dateStr);
 
@@ -504,20 +620,13 @@
                     totalSum += value;
                     if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { monthSpent += value; }
                 }
-
-                if (itemDate >= startOfWeek) {
-                    if (theme.isDeficitGood) { if(value < 0) weekSum += value; } 
-                    else { weekSum += value; }
-                }
                 count++;
             });
 
-            if (theme.isDeficitGood) { balanceHealth = Math.abs(weekSum); } 
-            else { const weeklyBudget = CONFIG.monthlyBudget / 4; balanceMoney = Math.round(weeklyBudget - weekSum); }
-
+            // Streak Logic
             if (sortedDates.length > 0) {
                 for (let i = sortedDates.length - 1; i >= 0; i--) {
-                    const d = sortedDates[i]; const val = dataMap[d].value;
+                    const d = sortedDates[i]; const val = globalDataMap[d].value;
                     if (new Date(d) > new Date()) continue; 
                     let isSuccess = false;
                     if (theme.isDeficitGood) isSuccess = (val < 0);
@@ -529,59 +638,29 @@
             document.getElementById('stat1-val').innerText = streak;
             document.getElementById('stat1-val').style.color = theme.isDeficitGood ? '#ff9b5e' : '#d29922';
 
-            const weeklyBar = document.getElementById('weekly-equivalents');
-            
             if (currentMode === 'health') {
                 const totalKg = (Math.abs(totalSum) / 7700).toFixed(1);
                 document.getElementById('stat2-val').innerText = totalKg;
                 document.getElementById('stat2-label').innerText = '預估總減脂 (KG)';
                 document.getElementById('stat2-val').style.color = '#3fb950';
-
                 document.getElementById('stat3-val').innerText = Math.abs(totalSum).toLocaleString();
                 document.getElementById('stat3-val').style.color = '#58a6ff';
-
-                weeklyBar.style.display = 'block';
-                const weeklyDeficit = Math.abs(weekSum);
-                
-                if (weekSum < 0) {
-                    const comparisons = [
-                        { text: '🥤 少喝了', unit: '杯珍奶', val: Math.round(weeklyDeficit / 650) },
-                        { text: '🍗 少吃了', unit: '塊雞排', val: Math.round(weeklyDeficit / 600) },
-                        { text: '🍔 少吃了', unit: '個大麥克', val: Math.round(weeklyDeficit / 550) },
-                        { text: '🍚 少吃了', unit: '碗白飯', val: Math.round(weeklyDeficit / 280) }
-                    ];
-                    
-                    let cIndex = 0;
-                    const updateBar = () => {
-                        const item = comparisons[cIndex];
-                        weeklyBar.innerHTML = `📅 本週戰績：${item.text} <span class="insight-highlight">${item.val}</span> ${item.unit}`;
-                        cIndex = (cIndex + 1) % comparisons.length;
-                    };
-                    updateBar(); 
-                    if(comparisonTicker) clearInterval(comparisonTicker);
-                    comparisonTicker = setInterval(updateBar, 3000);
-                } else {
-                    weeklyBar.innerHTML = `📅 本週戰績：目前尚未累積赤字，加油！`;
-                    if(comparisonTicker) clearInterval(comparisonTicker);
-                }
-
             } else {
-                weeklyBar.style.display = 'none'; 
-                if(comparisonTicker) clearInterval(comparisonTicker);
-
                 const avg = count > 0 ? Math.round(totalSum / count) : 0;
                 document.getElementById('stat2-val').innerText = avg.toLocaleString();
                 document.getElementById('stat2-label').innerText = '日均花費 ($)';
                 document.getElementById('stat2-val').style.color = '#58a6ff';
-
                 const remaining = CONFIG.monthlyBudget - monthSpent;
                 document.getElementById('stat3-val').innerText = remaining.toLocaleString();
                 document.getElementById('stat3-val').style.color = remaining > 0 ? '#3fb950' : '#ff4d4d';
                 updateWalletHP(monthSpent, CONFIG.monthlyBudget);
             }
             
-            drawHeatmap(dataMap, theme);
+            drawHeatmap(globalDataMap, theme);
             setTimeout(() => { const scroller = document.getElementById('graph-scroller'); if(scroller) scroller.scrollLeft = scroller.scrollWidth; }, 100);
+            
+            // V16: 初始化週次洞察 (offset = 0)
+            updateWeeklyInsight(0);
         }
 
         function updateWalletHP(spent, budget) {
@@ -595,13 +674,8 @@
             document.getElementById('wallet-max').innerText = budget.toLocaleString();
             document.getElementById('theory-hp').innerText = Math.round(theoryRemaining).toLocaleString();
             const bar = document.getElementById('hp-fill');
-            const container = document.getElementById('budget-container');
             bar.style.width = hpPercent + '%';
-            if (remaining < theoryRemaining * 0.9) { 
-                bar.className = 'hp-fill danger'; 
-            } else { 
-                bar.className = 'hp-fill'; 
-            }
+            if (remaining < theoryRemaining * 0.9) { bar.className = 'hp-fill danger'; } else { bar.className = 'hp-fill'; }
         }
 
         function drawHeatmap(data, theme) {
@@ -649,11 +723,7 @@
         }
 
         async function fetchQuotes(id, sheetName) {
-            // V15.1: 這裡也使用 applyDefaultBackground 作為備援
-            if (!id || !sheetName) {
-                applyDefaultBackground();
-                return;
-            }
+            if (!id || !sheetName) { applyDefaultBackground(); return; }
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${sheetName}&tq=SELECT A, B, C`;
             try {
                 const res = await fetch(url); const text = await res.text();
@@ -666,21 +736,14 @@
                     const qImg  = row.c[2] ? row.c[2].v : null;
                     document.getElementById('q-text').innerText = qText;
                     document.getElementById('q-author').innerText = qAuth;
-                    
                     if (CONFIG.bgStyle === 'custom' && qImg) { 
                         const card = document.getElementById('quote-card');
                         const overlay = document.getElementById('q-overlay');
                         card.style.backgroundImage = `url('${qImg}')`; 
                         overlay.style.display = 'block'; 
-                    } else {
-                        applyDefaultBackground(); // 使用 Nature 風格
-                    }
+                    } else { applyDefaultBackground(); }
                 }
-            } catch (e) { 
-                console.log('Quote fetch failed');
-                document.getElementById('q-text').innerText = "Focus on your goal.";
-                applyDefaultBackground();
-            }
+            } catch (e) { applyDefaultBackground(); }
         }
     </script>
 </body>
