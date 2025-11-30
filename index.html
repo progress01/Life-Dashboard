@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V19.4</title>
+    <title>Life Dashboard V20</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         /* --- 全域風格 --- */
         body {
@@ -24,8 +25,12 @@
         .switch-btn.active[data-mode="money"] { background: #d29922; color: #1e1e1e; }
         .switch-btn.active[data-mode="reward"] { background: #a371f7; color: #fff; } 
 
-        .settings-btn { background: #21262d; border: 1px solid #30363d; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; color: #8b949e; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
-        .settings-btn:hover { color: #58a6ff; transform: rotate(90deg); border-color: #58a6ff; }
+        /* V20: 右側按鈕群組 */
+        .nav-right-group { display: flex; gap: 10px; }
+        
+        .icon-btn { background: #21262d; border: 1px solid #30363d; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; color: #8b949e; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .icon-btn:hover { color: #58a6ff; border-color: #58a6ff; transform: scale(1.1); }
+        .settings-btn:hover { transform: rotate(90deg); }
 
         h2 { margin: 0 0 15px 0; font-weight: 600; letter-spacing: 1px; font-size: 1.5rem; text-align: center; }
 
@@ -169,7 +174,10 @@
             <button class="switch-btn" data-mode="money" onclick="switchApp('money')">💰 記帳</button>
             <button class="switch-btn" data-mode="reward" onclick="switchApp('reward')">🎲 獎勵</button>
         </div>
-        <button class="settings-btn" onclick="openSettings()">⚙️</button>
+        <div class="nav-right-group">
+            <button class="icon-btn" onclick="captureScreenshot()" title="截圖分享">📷</button>
+            <button class="icon-btn settings-btn" onclick="openSettings()">⚙️</button>
+        </div>
     </div>
 
     <h2 id="app-title">Life Dashboard</h2>
@@ -351,7 +359,6 @@
             document.getElementById('q-author').innerText = r.author;
         }
 
-        // V19.4: Timezone Helper
         function formatLocalYMD(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -426,6 +433,31 @@
             if (CONFIG.bgStyle !== 'nature') return;
             const card = document.getElementById('quote-card');
             card.style.backgroundImage = `url('https://loremflickr.com/800/300/nature,landscape?random=${Date.now()}')`;
+        }
+
+        // V20: 截圖分享功能
+        function captureScreenshot() {
+            const btn = document.querySelector('.icon-btn[title="截圖分享"]');
+            const originalText = btn.innerText;
+            btn.innerText = '📸';
+            
+            // 使用 html2canvas 截取 body
+            html2canvas(document.body, {
+                useCORS: true, // 允許跨域圖片 (如果圖片伺服器支援)
+                backgroundColor: '#0d1117',
+                scrollY: 0
+            }).then(canvas => {
+                const link = document.createElement('a');
+                const today = formatLocalYMD(new Date());
+                link.download = `LifeDashboard_${today}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                btn.innerText = originalText;
+            }).catch(err => {
+                console.error(err);
+                alert('截圖失敗，可能是背景圖片安全性限制。請嘗試更換背景或手動截圖。');
+                btn.innerText = originalText;
+            });
         }
 
         function switchApp(mode) {
@@ -517,7 +549,7 @@
             let weekSum = 0;
             let ptr = new Date(startOfWeek);
             while(ptr <= endOfWeek) {
-                const dStr = formatLocalYMD(ptr); // V19.4: Use local helper
+                const dStr = formatLocalYMD(ptr); // Use helper
                 if (globalDataMap[dStr]) {
                     if (globalTheme.isDeficitGood) {
                          if(globalDataMap[dStr].value < 0) weekSum += globalDataMap[dStr].value;
@@ -639,7 +671,8 @@
             globalDataMap = {}; 
             
             let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
-            const todayStr = formatLocalYMD(now); // V19.4: Use helper
+            const offset = now.getTimezoneOffset() * 60000;
+            const todayStr = formatLocalYMD(now);
             
             rows.forEach(row => {
                 if (!row.c[0] || row.c[1] === null) return;
@@ -647,7 +680,6 @@
                 try {
                     if (typeof dateVal === 'string' && dateVal.includes("Date")) { 
                         const parts = dateVal.match(/Date\((\d+),(\d+),(\d+)\)/); 
-                        // V19.4: Fix parsing to use local date directly
                         const d = new Date(parts[1], parts[2], parts[3]);
                         dateStr = formatLocalYMD(d);
                     } else { 
@@ -671,7 +703,7 @@
                 count++;
             });
 
-            // V19.4: Streak Fix (Check backwards starting from Today)
+            // Streak Logic (Check backwards starting from Today)
             let checkDate = new Date();
             let checkStr = formatLocalYMD(checkDate);
             
@@ -739,14 +771,14 @@
         function drawHeatmap(data, theme) {
             const container = document.getElementById('heatmap'); container.innerHTML = '';
             const today = new Date(); const startDate = new Date(); startDate.setDate(today.getDate() - 365);
-            // V17.2: Heatmap Monday Start
+            // Monday start
             while (startDate.getDay() !== 1) startDate.setDate(startDate.getDate() - 1);
             
             let currentDate = new Date(startDate);
             const hoverBar = document.getElementById('hover-info');
 
             while (currentDate <= today) {
-                const dateString = formatLocalYMD(currentDate); // V19.4: Use helper
+                const dateString = formatLocalYMD(currentDate); // Use helper
                 const item = data[dateString];
                 const cell = document.createElement('div');
                 cell.classList.add('day-cell');
