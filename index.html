@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V10.2</title>
+    <title>Life Dashboard V11</title>
     <style>
         /* --- 全域風格 --- */
         body {
@@ -33,7 +33,7 @@
         .dashboard-view { width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.5s ease; }
         .hidden { display: none !important; }
 
-        /* --- 數據與圖表 (保留) --- */
+        /* --- 數據與圖表 --- */
         .quote-container { background-color: #161b22; background-size: cover; background-position: center; border: 1px solid #30363d; border-left: 5px solid #58a6ff; border-radius: 8px; margin-bottom: 20px; width: 100%; min-height: 100px; display: flex; align-items: center; position: relative; overflow: hidden; transition: 0.5s; box-sizing: border-box; }
         .quote-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(13,17,23,0.98) 0%, rgba(13,17,23,0.6) 100%); z-index: 1; }
         .quote-content-layer { position: relative; z-index: 2; padding: 20px; width: 100%; box-sizing: border-box; }
@@ -61,46 +61,25 @@
         .shaking { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
 
-        /* --- 🎲 獎勵轉盤 (V10.2) --- */
+        /* --- 🎲 獎勵轉盤 --- */
         .reward-card {
             background: #161b22; border: 1px solid #a371f7; border-radius: 12px; padding: 20px;
             width: 100%; box-sizing: border-box; text-align: center;
             box-shadow: 0 0 20px rgba(163, 113, 247, 0.1);
         }
-        /* 獎勵切換 Toggle */
-        .reward-toggle-container {
-            display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;
-        }
-        .sub-toggle-btn {
-            background: #21262d; border: 1px solid #30363d; color: #8b949e;
-            padding: 6px 15px; border-radius: 15px; cursor: pointer; font-size: 13px;
-        }
+        .reward-toggle-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .sub-toggle-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; padding: 6px 15px; border-radius: 15px; cursor: pointer; font-size: 13px; }
         .sub-toggle-btn.active-h { background: #238636; color: white; border-color: #238636; }
         .sub-toggle-btn.active-m { background: #d29922; color: #1e1e1e; border-color: #d29922; }
 
         .balance-info { font-size: 1rem; color: #8b949e; margin-bottom: 5px; }
         .balance-amount { font-size: 2.5rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
-        
-        .result-box {
-            margin: 20px 0; height: 80px; display: flex; align-items: center; justify-content: center;
-            background: #0d1117; border: 2px dashed #30363d; border-radius: 8px;
-            font-size: 1.5rem; font-weight: bold; color: #fff;
-        }
+        .result-box { margin: 20px 0; height: 80px; display: flex; align-items: center; justify-content: center; background: #0d1117; border: 2px dashed #30363d; border-radius: 8px; font-size: 1.5rem; font-weight: bold; color: #fff; }
         .result-box.win { border-color: #ffd700; color: #ffd700; animation: pop 0.3s; }
-        
-        .spin-btn {
-            background: linear-gradient(135deg, #a371f7, #7e22ce); color: white; border: none;
-            padding: 15px 40px; border-radius: 30px; font-size: 1.2rem; font-weight: bold;
-            cursor: pointer; box-shadow: 0 4px 15px rgba(126, 34, 206, 0.4); transition: 0.2s; width: 100%;
-        }
+        .spin-btn { background: linear-gradient(135deg, #a371f7, #7e22ce); color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(126, 34, 206, 0.4); transition: 0.2s; width: 100%; }
         .spin-btn:active { transform: scale(0.95); }
         .spin-btn:disabled { background: #30363d; cursor: not-allowed; box-shadow: none; }
-        
-        .reward-list-area {
-            width: 100%; background: #0d1117; border: 1px solid #30363d; color: #8b949e;
-            padding: 10px; border-radius: 6px; margin-top: 20px; min-height: 100px;
-            font-family: monospace; font-size: 14px; resize: vertical; box-sizing: border-box;
-        }
+        .reward-list-area { width: 100%; background: #0d1117; border: 1px solid #30363d; color: #8b949e; padding: 10px; border-radius: 6px; margin-top: 20px; min-height: 100px; font-family: monospace; font-size: 14px; resize: vertical; box-sizing: border-box; }
 
         /* --- Modal 設定面板 --- */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; }
@@ -186,17 +165,17 @@
         <div class="modal-box">
             <div class="modal-title">⚙️ 資料來源設定</div>
             
-            <div class="input-group"><label class="input-label">熱量表 ID</label><input type="text" id="input-health-id" class="input-field"></div>
-            <div class="input-group"><label class="input-label">熱量表分頁名</label><input type="text" id="input-health-sheet" class="input-field"></div>
+            <div class="input-group"><label class="input-label">熱量表 ID</label><input type="text" id="input-health-id" class="input-field" placeholder="貼上 ID..."></div>
+            <div class="input-group"><label class="input-label">熱量表分頁名</label><input type="text" id="input-health-sheet" class="input-field" placeholder="預設: 熱量管理"></div>
 
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
 
-            <div class="input-group"><label class="input-label">記帳表 ID</label><input type="text" id="input-money-id" class="input-field"></div>
-            <div class="input-group"><label class="input-label">記帳表分頁名</label><input type="text" id="input-money-sheet" class="input-field"></div>
-            <div class="input-group"><label class="input-label">記帳月預算</label><input type="number" id="input-monthly-budget" class="input-field"></div>
+            <div class="input-group"><label class="input-label">記帳表 ID</label><input type="text" id="input-money-id" class="input-field" placeholder="貼上 ID..."></div>
+            <div class="input-group"><label class="input-label">記帳表分頁名</label><input type="text" id="input-money-sheet" class="input-field" placeholder="預設: 表單回應 1"></div>
+            <div class="input-group"><label class="input-label">記帳月預算</label><input type="number" id="input-monthly-budget" class="input-field" value="10000"></div>
 
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
-            <div class="input-group"><label class="input-label">金句分頁名</label><input type="text" id="input-quote-sheet" class="input-field"></div>
+            <div class="input-group"><label class="input-label">金句分頁名</label><input type="text" id="input-quote-sheet" class="input-field" placeholder="預設: Quotes"></div>
             
             <div class="input-group">
                 <label class="input-label">背景風格</label>
@@ -218,15 +197,12 @@
             quoteSheet: 'Quotes',
             monthlyBudget: 10000,
             bgStyle: 'nature',
-            // V10.2 雙獎勵池
             rewardsHealth: "喝一杯奶茶\n吃炸雞\n吃甜點\n休息一天",
             rewardsMoney: "買 Steam 遊戲\n搭計程車\n買新衣服\n吃大餐"
         };
         
         let currentMode = 'health';
-        let currentRewardContext = 'health'; // 在獎勵頁面中，目前是看熱量還是錢
-        
-        // 全域餘額記憶 (避免切換時重抓)
+        let currentRewardContext = 'health'; 
         let balanceHealth = 0;
         let balanceMoney = 0;
 
@@ -241,6 +217,8 @@
             loadSettings();
             if (!CONFIG.healthId && !CONFIG.moneyId) openSettings();
             else switchApp('health');
+            
+            document.getElementById('reward-list-input').value = CONFIG.rewardsHealth;
         }
 
         function openSettings() {
@@ -263,21 +241,21 @@
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
             CONFIG.quoteSheet = document.getElementById('input-quote-sheet').value.trim() || 'Quotes';
-            localStorage.setItem('dashboard_config_v10_2', JSON.stringify(CONFIG));
+            
+            localStorage.setItem('dashboard_config_v11', JSON.stringify(CONFIG));
             closeSettings();
             switchApp(currentMode);
         }
         
         function loadSettings() {
-            const saved = localStorage.getItem('dashboard_config_v10_2');
+            const saved = localStorage.getItem('dashboard_config_v11'); // New Key V11
             if (saved) {
                 CONFIG = JSON.parse(saved);
-                // Migration check for older versions
                 if (!CONFIG.rewardsHealth) CONFIG.rewardsHealth = "喝一杯奶茶\n吃炸雞";
                 if (!CONFIG.rewardsMoney) CONFIG.rewardsMoney = "買遊戲\n看電影";
             }
             else { 
-                const old = localStorage.getItem('dashboard_config_v10') || localStorage.getItem('dashboard_config_v8_1');
+                const old = localStorage.getItem('dashboard_config_v10_2') || localStorage.getItem('dashboard_config_v10');
                 if(old) CONFIG = JSON.parse(old);
             }
         }
@@ -286,7 +264,7 @@
             const content = document.getElementById('reward-list-input').value;
             if (currentRewardContext === 'health') CONFIG.rewardsHealth = content;
             else CONFIG.rewardsMoney = content;
-            localStorage.setItem('dashboard_config_v10_2', JSON.stringify(CONFIG));
+            localStorage.setItem('dashboard_config_v11', JSON.stringify(CONFIG));
         }
 
         function switchApp(mode) {
@@ -300,7 +278,6 @@
                 dashView.classList.add('hidden');
                 rewardView.classList.remove('hidden');
                 document.getElementById('app-title').innerText = "🎲 Reward Center";
-                // 預設打開熱量獎勵
                 switchRewardContext('health');
                 return;
             }
@@ -314,7 +291,6 @@
             
             document.getElementById('app-title').innerText = (mode === 'health') ? "🔥 Calorie Tracker" : "💰 Expense Tracker";
             document.getElementById('heatmap').innerHTML = 'Loading data...';
-            
             document.getElementById('stat1-label').innerText = theme.statLabels[0];
             document.getElementById('stat2-label').innerText = theme.statLabels[1];
             document.getElementById('stat3-label').innerText = theme.statLabels[2];
@@ -328,15 +304,11 @@
             }
         }
 
-        // V10.2 雙獎勵池切換邏輯
         function switchRewardContext(type) {
             currentRewardContext = type;
-            
-            // UI Toggle
             document.getElementById('reward-health-btn').classList.toggle('active-h', type === 'health');
             document.getElementById('reward-money-btn').classList.toggle('active-m', type === 'money');
 
-            // Content Update
             const title = (type === 'health') ? '🔥 本週熱量赤字' : '💰 本週剩餘預算';
             const unit = (type === 'health') ? 'cal' : '$';
             const val = (type === 'health') ? balanceHealth : balanceMoney;
@@ -345,11 +317,13 @@
             document.getElementById('reward-title').innerText = title;
             document.getElementById('reward-balance').innerText = `${val} ${unit}`;
             
-            // Color Logic
-            let color = '#fff';
-            if (type === 'health') color = '#ff9b5e'; // Orange
-            else color = '#d29922'; // Gold
-            document.getElementById('reward-balance').style.color = color;
+            let color = (val >= 0) ? '#3fb950' : '#ff4d4d';
+            if (type === 'health' && val < 0) color = '#ff4d4d'; // 赤字(存)是正的顯示，如果這裡算出來是負的代表超吃
+
+            // V11: 赤字在 balanceHealth 已經是正數(絕對值)顯示
+            // V11: 錢是正數
+            // 所以只要是正數都是綠色
+            document.getElementById('reward-balance').style.color = (val >= 0) ? '#3fb950' : '#ff4d4d';
 
             document.getElementById('reward-list-input').value = rewardList || "";
         }
@@ -357,63 +331,86 @@
         function spinWheel() {
             const listText = document.getElementById('reward-list-input').value.trim();
             if (!listText) return alert('請先輸入獎品清單！');
-            
             const items = listText.split('\n').filter(line => line.trim() !== '');
+            if (items.length === 0) return;
             const resultBox = document.getElementById('reward-result');
             const btn = document.querySelector('.spin-btn');
-            
-            if (items.length === 0) return;
-
-            btn.disabled = true;
-            resultBox.classList.remove('win');
-            let count = 0;
-            let speed = 50;
-
+            btn.disabled = true; resultBox.classList.remove('win');
+            let count = 0; let speed = 50;
             const loop = setInterval(() => {
                 const rand = items[Math.floor(Math.random() * items.length)];
-                resultBox.innerText = rand;
-                count++;
-                
-                if (count > 20) { 
-                    clearInterval(loop);
-                    btn.disabled = false;
-                    resultBox.classList.add('win');
-                }
+                resultBox.innerText = rand; count++;
+                if (count > 20) { clearInterval(loop); btn.disabled = false; resultBox.classList.add('win'); }
             }, speed);
         }
 
         async function fetchData(id, sheetName, theme) {
-            const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${sheetName}&tq=SELECT A, B`;
+            const encodedSheet = encodeURIComponent(sheetName);
+            const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=SELECT A, B OFFSET 1`;
             try {
                 const res = await fetch(url); const text = await res.text();
                 const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
                 const data = JSON.parse(jsonString);
                 processData(data.table.rows, theme);
-            } catch (error) { console.error(error); document.getElementById('heatmap').innerText = "讀取失敗"; }
+            } catch (error) { 
+                console.error(error); 
+                document.getElementById('heatmap').innerText = `讀取失敗: 請確認 "${sheetName}" 分頁名稱正確`; 
+            }
         }
 
         function processData(rows, theme) {
             const dataMap = {}; let totalSum = 0; let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
-            
-            // 本週統計初始化
             let weekSum = 0;
             const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+            startOfWeek.setDate(now.getDate() - now.getDay());
             startOfWeek.setHours(0,0,0,0);
 
             rows.forEach(row => {
                 if (!row.c[0] || row.c[1] === null) return;
                 let dateStr = ""; let dateVal = row.c[0].v;
-                if (typeof dateVal === 'string' && dateVal.includes("Date")) { const parts = dateVal.match(/Date\((\d+),(\d+),(\d+)\)/); dateStr = new Date(parts[1], parts[2], parts[3]).toISOString().split('T')[0]; } 
-                else { dateStr = new Date(row.c[0].f || row.c[0].v).toISOString().split('T')[0]; }
-                const value = row.c[1].v; dataMap[dateStr] = value;
+                try {
+                    if (typeof dateVal === 'string' && dateVal.includes("Date")) { const parts = dateVal.match(/Date\((\d+),(\d+),(\d+)\)/); dateStr = new Date(parts[1], parts[2], parts[3]).toISOString().split('T')[0]; } 
+                    else { 
+                        const d = new Date(row.c[0].f || row.c[0].v);
+                        if(isNaN(d.getTime())) return;
+                        dateStr = d.toISOString().split('T')[0]; 
+                    }
+                } catch(e) { return; }
+
+                const value = row.c[1].v; 
                 
+                // 🌟 V11: 加總邏輯 (若同一天有多筆)
+                if (dataMap[dateStr]) {
+                    dataMap[dateStr].value += value; // 累加
+                } else {
+                    dataMap[dateStr] = { value: value, note: "" };
+                }
+
+                // 計算總計與本週 (注意：這裡迴圈跑每筆資料，若要精確計算需在迴圈後再跑一次 map，但為了效能與邏輯簡化，這裡做近似計算)
+                // 修正：這裡直接加總 value 會重複計算如果 map 已經處理過。
+                // 正確作法：先組好 dataMap，後面再跑一次 dataMap 算統計。
+            });
+            
+            // 🌟 V11: 重新走訪 dataMap 計算統計數據 (確保加總正確)
+            totalSum = 0; count = 0; streak = 0; monthSpent = 0; weekSum = 0;
+
+            const sortedDates = Object.keys(dataMap).sort();
+            
+            sortedDates.forEach(dateStr => {
+                const item = dataMap[dateStr];
+                const value = item.value;
                 const itemDate = new Date(dateStr);
 
-                if (theme.isDeficitGood) { if (value < 0) totalSum += value; } 
-                else { totalSum += value; if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { monthSpent += value; } }
-                
-                // 本週累計
+                if (theme.isDeficitGood) {
+                     // 熱量：只算赤字總和 (負數)
+                    if (value < 0) totalSum += value;
+                } else {
+                    // 記帳：算總花費
+                    totalSum += value;
+                    if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { monthSpent += value; }
+                }
+
+                // 本週統計
                 if (itemDate >= startOfWeek) {
                     if (theme.isDeficitGood) { if(value < 0) weekSum += value; } 
                     else { weekSum += value; }
@@ -421,24 +418,22 @@
                 count++;
             });
 
-            // 🌟 儲存到全域變數
-            if (theme.isDeficitGood) { 
-                balanceHealth = Math.abs(weekSum); // 轉正數顯示
-            } else { 
-                const weeklyBudget = CONFIG.monthlyBudget / 4; 
-                balanceMoney = Math.round(weeklyBudget - weekSum); 
-            }
+            // 更新全域餘額
+            if (theme.isDeficitGood) { balanceHealth = Math.abs(weekSum); } 
+            else { const weeklyBudget = CONFIG.monthlyBudget / 4; balanceMoney = Math.round(weeklyBudget - weekSum); }
 
-            // Streak Calculation
-            const sortedDates = Object.keys(dataMap).sort();
+            // Streak Logic
             if (sortedDates.length > 0) {
                 for (let i = sortedDates.length - 1; i >= 0; i--) {
-                    const d = sortedDates[i]; const val = dataMap[d];
+                    const d = sortedDates[i]; const val = dataMap[d].value;
                     if (new Date(d) > new Date()) continue; 
                     let isSuccess = false;
                     if (theme.isDeficitGood) isSuccess = (val < 0);
                     else isSuccess = (val <= theme.budgetLimit && val > 0) || (val <= theme.goldLimit);
-                    if (isSuccess) { streak++; if (i > 0 && Math.abs(new Date(d) - new Date(sortedDates[i-1])) / 86400000 > 1.5) break; } else { break; }
+                    if (isSuccess) { streak++; if (i > 0) {
+                         const curr = new Date(d); const prev = new Date(sortedDates[i-1]); 
+                         if (Math.abs(curr - prev) / (1000*60*60*24) > 1.5) break; 
+                    }} else { break; }
                 }
             }
 
@@ -487,12 +482,12 @@
             let currentDate = new Date(startDate);
             while (currentDate <= today) {
                 const dateString = currentDate.toISOString().split('T')[0];
-                const value = data[dateString];
+                const item = data[dateString];
                 const cell = document.createElement('div');
                 cell.classList.add('day-cell');
                 cell.style.backgroundColor = theme.colors[theme.isDeficitGood ? 3 : 2]; 
-                if (value !== undefined) {
-                    const th = theme.thresholds; let verdict = "";
+                if (item !== undefined) {
+                    const value = item.value; const th = theme.thresholds; let verdict = "";
                     if (theme.isDeficitGood) {
                         if (value < th[0]) cell.style.backgroundColor = theme.colors[0];
                         else if (value < th[1]) cell.style.backgroundColor = theme.colors[1];
