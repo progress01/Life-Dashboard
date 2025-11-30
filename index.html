@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V11</title>
+    <title>Life Dashboard V11.5</title>
     <style>
         /* --- 全域風格 --- */
         body {
@@ -89,6 +89,7 @@
         .input-label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 5px; }
         .input-field, .input-select { width: 100%; padding: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; box-sizing: border-box; font-size: 14px; }
         .save-btn { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px;}
+        .note { font-size: 11px; color: #58a6ff; margin-top: 2px; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -165,13 +166,21 @@
         <div class="modal-box">
             <div class="modal-title">⚙️ 資料來源設定</div>
             
-            <div class="input-group"><label class="input-label">熱量表 ID</label><input type="text" id="input-health-id" class="input-field" placeholder="貼上 ID..."></div>
-            <div class="input-group"><label class="input-label">熱量表分頁名</label><input type="text" id="input-health-sheet" class="input-field" placeholder="預設: 熱量管理"></div>
+            <div class="input-group">
+                <label class="input-label">熱量表連結 (或 ID)</label>
+                <input type="text" id="input-health-id" class="input-field" placeholder="貼上完整網址或 ID...">
+                <div class="note">支援直接貼上網址</div>
+            </div>
+            <div class="input-group"><label class="input-label">熱量表分頁名</label><input type="text" id="input-health-sheet" class="input-field" placeholder="預設: 表單"></div>
 
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
 
-            <div class="input-group"><label class="input-label">記帳表 ID</label><input type="text" id="input-money-id" class="input-field" placeholder="貼上 ID..."></div>
-            <div class="input-group"><label class="input-label">記帳表分頁名</label><input type="text" id="input-money-sheet" class="input-field" placeholder="預設: 表單回應 1"></div>
+            <div class="input-group">
+                <label class="input-label">記帳表連結 (或 ID)</label>
+                <input type="text" id="input-money-id" class="input-field" placeholder="貼上完整網址或 ID...">
+                <div class="note">支援直接貼上網址</div>
+            </div>
+            <div class="input-group"><label class="input-label">記帳表分頁名</label><input type="text" id="input-money-sheet" class="input-field" placeholder="預設: 表單"></div>
             <div class="input-group"><label class="input-label">記帳月預算</label><input type="number" id="input-monthly-budget" class="input-field" value="10000"></div>
 
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
@@ -192,8 +201,8 @@
 
     <script>
         let CONFIG = {
-            healthId: '', healthSheet: '熱量管理',
-            moneyId: '', moneySheet: '表單回應 1',
+            healthId: '', healthSheet: '表單',
+            moneyId: '', moneySheet: '表單',
             quoteSheet: 'Quotes',
             monthlyBudget: 10000,
             bgStyle: 'nature',
@@ -203,7 +212,7 @@
         
         let currentMode = 'health';
         let lastActiveMode = 'health'; 
-        let currentWeekBalance = 0;    
+        let currentWeekBalance = 0;     
 
         const THEMES = {
             health: { colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], statLabels: ['連續達標 (天)', '預估減脂 (kg)', '累積赤字 (cal)'], isDeficitGood: true, thresholds: [-600, -300, 0, 300, 600], unit: 'cal' },
@@ -222,9 +231,12 @@
 
         function openSettings() {
             document.getElementById('input-health-id').value = CONFIG.healthId || '';
-            document.getElementById('input-health-sheet').value = CONFIG.healthSheet || '';
+            // V11.5 Update: 預設值改為 '表單'
+            document.getElementById('input-health-sheet').value = CONFIG.healthSheet || '表單';
+            
             document.getElementById('input-money-id').value = CONFIG.moneyId || '';
-            document.getElementById('input-money-sheet').value = CONFIG.moneySheet || '';
+            document.getElementById('input-money-sheet').value = CONFIG.moneySheet || '表單';
+            
             document.getElementById('input-monthly-budget').value = CONFIG.monthlyBudget || 10000;
             document.getElementById('input-bg-style').value = CONFIG.bgStyle || 'nature';
             document.getElementById('input-quote-sheet').value = CONFIG.quoteSheet || 'Quotes';
@@ -233,11 +245,18 @@
         function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
         
         function saveSettings() {
-            CONFIG.healthId = document.getElementById('input-health-id').value.trim();
-            CONFIG.healthSheet = document.getElementById('input-health-sheet').value.trim() || '熱量管理';
+            // V11.5 Update: 智慧網址識別與新預設值
+            const extractId = (val) => {
+                if (!val) return '';
+                const match = val.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                return match ? match[1] : val;
+            };
+
+            CONFIG.healthId = extractId(document.getElementById('input-health-id').value.trim());
+            CONFIG.healthSheet = document.getElementById('input-health-sheet').value.trim() || '表單';
             
-            CONFIG.moneyId = document.getElementById('input-money-id').value.trim();
-            CONFIG.moneySheet = document.getElementById('input-money-sheet').value.trim() || '表單回應 1';
+            CONFIG.moneyId = extractId(document.getElementById('input-money-id').value.trim());
+            CONFIG.moneySheet = document.getElementById('input-money-sheet').value.trim() || '表單';
             
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
@@ -254,10 +273,6 @@
                 CONFIG = JSON.parse(saved);
                 if (!CONFIG.rewardsHealth) CONFIG.rewardsHealth = "喝一杯奶茶\n吃炸雞";
                 if (!CONFIG.rewardsMoney) CONFIG.rewardsMoney = "買遊戲\n看電影";
-            }
-            else { 
-                const old = localStorage.getItem('dashboard_config_v10_2') || localStorage.getItem('dashboard_config_v10');
-                if(old) CONFIG = JSON.parse(old);
             }
         }
 
@@ -280,7 +295,6 @@
                 rewardView.classList.remove('hidden');
                 document.getElementById('app-title').innerText = "🎲 Reward Center";
                 
-                // V11 Bugfix: 自動切換到上次的模式對應的獎勵
                 if(lastActiveMode) switchRewardContext(lastActiveMode);
                 else switchRewardContext('health');
                 return;
@@ -303,7 +317,6 @@
             document.getElementById('budget-container').style.display = (mode === 'money') ? 'flex' : 'none';
 
             if (sheetId) {
-                // V11: 修正查詢字串，改為 B, C
                 fetchData(sheetId, sheetName, theme);
                 fetchQuotes(sheetId, CONFIG.quoteSheet);
             } else {
@@ -357,8 +370,8 @@
         }
 
         async function fetchData(id, sheetName, theme) {
-            // V11: 改為 SELECT B, C (B=日期, C=數值)
             const encodedSheet = encodeURIComponent(sheetName);
+            // 查詢 B(日期) 和 C(數值) 欄位
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=SELECT B, C OFFSET 1`;
             try {
                 const res = await fetch(url); const text = await res.text();
@@ -367,7 +380,7 @@
                 processData(data.table.rows, theme);
             } catch (error) { 
                 console.error(error); 
-                document.getElementById('heatmap').innerText = `讀取失敗: 請確認 "${sheetName}" 分頁名稱正確`; 
+                document.getElementById('heatmap').innerHTML = `讀取失敗: 請確認分頁名稱 "${sheetName}" 是否正確`; 
             }
         }
 
@@ -392,7 +405,6 @@
 
                 const value = row.c[1].v; 
                 
-                // V11: 資料累加 (Aggregation)
                 if (dataMap[dateStr]) {
                     dataMap[dateStr].value += value;
                 } else {
@@ -400,7 +412,6 @@
                 }
             });
             
-            // V11: 遍歷 dataMap 計算統計
             totalSum = 0; count = 0; streak = 0; monthSpent = 0; weekSum = 0;
             const sortedDates = Object.keys(dataMap).sort();
             
@@ -423,11 +434,9 @@
                 count++;
             });
 
-            // 更新全域餘額 (獎勵用)
             if (theme.isDeficitGood) { balanceHealth = Math.abs(weekSum); } 
             else { const weeklyBudget = CONFIG.monthlyBudget / 4; balanceMoney = Math.round(weeklyBudget - weekSum); }
 
-            // Streak Logic
             if (sortedDates.length > 0) {
                 for (let i = sortedDates.length - 1; i >= 0; i--) {
                     const d = sortedDates[i]; const val = dataMap[d].value;
@@ -514,7 +523,6 @@
         }
 
         async function fetchQuotes(id, sheetName) {
-            // 這裡不用改，金句表 A, B, C 欄位沒變
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${sheetName}&tq=SELECT A, B, C`;
             try {
                 const res = await fetch(url); const text = await res.text();
