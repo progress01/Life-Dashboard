@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V5.1</title>
+    <title>Life Dashboard V6</title>
     <style>
         /* --- 全域風格 --- */
         body {
@@ -15,73 +15,59 @@
             transition: background 0.5s;
         }
 
-        /* --- 頂部導航 --- */
-        .nav-bar {
-            width: 100%; max-width: 800px;
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px;
-        }
-        .switch-container {
-            background: #161b22; padding: 4px; border-radius: 30px;
-            border: 1px solid #30363d; display: flex; gap: 4px;
-        }
-        .switch-btn {
-            background: transparent; border: none; color: #8b949e;
-            padding: 8px 20px; font-size: 14px; font-weight: bold;
-            cursor: pointer; border-radius: 25px; transition: 0.3s;
-        }
+        /* --- 導航與設定 --- */
+        .nav-bar { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .switch-container { background: #161b22; padding: 4px; border-radius: 30px; border: 1px solid #30363d; display: flex; gap: 4px; }
+        .switch-btn { background: transparent; border: none; color: #8b949e; padding: 8px 20px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 25px; transition: 0.3s; }
         .switch-btn.active { background: #238636; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
         .switch-btn.active[data-mode="money"] { background: #d29922; color: #1e1e1e; }
-
-        .settings-btn {
-            background: none; border: none; font-size: 20px; cursor: pointer;
-            color: #8b949e; transition: 0.3s;
-        }
+        .settings-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #8b949e; transition: 0.3s; }
         .settings-btn:hover { color: #58a6ff; transform: rotate(90deg); }
 
-        h2 { margin: 0 0 20px 0; font-weight: 600; letter-spacing: 1px; }
+        h2 { margin: 0 0 10px 0; font-weight: 600; letter-spacing: 1px; }
 
-        /* --- 設定面板 (Modal) --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8); z-index: 100;
-            display: none; justify-content: center; align-items: center;
+        /* --- V6: 錢包血條 (Wallet HP) --- */
+        .budget-bar-container {
+            width: 100%; max-width: 600px; margin-bottom: 25px; display: none;
+            flex-direction: column; gap: 8px;
+            background: #161b22; padding: 15px; border-radius: 12px; border: 1px solid #30363d;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        .modal-box {
-            background: #161b22; border: 1px solid #30363d; border-radius: 10px;
-            padding: 25px; width: 90%; max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        .budget-header { display: flex; justify-content: space-between; align-items: flex-end; }
+        .budget-title { font-size: 14px; font-weight: bold; color: #e6edf3; }
+        .budget-numbers { font-size: 12px; color: #8b949e; }
+        
+        .hp-track { 
+            width: 100%; height: 12px; background: #21262d; border-radius: 6px; overflow: hidden; position: relative; 
+            border: 1px solid #30363d;
         }
-        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #fff; }
-        .input-group { margin-bottom: 15px; }
-        .input-label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 5px; }
-        .input-field {
-            width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d;
-            border-radius: 6px; color: #c9d1d9; box-sizing: border-box;
+        .hp-fill { 
+            height: 100%; width: 100%; background: linear-gradient(90deg, #2ea043, #3fb950); 
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
+            box-shadow: 0 0 10px rgba(46, 160, 67, 0.4);
         }
-        .input-select {
-            width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d;
-            border-radius: 6px; color: #c9d1d9;
+        /* 血量告急樣式 */
+        .hp-fill.danger { 
+            background: linear-gradient(90deg, #da3633, #f85149); 
+            box-shadow: 0 0 10px rgba(218, 54, 51, 0.4);
         }
-        .save-btn {
-            width: 100%; padding: 12px; background: #238636; color: white; border: none;
-            border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;
+        /* 錢包顫抖特效 */
+        .shaking { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 
+            10%, 90% { transform: translate3d(-1px, 0, 0); } 
+            20%, 80% { transform: translate3d(2px, 0, 0); } 
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 
+            40%, 60% { transform: translate3d(4px, 0, 0); } 
         }
 
         /* --- 金句卡片 --- */
         .quote-container {
-            background-color: #161b22;
-            background-size: cover; background-position: center;
+            background-color: #161b22; background-size: cover; background-position: center;
             border: 1px solid #30363d; border-left: 5px solid #58a6ff;
-            border-radius: 8px; margin-bottom: 30px;
-            max-width: 800px; width: 100%; min-height: 120px;
-            display: flex; align-items: center; position: relative; overflow: hidden;
-            transition: 0.5s;
+            border-radius: 8px; margin-bottom: 30px; max-width: 800px; width: 100%; min-height: 120px;
+            display: flex; align-items: center; position: relative; overflow: hidden; transition: 0.5s;
         }
-        .quote-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(90deg, rgba(13,17,23,0.98) 0%, rgba(13,17,23,0.7) 100%); z-index: 1;
-        }
+        .quote-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(13,17,23,0.98) 0%, rgba(13,17,23,0.6) 100%); z-index: 1; }
         .quote-content-layer { position: relative; z-index: 2; padding: 20px 30px; width: 100%; }
         .quote-text { font-size: 18px; font-weight: 500; color: #fff; font-family: serif; margin-bottom: 8px; }
         .quote-author { font-size: 12px; color: #8b949e; text-align: right; display: block; font-weight: bold; text-transform: uppercase; }
@@ -97,12 +83,32 @@
         .graph-container { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; gap: 4px; }
         .day-cell { width: 12px; height: 12px; border-radius: 2px; background-color: #21262d; outline: 1px solid rgba(255,255,255,0.05); }
         
-        .day-cell:hover { transform: scale(1.3); z-index: 10; border: 1px solid #fff; }
+        /* V6: 黃金呼吸燈特效 */
+        .color-gold { 
+            background-color: #ffd700 !important; 
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); 
+            z-index: 2;
+            animation: glow 2s infinite alternate;
+        }
+        @keyframes glow { from { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); } to { box-shadow: 0 0 15px rgba(255, 215, 0, 0.9); } }
+
+        .day-cell:hover { transform: scale(1.5); z-index: 10; border: 1px solid #fff; }
         .day-cell:hover::after {
             content: attr(data-tooltip); position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%);
             background: #6e7681; color: white; padding: 5px 8px; border-radius: 4px; font-size: 11px;
             white-space: pre; pointer-events: none; min-width: 100px; text-align: center;
+            z-index: 20;
         }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; }
+        .modal-box { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 25px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #fff; }
+        .input-group { margin-bottom: 15px; }
+        .input-label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 5px; }
+        .input-field { width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; box-sizing: border-box; }
+        .input-select { width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; }
+        .save-btn { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -116,6 +122,19 @@
     </div>
 
     <h2 id="app-title">Life Dashboard</h2>
+
+    <div class="budget-bar-container" id="budget-container">
+        <div class="budget-header">
+            <span class="budget-title">💳 錢包生命值 (HP)</span>
+            <span class="budget-numbers"><span id="wallet-hp">10000</span> / <span id="wallet-max">10000</span></span>
+        </div>
+        <div class="hp-track">
+            <div class="hp-fill" id="hp-fill"></div>
+        </div>
+        <div style="font-size:11px; color:#8b949e; text-align:right; margin-top:2px;">
+            今日理論剩餘: <span id="theory-hp">0</span>
+        </div>
+    </div>
 
     <div class="quote-container" id="quote-card">
         <div class="quote-overlay" id="q-overlay"></div>
@@ -138,42 +157,33 @@
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-box">
             <div class="modal-title">⚙️ 資料來源設定</div>
+            <div class="input-group"><label class="input-label">熱量表 Sheet ID</label><input type="text" id="input-health-id" class="input-field" placeholder="貼上 ID..."></div>
+            <div class="input-group"><label class="input-label">記帳表 Sheet ID</label><input type="text" id="input-money-id" class="input-field" placeholder="貼上 ID..."></div>
+            
+            <div class="input-group"><label class="input-label">記帳月預算 (Total)</label><input type="number" id="input-monthly-budget" class="input-field" placeholder="預設: 10000" value="10000"></div>
             
             <div class="input-group">
-                <label class="input-label">熱量表 Sheet ID</label>
-                <input type="text" id="input-health-id" class="input-field" placeholder="貼上 ID...">
-            </div>
-
-            <div class="input-group">
-                <label class="input-label">記帳表 Sheet ID</label>
-                <input type="text" id="input-money-id" class="input-field" placeholder="貼上 ID...">
-            </div>
-
-            <div class="input-group">
-                <label class="input-label">圖片背景風格</label>
+                <label class="input-label">背景風格</label>
                 <select id="input-bg-style" class="input-select">
-                    <option value="nature" selected>🌲 隨機風景 (Unsplash)</option>
-                    <option value="gradient">🌌 科技漸層 (無版權問題)</option>
+                    <option value="nature" selected>🌲 隨機風景</option>
+                    <option value="gradient">🌌 科技漸層</option>
                     <option value="custom">🔗 使用 Excel 網址</option>
                 </select>
             </div>
-
             <button class="save-btn" onclick="saveSettings()">💾 儲存並讀取</button>
             <div style="text-align:center; margin-top:10px; font-size:12px; color:#555; cursor:pointer;" onclick="closeSettings()">關閉</div>
         </div>
     </div>
 
     <script>
-        // 預設設定 (BG Style 預設 nature)
         let CONFIG = {
             healthId: '',
             moneyId: '',
-            bgStyle: 'nature' 
+            monthlyBudget: 10000, // V6 預設 10000
+            bgStyle: 'nature'
         };
-
         let currentMode = 'health';
 
-        // 顏色主題
         const THEMES = {
             health: {
                 colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'],
@@ -183,66 +193,53 @@
                 unit: 'cal'
             },
             money: {
+                // 調整黃金與警告色
                 colors: ['#0e4429', '#26a641', '#161b22', '#d29922', '#bd561d', '#ff4d4d'], 
-                statLabels: ['省錢達標 (天)', '日均花費 ($)', '本月總花費 ($)'],
+                statLabels: ['省錢達標 (天)', '日均花費 ($)', '本月剩餘 ($)'], // Stat 3 改為剩餘預算
                 isDeficitGood: false,
-                budgetLimit: 300,
+                budgetLimit: 300, // V6: 日預算 300
+                goldLimit: 170,   // V6: 黃金傳說 170
                 thresholds: [100, 300, 800, 1500, 3000],
                 unit: '$'
             }
         };
 
-        // 初始化
         init();
 
         function init() {
             loadSettings();
-            // 如果完全沒資料，就打開設定
-            if (!CONFIG.healthId && !CONFIG.moneyId) {
-                openSettings();
-            } else {
-                // 有資料就讀取
-                switchApp('health');
-            }
+            if (!CONFIG.healthId && !CONFIG.moneyId) openSettings();
+            else switchApp('health');
         }
 
-        // --- 設定功能 ---
         function openSettings() {
             document.getElementById('input-health-id').value = CONFIG.healthId || '';
             document.getElementById('input-money-id').value = CONFIG.moneyId || '';
+            document.getElementById('input-monthly-budget').value = CONFIG.monthlyBudget || 10000;
             document.getElementById('input-bg-style').value = CONFIG.bgStyle || 'nature';
             document.getElementById('settings-modal').style.display = 'flex';
         }
-
-        function closeSettings() {
-            document.getElementById('settings-modal').style.display = 'none';
-        }
-
+        function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
         function saveSettings() {
             CONFIG.healthId = document.getElementById('input-health-id').value.trim();
             CONFIG.moneyId = document.getElementById('input-money-id').value.trim();
+            CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
-            
             localStorage.setItem('dashboard_config_v5', JSON.stringify(CONFIG));
             closeSettings();
-            switchApp(currentMode); // 重整
+            switchApp(currentMode);
         }
-
         function loadSettings() {
             const saved = localStorage.getItem('dashboard_config_v5');
             if (saved) CONFIG = JSON.parse(saved);
         }
 
-        // --- 主邏輯 ---
         function switchApp(mode) {
             currentMode = mode;
             const theme = THEMES[mode];
             const sheetId = (mode === 'health') ? CONFIG.healthId : CONFIG.moneyId;
 
-            // UI Update
-            document.querySelectorAll('.switch-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.mode === mode);
-            });
+            document.querySelectorAll('.switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
             document.getElementById('app-title').innerText = (mode === 'health') ? "🔥 Calorie Tracker" : "💰 Expense Tracker";
             document.getElementById('heatmap').innerHTML = 'Loading data...';
             
@@ -250,8 +247,10 @@
             document.getElementById('stat2-label').innerText = theme.statLabels[1];
             document.getElementById('stat3-label').innerText = theme.statLabels[2];
 
-            // Fetch
+            document.getElementById('budget-container').style.display = (mode === 'money') ? 'flex' : 'none';
+
             if (sheetId) {
+                // V6: 移除 C 欄抓取 (備註不用)
                 fetchData(sheetId, (mode === 'health') ? '熱量管理' : '表單回應 1', theme);
                 fetchQuotes(sheetId, 'Quotes');
             } else {
@@ -278,8 +277,8 @@
             let totalSum = 0;
             let count = 0;
             let streak = 0;
-            const currentMonth = new Date().getMonth();
-            let monthSum = 0;
+            const now = new Date();
+            let monthSpent = 0;
 
             rows.forEach(row => {
                 if (!row.c[0] || row.c[1] === null) return;
@@ -298,12 +297,15 @@
                     if (value < 0) totalSum += value;
                 } else {
                     totalSum += value;
-                    if (new Date(dateStr).getMonth() === currentMonth) monthSum += value;
+                    // 統計本月花費
+                    if (new Date(dateStr).getMonth() === now.getMonth() && new Date(dateStr).getFullYear() === now.getFullYear()) {
+                        monthSpent += value;
+                    }
                 }
                 count++;
             });
 
-            // Streak
+            // Streak Calculation
             const sortedDates = Object.keys(dataMap).sort();
             if (sortedDates.length > 0) {
                 for (let i = sortedDates.length - 1; i >= 0; i--) {
@@ -312,7 +314,7 @@
                     if (new Date(d) > new Date()) continue; 
                     let isSuccess = false;
                     if (theme.isDeficitGood) isSuccess = (val < 0);
-                    else isSuccess = (val <= theme.budgetLimit);
+                    else isSuccess = (val <= theme.budgetLimit && val > 0) || (val <= theme.goldLimit); // <=300 或 黃金日
 
                     if (isSuccess) {
                         streak++;
@@ -337,11 +339,48 @@
             } else {
                 const avg = count > 0 ? Math.round(totalSum / count) : 0;
                 document.getElementById('stat2-val').innerText = avg.toLocaleString();
-                document.getElementById('stat3-val').innerText = monthSum.toLocaleString();
+                // V6: 顯示本月「剩餘」預算，而不是已花費
+                const remaining = CONFIG.monthlyBudget - monthSpent;
+                document.getElementById('stat3-val').innerText = remaining.toLocaleString();
+                document.getElementById('stat3-val').style.color = remaining > 0 ? '#3fb950' : '#ff4d4d';
                 document.getElementById('stat2-val').style.color = '#58a6ff';
+                
+                updateWalletHP(monthSpent, CONFIG.monthlyBudget);
             }
 
             drawHeatmap(dataMap, theme);
+        }
+
+        function updateWalletHP(spent, budget) {
+            const now = new Date();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const currentDay = now.getDate();
+            
+            // 剩餘預算 = HP
+            const remaining = budget - spent;
+            const hpPercent = Math.max(0, (remaining / budget) * 100);
+            
+            // 理論剩餘 (時間過多少，錢就該剩多少)
+            const theoryRemaining = budget * ((daysInMonth - currentDay) / daysInMonth);
+            
+            document.getElementById('wallet-hp').innerText = remaining.toLocaleString();
+            document.getElementById('wallet-max').innerText = budget.toLocaleString();
+            document.getElementById('theory-hp').innerText = Math.round(theoryRemaining).toLocaleString();
+
+            const bar = document.getElementById('hp-fill');
+            const container = document.getElementById('budget-container');
+            
+            bar.style.width = hpPercent + '%';
+            
+            // V6: 血量告急邏輯
+            // 如果「實際剩餘」比「理論剩餘」少太多 (例如少 10%)，血條變紅且震動
+            if (remaining < theoryRemaining * 0.9) {
+                bar.className = 'hp-fill danger';
+                container.classList.add('shaking'); // 錢包在發抖
+            } else {
+                bar.className = 'hp-fill';
+                container.classList.remove('shaking');
+            }
         }
 
         function drawHeatmap(data, theme) {
@@ -364,7 +403,12 @@
 
                 if (value !== undefined) {
                     const th = theme.thresholds;
+                    
+                    // 🌟 V6: 評語系統 & 黃金判定
+                    let verdict = "";
+                    
                     if (theme.isDeficitGood) {
+                        // 熱量模式 (邏輯不變)
                         if (value < th[0]) cell.style.backgroundColor = theme.colors[0];
                         else if (value < th[1]) cell.style.backgroundColor = theme.colors[1];
                         else if (value < 0) cell.style.backgroundColor = theme.colors[2];
@@ -372,15 +416,22 @@
                         else if (value < th[3]) cell.style.backgroundColor = theme.colors[4];
                         else if (value < th[4]) cell.style.backgroundColor = theme.colors[5];
                         else cell.style.backgroundColor = theme.colors[6];
+                        verdict = value < 0 ? "💪 燃脂中" : "🍔 囤積中";
                     } else {
-                        if (value === 0) cell.style.backgroundColor = theme.colors[2];
-                        else if (value <= th[0]) cell.style.backgroundColor = theme.colors[0];
-                        else if (value <= th[1]) cell.style.backgroundColor = theme.colors[1];
-                        else if (value <= th[2]) cell.style.backgroundColor = theme.colors[3];
-                        else if (value <= th[3]) cell.style.backgroundColor = theme.colors[4];
-                        else cell.style.backgroundColor = theme.colors[5];
+                        // 💰 記帳模式 (V6 強化)
+                        if (value <= theme.goldLimit) {
+                             // 黃金傳說 (<= 170)
+                             cell.classList.add('color-gold');
+                             verdict = "🏆 神之省錢";
+                        } else {
+                            if (value <= th[1]) { cell.style.backgroundColor = theme.colors[1]; verdict = "✅ 安全達標"; }
+                            else if (value <= th[2]) { cell.style.backgroundColor = theme.colors[3]; verdict = "👌 普通"; }
+                            else if (value <= th[3]) { cell.style.backgroundColor = theme.colors[4]; verdict = "⚠️ 有點貴"; }
+                            else { cell.style.backgroundColor = theme.colors[5]; verdict = "💸 大失血"; }
+                        }
                     }
-                    cell.setAttribute('data-tooltip', `${dateString}\n${theme.unit}: ${value}`);
+                    
+                    cell.setAttribute('data-tooltip', `${dateString}\n${verdict}\n${theme.unit}: ${value}`);
                 }
                 container.appendChild(cell);
                 currentDate.setDate(currentDate.getDate() + 1);
@@ -404,21 +455,19 @@
                     document.getElementById('q-text').innerText = qText;
                     document.getElementById('q-author').innerText = qAuth;
                     
-                    // 背景處理
                     const card = document.getElementById('quote-card');
                     const overlay = document.getElementById('q-overlay');
                     
                     if (CONFIG.bgStyle === 'custom' && qImg) {
                         card.style.backgroundImage = `url('${qImg}')`;
+                        overlay.style.display = 'block';
                     } else if (CONFIG.bgStyle === 'nature') {
-                        // 🌟 使用 Unsplash Source API 抓取隨機風景圖，加上時間戳避免快取
                         card.style.backgroundImage = `url('https://source.unsplash.com/random/800x300?nature,landscape,mountain&t=${Date.now()}')`;
+                        overlay.style.display = 'block';
                     } else {
                         card.style.backgroundImage = 'linear-gradient(135deg, #21262d 0%, #0d1117 100%)';
+                        overlay.style.display = 'none';
                     }
-                    
-                    // 只有在有背景圖時才顯示遮罩，漸層不需要遮罩
-                    overlay.style.display = (CONFIG.bgStyle !== 'gradient') ? 'block' : 'none';
                     card.style.display = 'flex';
                 }
             } catch (e) { console.log('Quote fetch failed'); }
