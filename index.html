@@ -202,9 +202,8 @@
         };
         
         let currentMode = 'health';
-        let currentRewardContext = 'health'; 
-        let balanceHealth = 0;
-        let balanceMoney = 0;
+        let lastActiveMode = 'health'; 
+        let currentWeekBalance = 0;    
 
         const THEMES = {
             health: { colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], statLabels: ['連續達標 (天)', '預估減脂 (kg)', '累積赤字 (cal)'], isDeficitGood: true, thresholds: [-600, -300, 0, 300, 600], unit: 'cal' },
@@ -236,8 +235,10 @@
         function saveSettings() {
             CONFIG.healthId = document.getElementById('input-health-id').value.trim();
             CONFIG.healthSheet = document.getElementById('input-health-sheet').value.trim() || '熱量管理';
+            
             CONFIG.moneyId = document.getElementById('input-money-id').value.trim();
             CONFIG.moneySheet = document.getElementById('input-money-sheet').value.trim() || '表單回應 1';
+            
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
             CONFIG.quoteSheet = document.getElementById('input-quote-sheet').value.trim() || 'Quotes';
@@ -248,7 +249,7 @@
         }
         
         function loadSettings() {
-            const saved = localStorage.getItem('dashboard_config_v11'); // New Key V11
+            const saved = localStorage.getItem('dashboard_config_v11');
             if (saved) {
                 CONFIG = JSON.parse(saved);
                 if (!CONFIG.rewardsHealth) CONFIG.rewardsHealth = "喝一杯奶茶\n吃炸雞";
@@ -278,10 +279,14 @@
                 dashView.classList.add('hidden');
                 rewardView.classList.remove('hidden');
                 document.getElementById('app-title').innerText = "🎲 Reward Center";
-                switchRewardContext('health');
+                
+                // V11 Bugfix: 自動切換到上次的模式對應的獎勵
+                if(lastActiveMode) switchRewardContext(lastActiveMode);
+                else switchRewardContext('health');
                 return;
             }
 
+            lastActiveMode = mode; 
             dashView.classList.remove('hidden');
             rewardView.classList.add('hidden');
             
@@ -291,12 +296,14 @@
             
             document.getElementById('app-title').innerText = (mode === 'health') ? "🔥 Calorie Tracker" : "💰 Expense Tracker";
             document.getElementById('heatmap').innerHTML = 'Loading data...';
+            
             document.getElementById('stat1-label').innerText = theme.statLabels[0];
             document.getElementById('stat2-label').innerText = theme.statLabels[1];
             document.getElementById('stat3-label').innerText = theme.statLabels[2];
             document.getElementById('budget-container').style.display = (mode === 'money') ? 'flex' : 'none';
 
             if (sheetId) {
+                // V11: 修正查詢字串，改為 B, C
                 fetchData(sheetId, sheetName, theme);
                 fetchQuotes(sheetId, CONFIG.quoteSheet);
             } else {
@@ -316,13 +323,6 @@
 
             document.getElementById('reward-title').innerText = title;
             document.getElementById('reward-balance').innerText = `${val} ${unit}`;
-            
-            let color = (val >= 0) ? '#3fb950' : '#ff4d4d';
-            if (type === 'health' && val < 0) color = '#ff4d4d'; // 赤字(存)是正的顯示，如果這裡算出來是負的代表超吃
-
-            // V11: 赤字在 balanceHealth 已經是正數(絕對值)顯示
-            // V11: 錢是正數
-            // 所以只要是正數都是綠色
             document.getElementById('reward-balance').style.color = (val >= 0) ? '#3fb950' : '#ff4d4d';
 
             document.getElementById('reward-list-input').value = rewardList || "";
@@ -331,22 +331,35 @@
         function spinWheel() {
             const listText = document.getElementById('reward-list-input').value.trim();
             if (!listText) return alert('請先輸入獎品清單！');
+            
             const items = listText.split('\n').filter(line => line.trim() !== '');
-            if (items.length === 0) return;
             const resultBox = document.getElementById('reward-result');
             const btn = document.querySelector('.spin-btn');
-            btn.disabled = true; resultBox.classList.remove('win');
-            let count = 0; let speed = 50;
+            
+            if (items.length === 0) return;
+
+            btn.disabled = true;
+            resultBox.classList.remove('win');
+            let count = 0;
+            let speed = 50;
+
             const loop = setInterval(() => {
                 const rand = items[Math.floor(Math.random() * items.length)];
-                resultBox.innerText = rand; count++;
-                if (count > 20) { clearInterval(loop); btn.disabled = false; resultBox.classList.add('win'); }
+                resultBox.innerText = rand;
+                count++;
+                
+                if (count > 20) { 
+                    clearInterval(loop);
+                    btn.disabled = false;
+                    resultBox.classList.add('win');
+                }
             }, speed);
         }
 
         async function fetchData(id, sheetName, theme) {
+            // V11: 改為 SELECT B, C (B=日期, C=數值)
             const encodedSheet = encodeURIComponent(sheetName);
-            const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=SELECT A, B OFFSET 1`;
+            const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=SELECT B, C OFFSET 1`;
             try {
                 const res = await fetch(url); const text = await res.text();
                 const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
@@ -379,21 +392,16 @@
 
                 const value = row.c[1].v; 
                 
-                // 🌟 V11: 加總邏輯 (若同一天有多筆)
+                // V11: 資料累加 (Aggregation)
                 if (dataMap[dateStr]) {
-                    dataMap[dateStr].value += value; // 累加
+                    dataMap[dateStr].value += value;
                 } else {
                     dataMap[dateStr] = { value: value, note: "" };
                 }
-
-                // 計算總計與本週 (注意：這裡迴圈跑每筆資料，若要精確計算需在迴圈後再跑一次 map，但為了效能與邏輯簡化，這裡做近似計算)
-                // 修正：這裡直接加總 value 會重複計算如果 map 已經處理過。
-                // 正確作法：先組好 dataMap，後面再跑一次 dataMap 算統計。
             });
             
-            // 🌟 V11: 重新走訪 dataMap 計算統計數據 (確保加總正確)
+            // V11: 遍歷 dataMap 計算統計
             totalSum = 0; count = 0; streak = 0; monthSpent = 0; weekSum = 0;
-
             const sortedDates = Object.keys(dataMap).sort();
             
             sortedDates.forEach(dateStr => {
@@ -402,15 +410,12 @@
                 const itemDate = new Date(dateStr);
 
                 if (theme.isDeficitGood) {
-                     // 熱量：只算赤字總和 (負數)
                     if (value < 0) totalSum += value;
                 } else {
-                    // 記帳：算總花費
                     totalSum += value;
                     if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { monthSpent += value; }
                 }
 
-                // 本週統計
                 if (itemDate >= startOfWeek) {
                     if (theme.isDeficitGood) { if(value < 0) weekSum += value; } 
                     else { weekSum += value; }
@@ -418,7 +423,7 @@
                 count++;
             });
 
-            // 更新全域餘額
+            // 更新全域餘額 (獎勵用)
             if (theme.isDeficitGood) { balanceHealth = Math.abs(weekSum); } 
             else { const weeklyBudget = CONFIG.monthlyBudget / 4; balanceMoney = Math.round(weeklyBudget - weekSum); }
 
@@ -430,10 +435,7 @@
                     let isSuccess = false;
                     if (theme.isDeficitGood) isSuccess = (val < 0);
                     else isSuccess = (val <= theme.budgetLimit && val > 0) || (val <= theme.goldLimit);
-                    if (isSuccess) { streak++; if (i > 0) {
-                         const curr = new Date(d); const prev = new Date(sortedDates[i-1]); 
-                         if (Math.abs(curr - prev) / (1000*60*60*24) > 1.5) break; 
-                    }} else { break; }
+                    if (isSuccess) { streak++; if (i > 0) { const curr = new Date(d); const prev = new Date(sortedDates[i-1]); if (Math.abs(curr - prev) / (1000*60*60*24) > 1.5) break; }} else { break; }
                 }
             }
 
@@ -512,6 +514,7 @@
         }
 
         async function fetchQuotes(id, sheetName) {
+            // 這裡不用改，金句表 A, B, C 欄位沒變
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${sheetName}&tq=SELECT A, B, C`;
             try {
                 const res = await fetch(url); const text = await res.text();
