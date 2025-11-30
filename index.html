@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V19.3</title>
+    <title>Life Dashboard V19.4</title>
     <style>
         /* --- 全域風格 --- */
         body {
@@ -351,6 +351,14 @@
             document.getElementById('q-author').innerText = r.author;
         }
 
+        // V19.4: Timezone Helper
+        function formatLocalYMD(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
         function openSettings() {
             document.getElementById('input-health-id').value = CONFIG.healthId || '';
             document.getElementById('input-health-sheet').value = CONFIG.healthSheet || '表單';
@@ -413,7 +421,6 @@
             }
         }
 
-        // V19.3: 點擊刷新 (圖片+文字)
         function refreshBanner() {
             setRandomFallbackQuote();
             if (CONFIG.bgStyle !== 'nature') return;
@@ -510,7 +517,7 @@
             let weekSum = 0;
             let ptr = new Date(startOfWeek);
             while(ptr <= endOfWeek) {
-                const dStr = ptr.toISOString().split('T')[0];
+                const dStr = formatLocalYMD(ptr); // V19.4: Use local helper
                 if (globalDataMap[dStr]) {
                     if (globalTheme.isDeficitGood) {
                          if(globalDataMap[dStr].value < 0) weekSum += globalDataMap[dStr].value;
@@ -616,7 +623,6 @@
 
         async function fetchData(id, sheetName, theme) {
             const encodedSheet = encodeURIComponent(sheetName);
-            // V19.3: Add anti-caching parameter
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=SELECT B, C OFFSET 1&_=${Date.now()}`;
             try {
                 const res = await fetch(url); const text = await res.text();
@@ -633,19 +639,21 @@
             globalDataMap = {}; 
             
             let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
-            // V19.3: Timezone fix for "Today"
-            const offset = now.getTimezoneOffset() * 60000;
-            const todayStr = new Date(now.getTime() - offset).toISOString().split('T')[0];
+            const todayStr = formatLocalYMD(now); // V19.4: Use helper
             
             rows.forEach(row => {
                 if (!row.c[0] || row.c[1] === null) return;
                 let dateStr = ""; let dateVal = row.c[0].v;
                 try {
-                    if (typeof dateVal === 'string' && dateVal.includes("Date")) { const parts = dateVal.match(/Date\((\d+),(\d+),(\d+)\)/); dateStr = new Date(parts[1], parts[2], parts[3]).toISOString().split('T')[0]; } 
-                    else { 
+                    if (typeof dateVal === 'string' && dateVal.includes("Date")) { 
+                        const parts = dateVal.match(/Date\((\d+),(\d+),(\d+)\)/); 
+                        // V19.4: Fix parsing to use local date directly
+                        const d = new Date(parts[1], parts[2], parts[3]);
+                        dateStr = formatLocalYMD(d);
+                    } else { 
                         const d = new Date(row.c[0].f || row.c[0].v);
                         if(isNaN(d.getTime())) return;
-                        dateStr = d.toISOString().split('T')[0]; 
+                        dateStr = formatLocalYMD(d);
                     }
                 } catch(e) { return; }
 
@@ -663,21 +671,19 @@
                 count++;
             });
 
-            // V19.3 Streak Logic: Logging Streak (Any data counts)
-            // Check Today first
-            let checkDate = new Date(now.getTime() - offset);
-            let checkStr = checkDate.toISOString().split('T')[0];
+            // V19.4: Streak Fix (Check backwards starting from Today)
+            let checkDate = new Date();
+            let checkStr = formatLocalYMD(checkDate);
             
             if (globalDataMap[checkStr]) {
-                streak = 1; // Today is logged
+                streak = 1; 
             } else {
-                streak = 0; // Today not yet logged
+                streak = 0; 
             }
             
-            // Iterate backwards
             while (true) {
                 checkDate.setDate(checkDate.getDate() - 1);
-                checkStr = checkDate.toISOString().split('T')[0];
+                checkStr = formatLocalYMD(checkDate);
                 if (globalDataMap[checkStr]) {
                     streak++;
                 } else {
@@ -740,7 +746,7 @@
             const hoverBar = document.getElementById('hover-info');
 
             while (currentDate <= today) {
-                const dateString = currentDate.toISOString().split('T')[0];
+                const dateString = formatLocalYMD(currentDate); // V19.4: Use helper
                 const item = data[dateString];
                 const cell = document.createElement('div');
                 cell.classList.add('day-cell');
@@ -787,10 +793,6 @@
                 const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
                 const data = JSON.parse(jsonString);
                 if (data.table.rows.length > 0) {
-                    // 如果有 Sheet 資料，優先使用
-                    // V19.3: 這裡的邏輯是: 如果使用者有自己的 Quotes Sheet，就只用那個
-                    // 如果沒有，就用內建的。若想混用，可以取消註解 push
-                    
                     const row = data.table.rows[Math.floor(Math.random() * data.table.rows.length)];
                     const qText = row.c[0] ? row.c[0].v : "";
                     const qAuth = row.c[1] ? row.c[1].v : "";
