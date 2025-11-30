@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V6</title>
+    <title>Life Dashboard V7.1</title>
     <style>
         /* --- 全域風格 --- */
         body {
@@ -19,14 +19,22 @@
         .nav-bar { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .switch-container { background: #161b22; padding: 4px; border-radius: 30px; border: 1px solid #30363d; display: flex; gap: 4px; }
         .switch-btn { background: transparent; border: none; color: #8b949e; padding: 8px 20px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 25px; transition: 0.3s; }
+        
+        /* 按鈕狀態顏色 */
         .switch-btn.active { background: #238636; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
         .switch-btn.active[data-mode="money"] { background: #d29922; color: #1e1e1e; }
+        .switch-btn.active[data-mode="news"] { background: #1f6feb; color: #fff; }
+
         .settings-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #8b949e; transition: 0.3s; }
         .settings-btn:hover { color: #58a6ff; transform: rotate(90deg); }
 
         h2 { margin: 0 0 10px 0; font-weight: 600; letter-spacing: 1px; }
 
-        /* --- V6: 錢包血條 (Wallet HP) --- */
+        /* --- 通用容器 --- */
+        .dashboard-view { width: 100%; max-width: 800px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.5s ease; }
+        .hidden { display: none !important; }
+
+        /* --- 錢包血條 --- */
         .budget-bar-container {
             width: 100%; max-width: 600px; margin-bottom: 25px; display: none;
             flex-direction: column; gap: 8px;
@@ -34,37 +42,17 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         .budget-header { display: flex; justify-content: space-between; align-items: flex-end; }
-        .budget-title { font-size: 14px; font-weight: bold; color: #e6edf3; }
-        .budget-numbers { font-size: 12px; color: #8b949e; }
-        
-        .hp-track { 
-            width: 100%; height: 12px; background: #21262d; border-radius: 6px; overflow: hidden; position: relative; 
-            border: 1px solid #30363d;
-        }
-        .hp-fill { 
-            height: 100%; width: 100%; background: linear-gradient(90deg, #2ea043, #3fb950); 
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
-            box-shadow: 0 0 10px rgba(46, 160, 67, 0.4);
-        }
-        /* 血量告急樣式 */
-        .hp-fill.danger { 
-            background: linear-gradient(90deg, #da3633, #f85149); 
-            box-shadow: 0 0 10px rgba(218, 54, 51, 0.4);
-        }
-        /* 錢包顫抖特效 */
+        .hp-track { width: 100%; height: 12px; background: #21262d; border-radius: 6px; overflow: hidden; position: relative; border: 1px solid #30363d; }
+        .hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #2ea043, #3fb950); transition: width 0.5s; }
+        .hp-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
         .shaking { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 
-            10%, 90% { transform: translate3d(-1px, 0, 0); } 
-            20%, 80% { transform: translate3d(2px, 0, 0); } 
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 
-            40%, 60% { transform: translate3d(4px, 0, 0); } 
-        }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
 
         /* --- 金句卡片 --- */
         .quote-container {
             background-color: #161b22; background-size: cover; background-position: center;
             border: 1px solid #30363d; border-left: 5px solid #58a6ff;
-            border-radius: 8px; margin-bottom: 30px; max-width: 800px; width: 100%; min-height: 120px;
+            border-radius: 8px; margin-bottom: 30px; width: 100%; min-height: 120px;
             display: flex; align-items: center; position: relative; overflow: hidden; transition: 0.5s;
         }
         .quote-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(13,17,23,0.98) 0%, rgba(13,17,23,0.6) 100%); z-index: 1; }
@@ -82,33 +70,38 @@
         .graph-wrapper { padding: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; max-width: 800px; width: 100%; overflow-x: auto; box-sizing: border-box;}
         .graph-container { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; gap: 4px; }
         .day-cell { width: 12px; height: 12px; border-radius: 2px; background-color: #21262d; outline: 1px solid rgba(255,255,255,0.05); }
-        
-        /* V6: 黃金呼吸燈特效 */
-        .color-gold { 
-            background-color: #ffd700 !important; 
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); 
-            z-index: 2;
-            animation: glow 2s infinite alternate;
-        }
+        .color-gold { background-color: #ffd700 !important; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); z-index: 2; animation: glow 2s infinite alternate; }
         @keyframes glow { from { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); } to { box-shadow: 0 0 15px rgba(255, 215, 0, 0.9); } }
-
         .day-cell:hover { transform: scale(1.5); z-index: 10; border: 1px solid #fff; }
         .day-cell:hover::after {
             content: attr(data-tooltip); position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%);
             background: #6e7681; color: white; padding: 5px 8px; border-radius: 4px; font-size: 11px;
-            white-space: pre; pointer-events: none; min-width: 100px; text-align: center;
-            z-index: 20;
+            white-space: pre; pointer-events: none; min-width: 100px; text-align: center; z-index: 20;
         }
+
+        /* --- 新聞清單 --- */
+        .news-grid { width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .news-card {
+            background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px;
+            transition: 0.2s; display: flex; flex-direction: column; justify-content: space-between;
+            text-decoration: none; color: #c9d1d9; position: relative; overflow: hidden;
+        }
+        .news-card:hover { border-color: #58a6ff; transform: translateY(-2px); background: #1c2128; }
+        .news-title { font-size: 15px; font-weight: 600; margin-bottom: 10px; line-height: 1.4; color: #58a6ff; }
+        .news-meta { font-size: 12px; color: #8b949e; display: flex; justify-content: space-between; }
+        .highlight-keyword { color: #ffd700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
 
         /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; }
-        .modal-box { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 25px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-box { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 25px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;}
         .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #fff; }
         .input-group { margin-bottom: 15px; }
         .input-label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 5px; }
         .input-field { width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; box-sizing: border-box; }
         .input-select { width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; }
         .save-btn { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -117,57 +110,83 @@
         <div class="switch-container">
             <button class="switch-btn active" data-mode="health" onclick="switchApp('health')">💪 熱量</button>
             <button class="switch-btn" data-mode="money" onclick="switchApp('money')">💰 記帳</button>
+            <button class="switch-btn" data-mode="news" onclick="switchApp('news')">📰 新聞</button>
         </div>
         <button class="settings-btn" onclick="openSettings()">⚙️</button>
     </div>
 
     <h2 id="app-title">Life Dashboard</h2>
 
-    <div class="budget-bar-container" id="budget-container">
-        <div class="budget-header">
-            <span class="budget-title">💳 錢包生命值 (HP)</span>
-            <span class="budget-numbers"><span id="wallet-hp">10000</span> / <span id="wallet-max">10000</span></span>
+    <div id="dashboard-view" class="dashboard-view">
+        <div class="budget-bar-container" id="budget-container">
+            <div class="budget-header">
+                <span style="font-size:14px; font-weight:bold; color:#e6edf3;">💳 錢包 HP</span>
+                <span style="font-size:12px; color:#8b949e;"><span id="wallet-hp">0</span> / <span id="wallet-max">0</span></span>
+            </div>
+            <div class="hp-track"><div class="hp-fill" id="hp-fill"></div></div>
+            <div style="font-size:11px; color:#8b949e; text-align:right; margin-top:2px;">今日理論剩餘: <span id="theory-hp">0</span></div>
         </div>
-        <div class="hp-track">
-            <div class="hp-fill" id="hp-fill"></div>
+
+        <div class="quote-container" id="quote-card">
+            <div class="quote-overlay" id="q-overlay"></div>
+            <div class="quote-content-layer">
+                <div class="quote-text" id="q-text">Loading...</div>
+                <div class="quote-author" id="q-author">System</div>
+            </div>
         </div>
-        <div style="font-size:11px; color:#8b949e; text-align:right; margin-top:2px;">
-            今日理論剩餘: <span id="theory-hp">0</span>
+
+        <div class="stats-container">
+            <div class="stat-item"><div id="stat1-val" class="stat-val">0</div><div id="stat1-label" class="stat-label">Streak</div></div>
+            <div class="stat-item"><div id="stat2-val" class="stat-val">0</div><div id="stat2-label" class="stat-label">Metric</div></div>
+            <div class="stat-item"><div id="stat3-val" class="stat-val">0</div><div id="stat3-label" class="stat-label">Total</div></div>
+        </div>
+
+        <div class="graph-wrapper">
+            <div id="heatmap" class="graph-container"></div>
         </div>
     </div>
 
-    <div class="quote-container" id="quote-card">
-        <div class="quote-overlay" id="q-overlay"></div>
-        <div class="quote-content-layer">
-            <div class="quote-text" id="q-text">請點擊右上角設定，輸入 Google Sheet ID。</div>
-            <div class="quote-author" id="q-author">System</div>
-        </div>
-    </div>
-
-    <div class="stats-container">
-        <div class="stat-item"><div id="stat1-val" class="stat-val">0</div><div id="stat1-label" class="stat-label">Streak</div></div>
-        <div class="stat-item"><div id="stat2-val" class="stat-val">0</div><div id="stat2-label" class="stat-label">Metric</div></div>
-        <div class="stat-item"><div id="stat3-val" class="stat-val">0</div><div id="stat3-label" class="stat-label">Total</div></div>
-    </div>
-
-    <div class="graph-wrapper">
-        <div id="heatmap" class="graph-container"></div>
+    <div id="news-view" class="dashboard-view hidden">
+        <div id="news-grid" class="news-grid">Loading News...</div>
     </div>
 
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-box">
-            <div class="modal-title">⚙️ 資料來源設定</div>
-            <div class="input-group"><label class="input-label">熱量表 Sheet ID</label><input type="text" id="input-health-id" class="input-field" placeholder="貼上 ID..."></div>
-            <div class="input-group"><label class="input-label">記帳表 Sheet ID</label><input type="text" id="input-money-id" class="input-field" placeholder="貼上 ID..."></div>
+            <div class="modal-title">⚙️ 全域設定</div>
             
-            <div class="input-group"><label class="input-label">記帳月預算 (Total)</label><input type="number" id="input-monthly-budget" class="input-field" placeholder="預設: 10000" value="10000"></div>
+            <div class="input-group">
+                <label class="input-label">熱量表 Sheet ID</label>
+                <input type="text" id="input-health-id" class="input-field" placeholder="貼上 ID...">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">記帳表 Sheet ID</label>
+                <input type="text" id="input-money-id" class="input-field" placeholder="貼上 ID...">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">記帳月預算</label>
+                <input type="number" id="input-monthly-budget" class="input-field" value="10000">
+            </div>
             
+            <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
+            
+            <div class="input-group">
+                <label class="input-label">新聞 RSS 連結 (預設為 Google News)</label>
+                <input type="text" id="input-rss-url" class="input-field" placeholder="https://...">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">新聞顯示數量 (篇)</label>
+                <input type="number" id="input-rss-limit" class="input-field" value="12" min="3" max="50">
+            </div>
+
             <div class="input-group">
                 <label class="input-label">背景風格</label>
                 <select id="input-bg-style" class="input-select">
                     <option value="nature" selected>🌲 隨機風景</option>
                     <option value="gradient">🌌 科技漸層</option>
-                    <option value="custom">🔗 使用 Excel 網址</option>
+                    <option value="custom">🔗 Excel 網址</option>
                 </select>
             </div>
             <button class="save-btn" onclick="saveSettings()">💾 儲存並讀取</button>
@@ -179,10 +198,15 @@
         let CONFIG = {
             healthId: '',
             moneyId: '',
-            monthlyBudget: 10000, // V6 預設 10000
-            bgStyle: 'nature'
+            monthlyBudget: 10000,
+            bgStyle: 'nature',
+            rssUrl: 'https://news.google.com/rss?hl=zh-TW&gl=TW&ceid=TW:zh-Hant',
+            rssLimit: 12 // 預設 12 篇
         };
         let currentMode = 'health';
+
+        // 關鍵字高亮 (您可以修改這些關鍵字)
+        const KEYWORDS = ["健康", "減重", "飲食", "AI", "理財", "股市", "ETF", "存錢", "科技"];
 
         const THEMES = {
             health: {
@@ -193,12 +217,11 @@
                 unit: 'cal'
             },
             money: {
-                // 調整黃金與警告色
                 colors: ['#0e4429', '#26a641', '#161b22', '#d29922', '#bd561d', '#ff4d4d'], 
-                statLabels: ['省錢達標 (天)', '日均花費 ($)', '本月剩餘 ($)'], // Stat 3 改為剩餘預算
+                statLabels: ['省錢達標 (天)', '日均花費 ($)', '本月剩餘 ($)'],
                 isDeficitGood: false,
-                budgetLimit: 300, // V6: 日預算 300
-                goldLimit: 170,   // V6: 黃金傳說 170
+                budgetLimit: 300,
+                goldLimit: 170,
                 thresholds: [100, 300, 800, 1500, 3000],
                 unit: '$'
             }
@@ -217,6 +240,8 @@
             document.getElementById('input-money-id').value = CONFIG.moneyId || '';
             document.getElementById('input-monthly-budget').value = CONFIG.monthlyBudget || 10000;
             document.getElementById('input-bg-style').value = CONFIG.bgStyle || 'nature';
+            document.getElementById('input-rss-url').value = CONFIG.rssUrl || '';
+            document.getElementById('input-rss-limit').value = CONFIG.rssLimit || 12;
             document.getElementById('settings-modal').style.display = 'flex';
         }
         function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
@@ -225,21 +250,47 @@
             CONFIG.moneyId = document.getElementById('input-money-id').value.trim();
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
-            localStorage.setItem('dashboard_config_v5', JSON.stringify(CONFIG));
+            
+            const rssInput = document.getElementById('input-rss-url').value.trim();
+            if(rssInput) CONFIG.rssUrl = rssInput;
+            
+            const limitInput = parseInt(document.getElementById('input-rss-limit').value);
+            if(limitInput) CONFIG.rssLimit = limitInput;
+
+            localStorage.setItem('dashboard_config_v7_1', JSON.stringify(CONFIG)); // Key Updated
             closeSettings();
             switchApp(currentMode);
         }
         function loadSettings() {
-            const saved = localStorage.getItem('dashboard_config_v5');
+            const saved = localStorage.getItem('dashboard_config_v7_1');
             if (saved) CONFIG = JSON.parse(saved);
+            else {
+                const old = localStorage.getItem('dashboard_config_v7') || localStorage.getItem('dashboard_config_v5');
+                if(old) CONFIG = JSON.parse(old);
+            }
         }
 
         function switchApp(mode) {
             currentMode = mode;
+            document.querySelectorAll('.switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+
+            const dashView = document.getElementById('dashboard-view');
+            const newsView = document.getElementById('news-view');
+
+            if (mode === 'news') {
+                dashView.classList.add('hidden');
+                newsView.classList.remove('hidden');
+                document.getElementById('app-title').innerText = "📰 Daily Briefing";
+                fetchNews();
+                return;
+            }
+
+            dashView.classList.remove('hidden');
+            newsView.classList.add('hidden');
+            
             const theme = THEMES[mode];
             const sheetId = (mode === 'health') ? CONFIG.healthId : CONFIG.moneyId;
-
-            document.querySelectorAll('.switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+            
             document.getElementById('app-title').innerText = (mode === 'health') ? "🔥 Calorie Tracker" : "💰 Expense Tracker";
             document.getElementById('heatmap').innerHTML = 'Loading data...';
             
@@ -250,12 +301,48 @@
             document.getElementById('budget-container').style.display = (mode === 'money') ? 'flex' : 'none';
 
             if (sheetId) {
-                // V6: 移除 C 欄抓取 (備註不用)
                 fetchData(sheetId, (mode === 'health') ? '熱量管理' : '表單回應 1', theme);
                 fetchQuotes(sheetId, 'Quotes');
             } else {
                 document.getElementById('heatmap').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">請點擊右上角 ⚙️ 設定 Sheet ID</div>';
             }
+        }
+
+        async function fetchNews() {
+            const grid = document.getElementById('news-grid');
+            grid.innerHTML = '<div style="color:#888; width:100%; text-align:center;">載入新聞中...</div>';
+
+            const rssUrl = CONFIG.rssUrl || 'https://news.google.com/rss?hl=zh-TW&gl=TW&ceid=TW:zh-Hant';
+            const limit = CONFIG.rssLimit || 12;
+            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+
+            try {
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+                
+                if (data.status === 'ok') {
+                    grid.innerHTML = '';
+                    // 使用設定的數量限制
+                    data.items.slice(0, limit).forEach(item => { 
+                        const card = document.createElement('a');
+                        card.className = 'news-card';
+                        card.href = item.link;
+                        card.target = '_blank';
+                        
+                        let title = item.title;
+                        KEYWORDS.forEach(kw => {
+                            if (title.includes(kw)) {
+                                title = title.replace(kw, `<span class="highlight-keyword">${kw}</span>`);
+                                card.style.borderColor = '#d29922';
+                            }
+                        });
+
+                        const date = new Date(item.pubDate).toLocaleDateString();
+                        card.innerHTML = `<div class="news-title">${title}</div><div class="news-meta"><span>${item.author || 'News'}</span><span>${date}</span></div>`;
+                        grid.appendChild(card);
+                    });
+                } else { grid.innerHTML = '無法載入新聞，請檢查 RSS 連結。'; }
+            } catch (e) { console.error(e); grid.innerHTML = '載入失敗 (API Error)'; }
         }
 
         async function fetchData(id, sheetName, theme) {
@@ -268,7 +355,7 @@
                 processData(data.table.rows, theme);
             } catch (error) {
                 console.error(error);
-                document.getElementById('heatmap').innerText = "讀取失敗 (請檢查 ID 或權限)";
+                document.getElementById('heatmap').innerText = "讀取失敗";
             }
         }
 
@@ -291,13 +378,12 @@
                      dateStr = new Date(row.c[0].f || row.c[0].v).toISOString().split('T')[0];
                 }
                 const value = row.c[1].v;
-                dataMap[dateStr] = value;
+                dataMap[dateStr] = { value: value, note: "" };
 
                 if (theme.isDeficitGood) {
                     if (value < 0) totalSum += value;
                 } else {
                     totalSum += value;
-                    // 統計本月花費
                     if (new Date(dateStr).getMonth() === now.getMonth() && new Date(dateStr).getFullYear() === now.getFullYear()) {
                         monthSpent += value;
                     }
@@ -305,16 +391,15 @@
                 count++;
             });
 
-            // Streak Calculation
             const sortedDates = Object.keys(dataMap).sort();
             if (sortedDates.length > 0) {
                 for (let i = sortedDates.length - 1; i >= 0; i--) {
                     const d = sortedDates[i];
-                    const val = dataMap[d];
+                    const val = dataMap[d].value;
                     if (new Date(d) > new Date()) continue; 
                     let isSuccess = false;
                     if (theme.isDeficitGood) isSuccess = (val < 0);
-                    else isSuccess = (val <= theme.budgetLimit && val > 0) || (val <= theme.goldLimit); // <=300 或 黃金日
+                    else isSuccess = (val <= theme.budgetLimit && val > 0) || (val <= theme.goldLimit);
 
                     if (isSuccess) {
                         streak++;
@@ -339,12 +424,10 @@
             } else {
                 const avg = count > 0 ? Math.round(totalSum / count) : 0;
                 document.getElementById('stat2-val').innerText = avg.toLocaleString();
-                // V6: 顯示本月「剩餘」預算，而不是已花費
                 const remaining = CONFIG.monthlyBudget - monthSpent;
                 document.getElementById('stat3-val').innerText = remaining.toLocaleString();
                 document.getElementById('stat3-val').style.color = remaining > 0 ? '#3fb950' : '#ff4d4d';
                 document.getElementById('stat2-val').style.color = '#58a6ff';
-                
                 updateWalletHP(monthSpent, CONFIG.monthlyBudget);
             }
 
@@ -355,12 +438,8 @@
             const now = new Date();
             const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
             const currentDay = now.getDate();
-            
-            // 剩餘預算 = HP
             const remaining = budget - spent;
             const hpPercent = Math.max(0, (remaining / budget) * 100);
-            
-            // 理論剩餘 (時間過多少，錢就該剩多少)
             const theoryRemaining = budget * ((daysInMonth - currentDay) / daysInMonth);
             
             document.getElementById('wallet-hp').innerText = remaining.toLocaleString();
@@ -369,14 +448,11 @@
 
             const bar = document.getElementById('hp-fill');
             const container = document.getElementById('budget-container');
-            
             bar.style.width = hpPercent + '%';
             
-            // V6: 血量告急邏輯
-            // 如果「實際剩餘」比「理論剩餘」少太多 (例如少 10%)，血條變紅且震動
             if (remaining < theoryRemaining * 0.9) {
                 bar.className = 'hp-fill danger';
-                container.classList.add('shaking'); // 錢包在發抖
+                container.classList.add('shaking');
             } else {
                 bar.className = 'hp-fill';
                 container.classList.remove('shaking');
@@ -395,20 +471,17 @@
 
             while (currentDate <= today) {
                 const dateString = currentDate.toISOString().split('T')[0];
-                const value = data[dateString];
+                const item = data[dateString];
                 const cell = document.createElement('div');
                 cell.classList.add('day-cell');
-                
                 cell.style.backgroundColor = theme.colors[theme.isDeficitGood ? 3 : 2]; 
 
-                if (value !== undefined) {
+                if (item !== undefined) {
+                    const value = item.value;
                     const th = theme.thresholds;
-                    
-                    // 🌟 V6: 評語系統 & 黃金判定
                     let verdict = "";
                     
                     if (theme.isDeficitGood) {
-                        // 熱量模式 (邏輯不變)
                         if (value < th[0]) cell.style.backgroundColor = theme.colors[0];
                         else if (value < th[1]) cell.style.backgroundColor = theme.colors[1];
                         else if (value < 0) cell.style.backgroundColor = theme.colors[2];
@@ -416,21 +489,14 @@
                         else if (value < th[3]) cell.style.backgroundColor = theme.colors[4];
                         else if (value < th[4]) cell.style.backgroundColor = theme.colors[5];
                         else cell.style.backgroundColor = theme.colors[6];
-                        verdict = value < 0 ? "💪 燃脂中" : "🍔 囤積中";
                     } else {
-                        // 💰 記帳模式 (V6 強化)
-                        if (value <= theme.goldLimit) {
-                             // 黃金傳說 (<= 170)
-                             cell.classList.add('color-gold');
-                             verdict = "🏆 神之省錢";
-                        } else {
-                            if (value <= th[1]) { cell.style.backgroundColor = theme.colors[1]; verdict = "✅ 安全達標"; }
-                            else if (value <= th[2]) { cell.style.backgroundColor = theme.colors[3]; verdict = "👌 普通"; }
-                            else if (value <= th[3]) { cell.style.backgroundColor = theme.colors[4]; verdict = "⚠️ 有點貴"; }
-                            else { cell.style.backgroundColor = theme.colors[5]; verdict = "💸 大失血"; }
-                        }
+                        if (value <= theme.goldLimit && value > 0) { cell.classList.add('color-gold'); verdict = "🏆 神之省錢"; }
+                        else if (value === 0) cell.style.backgroundColor = theme.colors[2];
+                        else if (value <= th[1]) { cell.style.backgroundColor = theme.colors[1]; verdict = "✅ 安全"; }
+                        else if (value <= th[2]) { cell.style.backgroundColor = theme.colors[3]; }
+                        else if (value <= th[3]) { cell.style.backgroundColor = theme.colors[4]; }
+                        else cell.style.backgroundColor = theme.colors[5];
                     }
-                    
                     cell.setAttribute('data-tooltip', `${dateString}\n${verdict}\n${theme.unit}: ${value}`);
                 }
                 container.appendChild(cell);
@@ -445,29 +511,18 @@
                 const text = await res.text();
                 const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
                 const data = JSON.parse(jsonString);
-                
                 if (data.table.rows.length > 0) {
                     const row = data.table.rows[Math.floor(Math.random() * data.table.rows.length)];
                     const qText = row.c[0] ? row.c[0].v : "Keep moving.";
                     const qAuth = row.c[1] ? row.c[1].v : "";
                     const qImg  = row.c[2] ? row.c[2].v : null;
-
                     document.getElementById('q-text').innerText = qText;
                     document.getElementById('q-author').innerText = qAuth;
-                    
                     const card = document.getElementById('quote-card');
                     const overlay = document.getElementById('q-overlay');
-                    
-                    if (CONFIG.bgStyle === 'custom' && qImg) {
-                        card.style.backgroundImage = `url('${qImg}')`;
-                        overlay.style.display = 'block';
-                    } else if (CONFIG.bgStyle === 'nature') {
-                        card.style.backgroundImage = `url('https://source.unsplash.com/random/800x300?nature,landscape,mountain&t=${Date.now()}')`;
-                        overlay.style.display = 'block';
-                    } else {
-                        card.style.backgroundImage = 'linear-gradient(135deg, #21262d 0%, #0d1117 100%)';
-                        overlay.style.display = 'none';
-                    }
+                    if (CONFIG.bgStyle === 'custom' && qImg) { card.style.backgroundImage = `url('${qImg}')`; overlay.style.display = 'block'; }
+                    else if (CONFIG.bgStyle === 'nature') { card.style.backgroundImage = `url('https://source.unsplash.com/random/800x300?nature,landscape,mountain&t=${Date.now()}')`; overlay.style.display = 'block'; }
+                    else { card.style.backgroundImage = 'linear-gradient(135deg, #21262d 0%, #0d1117 100%)'; overlay.style.display = 'none'; }
                     card.style.display = 'flex';
                 }
             } catch (e) { console.log('Quote fetch failed'); }
