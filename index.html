@@ -2,10 +2,10 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Dashboard V8</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Dashboard V10</title>
     <style>
-        /* --- 0. 全域設定 --- */
+        /* --- 全域風格 --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             background-color: #0d1117;
@@ -13,64 +13,27 @@
             display: flex; flex-direction: column; align-items: center;
             padding: 20px; margin: 0;
             transition: background 0.5s;
-            /* 防止手機橫向溢出 */
-            overflow-x: hidden;
         }
 
-        /* --- 1. 導航列 (RWD) --- */
-        .nav-bar {
-            width: 100%; max-width: 900px;
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; gap: 10px;
-        }
-        .switch-container {
-            background: #161b22; padding: 4px; border-radius: 30px;
-            border: 1px solid #30363d; display: flex; gap: 4px;
-            /* 手機版優化：允許縮放 */
-            flex: 1; justify-content: center;
-        }
-        .switch-btn {
-            background: transparent; border: none; color: #8b949e;
-            padding: 8px 20px; font-size: 14px; font-weight: bold;
-            cursor: pointer; border-radius: 25px; transition: 0.3s;
-            white-space: nowrap; /* 防止文字換行 */
-        }
+        /* --- 導航列 --- */
+        .nav-bar { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; }
+        .switch-container { background: #161b22; padding: 4px; border-radius: 30px; border: 1px solid #30363d; display: flex; gap: 4px; flex: 1; justify-content: center; }
+        .switch-btn { background: transparent; border: none; color: #8b949e; padding: 8px 20px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 25px; transition: 0.3s; white-space: nowrap; }
         
-        /* 狀態顏色 */
         .switch-btn.active { background: #238636; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
         .switch-btn.active[data-mode="money"] { background: #d29922; color: #1e1e1e; }
-        .switch-btn.active[data-mode="news"] { background: #1f6feb; color: #fff; }
+        .switch-btn.active[data-mode="reward"] { background: #a371f7; color: #fff; } /* 紫色獎勵模式 */
 
-        .settings-btn {
-            background: #21262d; border: 1px solid #30363d; 
-            width: 40px; height: 40px; border-radius: 50%;
-            font-size: 20px; cursor: pointer; color: #8b949e; 
-            display: flex; align-items: center; justify-content: center;
-            transition: 0.3s;
-        }
+        .settings-btn { background: #21262d; border: 1px solid #30363d; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; color: #8b949e; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         .settings-btn:hover { color: #58a6ff; transform: rotate(90deg); border-color: #58a6ff; }
 
         h2 { margin: 0 0 15px 0; font-weight: 600; letter-spacing: 1px; font-size: 1.5rem; text-align: center; }
 
-        /* --- 2. 通用容器 --- */
+        /* --- 通用容器 --- */
         .dashboard-view { width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.5s ease; }
         .hidden { display: none !important; }
 
-        /* --- 3. 錢包血條 (Wallet HP) --- */
-        .budget-bar-container {
-            width: 100%; box-sizing: border-box; margin-bottom: 20px; display: none;
-            flex-direction: column; gap: 8px;
-            background: #161b22; padding: 15px; border-radius: 12px; border: 1px solid #30363d;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .budget-header { display: flex; justify-content: space-between; align-items: flex-end; }
-        .hp-track { width: 100%; height: 12px; background: #21262d; border-radius: 6px; overflow: hidden; position: relative; border: 1px solid #30363d; }
-        .hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #2ea043, #3fb950); transition: width 0.5s; }
-        .hp-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
-        .shaking { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
-
-        /* --- 4. 金句卡片 --- */
+        /* --- 金句與數據區 (保留 V8) --- */
         .quote-container {
             background-color: #161b22; background-size: cover; background-position: center;
             border: 1px solid #30363d; border-left: 5px solid #58a6ff;
@@ -83,55 +46,48 @@
         .quote-text { font-size: 1.1rem; font-weight: 500; color: #fff; font-family: serif; margin-bottom: 8px; line-height: 1.4; }
         .quote-author { font-size: 0.8rem; color: #8b949e; text-align: right; display: block; font-weight: bold; text-transform: uppercase; }
 
-        /* --- 5. 數據統計區 (RWD 重點) --- */
-        .stats-container { 
-            display: flex; gap: 20px; margin-bottom: 20px; width: 100%; 
-            justify-content: space-around; /* 平均分配空間 */
-        }
+        .stats-container { display: flex; gap: 20px; margin-bottom: 20px; width: 100%; justify-content: space-around; }
         .stat-item { display: flex; flex-direction: column; align-items: center; }
         .stat-val { font-size: 2rem; font-weight: 800; margin-bottom: 5px; line-height: 1; }
         .stat-label { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; }
-        
-        /* --- 6. 熱點圖 (RWD 重點) --- */
-        .graph-wrapper { 
-            padding: 15px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; 
-            width: 100%; box-sizing: border-box;
-            overflow-x: auto; /* 讓過長的圖表可以左右滑動 */
-            -webkit-overflow-scrolling: touch; /* iOS 滑動順暢 */
-        }
+
+        .graph-wrapper { padding: 15px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; width: 100%; box-sizing: border-box; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .graph-container { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; gap: 3px; }
         .day-cell { width: 12px; height: 12px; border-radius: 2px; background-color: #21262d; outline: 1px solid rgba(255,255,255,0.05); }
         .color-gold { background-color: #ffd700 !important; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); z-index: 2; animation: glow 2s infinite alternate; }
         @keyframes glow { from { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); } to { box-shadow: 0 0 15px rgba(255, 215, 0, 0.9); } }
-        
-        /* 電腦版 Hover */
-        @media (hover: hover) {
-            .day-cell:hover { transform: scale(1.5); z-index: 10; border: 1px solid #fff; }
-            .day-cell:hover::after {
-                content: attr(data-tooltip); position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%);
-                background: #6e7681; color: white; padding: 5px 8px; border-radius: 4px; font-size: 11px;
-                white-space: pre; pointer-events: none; min-width: 100px; text-align: center; z-index: 20;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            }
-        }
+        @media (hover: hover) { .day-cell:hover { transform: scale(1.5); z-index: 10; border: 1px solid #fff; } }
 
-        /* --- 7. 新聞清單 (RWD) --- */
-        .news-grid { 
-            width: 100%; 
-            display: grid; 
-            /* 自動適應：最小 280px，手機變單欄，電腦變多欄 */
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-            gap: 15px; box-sizing: border-box;
+        /* --- 🎲 獎勵轉盤 (New V10) --- */
+        .reward-card {
+            background: #161b22; border: 1px solid #a371f7; border-radius: 12px; padding: 25px;
+            width: 100%; box-sizing: border-box; text-align: center;
+            box-shadow: 0 0 20px rgba(163, 113, 247, 0.1);
         }
-        .news-card {
-            background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px;
-            transition: 0.2s; display: flex; flex-direction: column; justify-content: space-between;
-            text-decoration: none; color: #c9d1d9; min-height: 100px;
+        .balance-info { font-size: 1rem; color: #8b949e; margin-bottom: 5px; }
+        .balance-amount { font-size: 2.5rem; font-weight: 800; color: #a371f7; text-shadow: 0 0 10px rgba(163, 113, 247, 0.4); }
+        
+        .result-box {
+            margin: 20px 0; height: 80px; display: flex; align-items: center; justify-content: center;
+            background: #0d1117; border: 2px dashed #30363d; border-radius: 8px;
+            font-size: 1.5rem; font-weight: bold; color: #fff;
         }
-        .news-card:hover { border-color: #58a6ff; transform: translateY(-2px); background: #1c2128; }
-        .news-title { font-size: 15px; font-weight: 600; margin-bottom: 10px; line-height: 1.4; color: #58a6ff; }
-        .news-meta { font-size: 12px; color: #8b949e; display: flex; justify-content: space-between; margin-top: auto; }
-        .highlight-keyword { color: #ffd700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
+        .result-box.win { border-color: #ffd700; color: #ffd700; animation: pop 0.3s; }
+
+        .spin-btn {
+            background: linear-gradient(135deg, #a371f7, #7e22ce); color: white; border: none;
+            padding: 15px 40px; border-radius: 30px; font-size: 1.2rem; font-weight: bold;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(126, 34, 206, 0.4); transition: 0.2s;
+            width: 100%;
+        }
+        .spin-btn:active { transform: scale(0.95); }
+        .spin-btn:disabled { background: #30363d; cursor: not-allowed; box-shadow: none; }
+
+        .reward-list-area {
+            width: 100%; background: #0d1117; border: 1px solid #30363d; color: #8b949e;
+            padding: 10px; border-radius: 6px; margin-top: 20px; min-height: 100px;
+            font-family: monospace; font-size: 14px; resize: vertical;
+        }
 
         /* --- Modal 設定面板 --- */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; }
@@ -143,24 +99,10 @@
         .save-btn { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px;}
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
-        /* --- 📱 Mobile Only Tweaks --- */
         @media (max-width: 600px) {
-            body { padding: 10px; }
-            .nav-bar { flex-direction: row; gap: 8px; }
-            .switch-container { flex: 1; padding: 3px; }
-            .switch-btn { padding: 8px 10px; font-size: 13px; flex: 1; text-align: center; }
-            
-            .stats-container { gap: 10px; }
-            .stat-val { font-size: 1.5rem; }
-            .stat-label { font-size: 0.7rem; }
-            
-            .quote-container { padding: 0; border-radius: 6px; }
-            .quote-content-layer { padding: 15px; }
-            .quote-text { font-size: 1rem; }
-
-            /* 熱點圖捲動提示 */
-            .graph-wrapper { padding: 10px; border-left: none; border-right: none; border-radius: 0; width: 100vw; margin-left: -10px; }
+            body { padding: 10px; } .nav-bar { flex-direction: row; gap: 8px; } .switch-container { flex: 1; padding: 3px; } .switch-btn { padding: 8px 5px; font-size: 13px; flex: 1; text-align: center; } .stats-container { gap: 10px; } .stat-val { font-size: 1.5rem; } .graph-wrapper { padding: 10px; width: 100vw; margin-left: -10px; border-radius: 0; border-left: none; border-right: none;}
         }
     </style>
 </head>
@@ -170,7 +112,7 @@
         <div class="switch-container">
             <button class="switch-btn active" data-mode="health" onclick="switchApp('health')">💪 熱量</button>
             <button class="switch-btn" data-mode="money" onclick="switchApp('money')">💰 記帳</button>
-            <button class="switch-btn" data-mode="news" onclick="switchApp('news')">📰 新聞</button>
+            <button class="switch-btn" data-mode="reward" onclick="switchApp('reward')">🎲 獎勵</button>
         </div>
         <button class="settings-btn" onclick="openSettings()">⚙️</button>
     </div>
@@ -178,15 +120,6 @@
     <h2 id="app-title">Life Dashboard</h2>
 
     <div id="dashboard-view" class="dashboard-view">
-        <div class="budget-bar-container" id="budget-container">
-            <div class="budget-header">
-                <span style="font-size:14px; font-weight:bold; color:#e6edf3;">💳 錢包 HP</span>
-                <span style="font-size:12px; color:#8b949e;"><span id="wallet-hp">0</span> / <span id="wallet-max">0</span></span>
-            </div>
-            <div class="hp-track"><div class="hp-fill" id="hp-fill"></div></div>
-            <div style="font-size:11px; color:#8b949e; text-align:right; margin-top:2px;">今日理論剩餘: <span id="theory-hp">0</span></div>
-        </div>
-
         <div class="quote-container" id="quote-card">
             <div class="quote-overlay" id="q-overlay"></div>
             <div class="quote-content-layer">
@@ -206,36 +139,55 @@
         </div>
     </div>
 
-    <div id="news-view" class="dashboard-view hidden">
-        <div id="news-grid" class="news-grid">Loading News...</div>
+    <div id="reward-view" class="dashboard-view hidden">
+        <div class="reward-card">
+            <div class="balance-info" id="reward-title">本週累積成果</div>
+            <div class="balance-amount" id="reward-balance">---</div>
+            
+            <div class="result-box" id="reward-result">?</div>
+            
+            <button class="spin-btn" onclick="spinWheel()">🎰 抽取獎勵</button>
+            
+            <div style="text-align:left; margin-top:20px; margin-bottom:5px; font-size:12px; color:#8b949e;">
+                👇 編輯你的獎品清單 (一行一個)
+            </div>
+            <textarea id="reward-list-input" class="reward-list-area" oninput="saveRewardList()"></textarea>
+        </div>
     </div>
 
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-box">
-            <div class="modal-title">⚙️ 全域設定</div>
+            <div class="modal-title">⚙️ 資料來源設定</div>
             <div class="input-group"><label class="input-label">熱量表 Sheet ID</label><input type="text" id="input-health-id" class="input-field" placeholder="貼上 ID..."></div>
             <div class="input-group"><label class="input-label">記帳表 Sheet ID</label><input type="text" id="input-money-id" class="input-field" placeholder="貼上 ID..."></div>
             <div class="input-group"><label class="input-label">記帳月預算</label><input type="number" id="input-monthly-budget" class="input-field" value="10000"></div>
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
-            <div class="input-group"><label class="input-label">新聞 RSS 連結</label><input type="text" id="input-rss-url" class="input-field" placeholder="Google News TW"></div>
-            <div class="input-group"><label class="input-label">新聞顯示數量</label><input type="number" id="input-rss-limit" class="input-field" value="12"></div>
-            <div class="input-group">
-                <label class="input-label">背景風格</label>
+            <div class="input-group"><label class="input-label">金句分頁名稱</label><input type="text" id="input-quote-sheet" class="input-field" placeholder="預設: Quotes"></div>
+            <div class="input-group"><label class="input-label">背景風格</label>
                 <select id="input-bg-style" class="input-select">
                     <option value="nature" selected>🌲 隨機風景</option>
                     <option value="gradient">🌌 科技漸層</option>
                     <option value="custom">🔗 Excel 網址</option>
                 </select>
             </div>
-            <button class="save-btn" onclick="saveSettings()">💾 儲存並讀取</button>
+            <button class="save-btn" onclick="saveSettings()">💾 儲存設定</button>
             <div style="text-align:center; margin-top:10px; font-size:12px; color:#555; cursor:pointer;" onclick="closeSettings()">關閉</div>
         </div>
     </div>
 
     <script>
-        let CONFIG = { healthId: '', moneyId: '', monthlyBudget: 10000, bgStyle: 'nature', rssUrl: 'https://news.google.com/rss?hl=zh-TW&gl=TW&ceid=TW:zh-Hant', rssLimit: 12 };
+        let CONFIG = {
+            healthId: '', healthSheet: '熱量管理',
+            moneyId: '', moneySheet: '表單回應 1',
+            quoteSheet: 'Quotes',
+            monthlyBudget: 10000,
+            bgStyle: 'nature',
+            rewards: "喝一杯奶茶\n買個小遊戲\n睡午覺 1 小時\n看一部電影\n吃頓好的\n買書" // 預設獎品
+        };
+        
         let currentMode = 'health';
-        const KEYWORDS = ["健康", "減重", "飲食", "AI", "理財", "股市", "ETF", "存錢", "科技", "運動"];
+        let lastActiveMode = 'health'; // 紀錄上次是在看熱量還是看錢
+        let currentWeekBalance = 0;    // 用來存本週剩餘
 
         const THEMES = {
             health: { colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], statLabels: ['連續達標 (天)', '預估減脂 (kg)', '累積赤字 (cal)'], isDeficitGood: true, thresholds: [-600, -300, 0, 300, 600], unit: 'cal' },
@@ -246,7 +198,11 @@
 
         function init() {
             loadSettings();
-            if (!CONFIG.healthId && !CONFIG.moneyId) openSettings(); else switchApp('health');
+            if (!CONFIG.healthId && !CONFIG.moneyId) openSettings();
+            else switchApp('health');
+            
+            // 載入獎品列表到輸入框
+            document.getElementById('reward-list-input').value = CONFIG.rewards;
         }
 
         function openSettings() {
@@ -254,8 +210,7 @@
             document.getElementById('input-money-id').value = CONFIG.moneyId || '';
             document.getElementById('input-monthly-budget').value = CONFIG.monthlyBudget || 10000;
             document.getElementById('input-bg-style').value = CONFIG.bgStyle || 'nature';
-            document.getElementById('input-rss-url').value = CONFIG.rssUrl || '';
-            document.getElementById('input-rss-limit').value = CONFIG.rssLimit || 12;
+            document.getElementById('input-quote-sheet').value = CONFIG.quoteSheet || 'Quotes';
             document.getElementById('settings-modal').style.display = 'flex';
         }
         function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
@@ -264,69 +219,109 @@
             CONFIG.moneyId = document.getElementById('input-money-id').value.trim();
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
-            const rssInput = document.getElementById('input-rss-url').value.trim(); if(rssInput) CONFIG.rssUrl = rssInput;
-            const limitInput = parseInt(document.getElementById('input-rss-limit').value); if(limitInput) CONFIG.rssLimit = limitInput;
-            localStorage.setItem('dashboard_config_v7_1', JSON.stringify(CONFIG));
+            CONFIG.quoteSheet = document.getElementById('input-quote-sheet').value.trim() || 'Quotes';
+            localStorage.setItem('dashboard_config_v10', JSON.stringify(CONFIG));
             closeSettings();
             switchApp(currentMode);
         }
         function loadSettings() {
-            const saved = localStorage.getItem('dashboard_config_v7_1');
+            const saved = localStorage.getItem('dashboard_config_v10');
             if (saved) CONFIG = JSON.parse(saved);
-            else { const old = localStorage.getItem('dashboard_config_v7') || localStorage.getItem('dashboard_config_v5'); if(old) CONFIG = JSON.parse(old); }
+            else { // Migration
+                const old = localStorage.getItem('dashboard_config_v8_1') || localStorage.getItem('dashboard_config_v7');
+                if(old) CONFIG = JSON.parse(old);
+            }
+        }
+
+        function saveRewardList() {
+            CONFIG.rewards = document.getElementById('reward-list-input').value;
+            localStorage.setItem('dashboard_config_v10', JSON.stringify(CONFIG));
         }
 
         function switchApp(mode) {
             currentMode = mode;
             document.querySelectorAll('.switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
-            const dashView = document.getElementById('dashboard-view'); const newsView = document.getElementById('news-view');
+            
+            const dashView = document.getElementById('dashboard-view');
+            const rewardView = document.getElementById('reward-view');
 
-            if (mode === 'news') {
-                dashView.classList.add('hidden'); newsView.classList.remove('hidden');
-                document.getElementById('app-title').innerText = "📰 Daily Briefing";
-                fetchNews(); return;
+            if (mode === 'reward') {
+                dashView.classList.add('hidden');
+                rewardView.classList.remove('hidden');
+                document.getElementById('app-title').innerText = "🎲 Reward Center";
+                
+                // 更新獎勵介面的餘額
+                const unit = (lastActiveMode === 'health') ? 'cal' : '$';
+                const title = (lastActiveMode === 'health') ? '🔥 本週熱量赤字' : '💰 本週剩餘預算';
+                
+                document.getElementById('reward-title').innerText = title;
+                
+                // 簡單處理：如果是正數用綠色，負數用紅色
+                const valColor = (currentWeekBalance >= 0) ? '#3fb950' : '#ff4d4d';
+                // 熱量赤字原本是負數，顯示時轉正比較好懂；花費剩餘是正數
+                let displayVal = currentWeekBalance;
+                if(lastActiveMode === 'health') displayVal = Math.abs(currentWeekBalance);
+
+                document.getElementById('reward-balance').innerText = `${displayVal} ${unit}`;
+                document.getElementById('reward-balance').style.color = valColor;
+
+                return;
             }
 
-            dashView.classList.remove('hidden'); newsView.classList.add('hidden');
+            // 一般模式 (Health/Money)
+            lastActiveMode = mode; // 記住最後是哪個模式，給獎勵頁面用
+            dashView.classList.remove('hidden');
+            rewardView.classList.add('hidden');
+            
             const theme = THEMES[mode];
             const sheetId = (mode === 'health') ? CONFIG.healthId : CONFIG.moneyId;
+            
             document.getElementById('app-title').innerText = (mode === 'health') ? "🔥 Calorie Tracker" : "💰 Expense Tracker";
             document.getElementById('heatmap').innerHTML = 'Loading data...';
+            
             document.getElementById('stat1-label').innerText = theme.statLabels[0];
             document.getElementById('stat2-label').innerText = theme.statLabels[1];
             document.getElementById('stat3-label').innerText = theme.statLabels[2];
-            document.getElementById('budget-container').style.display = (mode === 'money') ? 'flex' : 'none';
 
             if (sheetId) {
                 fetchData(sheetId, (mode === 'health') ? '熱量管理' : '表單回應 1', theme);
-                fetchQuotes(sheetId, 'Quotes');
-            } else { document.getElementById('heatmap').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">請點擊右上角 ⚙️ 設定 Sheet ID</div>'; }
+                fetchQuotes(sheetId, CONFIG.quoteSheet);
+            } else {
+                document.getElementById('heatmap').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">請點擊右上角 ⚙️ 設定 Sheet ID</div>';
+            }
         }
 
-        async function fetchNews() {
-            const grid = document.getElementById('news-grid');
-            grid.innerHTML = '<div style="color:#888; width:100%; text-align:center;">載入新聞中...</div>';
-            const rssUrl = CONFIG.rssUrl || 'https://news.google.com/rss?hl=zh-TW&gl=TW&ceid=TW:zh-Hant';
-            const limit = CONFIG.rssLimit || 12;
-            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+        // --- 🎲 Reward Logic ---
+        function spinWheel() {
+            const listText = document.getElementById('reward-list-input').value.trim();
+            if (!listText) return alert('請先輸入獎品清單！');
+            
+            const items = listText.split('\n').filter(line => line.trim() !== '');
+            const resultBox = document.getElementById('reward-result');
+            const btn = document.querySelector('.spin-btn');
+            
+            if (items.length === 0) return;
 
-            try {
-                const res = await fetch(apiUrl);
-                const data = await res.json();
-                if (data.status === 'ok') {
-                    grid.innerHTML = '';
-                    data.items.slice(0, limit).forEach(item => { 
-                        const card = document.createElement('a'); card.className = 'news-card'; card.href = item.link; card.target = '_blank';
-                        let title = item.title;
-                        KEYWORDS.forEach(kw => { if (title.includes(kw)) { title = title.replace(kw, `<span class="highlight-keyword">${kw}</span>`); card.style.borderColor = '#d29922'; } });
-                        const date = new Date(item.pubDate).toLocaleDateString();
-                        card.innerHTML = `<div class="news-title">${title}</div><div class="news-meta"><span>${item.author || 'News'}</span><span>${date}</span></div>`;
-                        grid.appendChild(card);
-                    });
-                } else { grid.innerHTML = '無法載入新聞，請檢查 RSS 連結。'; }
-            } catch (e) { console.error(e); grid.innerHTML = '載入失敗 (API Error)'; }
+            btn.disabled = true;
+            resultBox.classList.remove('win');
+            let count = 0;
+            let speed = 50;
+
+            // 跑馬燈效果
+            const loop = setInterval(() => {
+                const rand = items[Math.floor(Math.random() * items.length)];
+                resultBox.innerText = rand;
+                count++;
+                
+                if (count > 20) { // 跑 20 次後停下
+                    clearInterval(loop);
+                    btn.disabled = false;
+                    resultBox.classList.add('win');
+                }
+            }, speed);
         }
 
+        // --- Data Logic ---
         async function fetchData(id, sheetName, theme) {
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${sheetName}&tq=SELECT A, B`;
             try {
@@ -339,26 +334,57 @@
 
         function processData(rows, theme) {
             const dataMap = {}; let totalSum = 0; let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
+            
+            // 本週統計初始化
+            let weekSum = 0;
+            // 計算本週開始日 (週日)
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setHours(0,0,0,0);
+
             rows.forEach(row => {
                 if (!row.c[0] || row.c[1] === null) return;
                 let dateStr = ""; let dateVal = row.c[0].v;
                 if (typeof dateVal === 'string' && dateVal.includes("Date")) { const parts = dateVal.match(/Date\((\d+),(\d+),(\d+)\)/); dateStr = new Date(parts[1], parts[2], parts[3]).toISOString().split('T')[0]; } 
                 else { dateStr = new Date(row.c[0].f || row.c[0].v).toISOString().split('T')[0]; }
-                const value = row.c[1].v; dataMap[dateStr] = { value: value, note: "" };
+                const value = row.c[1].v; dataMap[dateStr] = value;
+                
+                const itemDate = new Date(dateStr);
+
+                // 統計總數
                 if (theme.isDeficitGood) { if (value < 0) totalSum += value; } 
-                else { totalSum += value; if (new Date(dateStr).getMonth() === now.getMonth() && new Date(dateStr).getFullYear() === now.getFullYear()) { monthSpent += value; } }
+                else { totalSum += value; if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { monthSpent += value; } }
+                
+                // 統計本週 (Heatmap 邏輯)
+                if (itemDate >= startOfWeek) {
+                    if (theme.isDeficitGood) {
+                        if(value < 0) weekSum += value; // 熱量：只加總赤字
+                    } else {
+                        weekSum += value; // 記帳：加總花費
+                    }
+                }
                 count++;
             });
 
+            // 儲存本週數據給獎勵頁面用
+            if (theme.isDeficitGood) {
+                currentWeekBalance = weekSum; // 熱量赤字 (負數)
+            } else {
+                // 記帳：計算本週剩餘 (假設月預算/4 = 週預算)
+                const weeklyBudget = CONFIG.monthlyBudget / 4;
+                currentWeekBalance = Math.round(weeklyBudget - weekSum);
+            }
+
+            // Streak Logic
             const sortedDates = Object.keys(dataMap).sort();
             if (sortedDates.length > 0) {
                 for (let i = sortedDates.length - 1; i >= 0; i--) {
-                    const d = sortedDates[i]; const val = dataMap[d].value;
+                    const d = sortedDates[i]; const val = dataMap[d];
                     if (new Date(d) > new Date()) continue; 
                     let isSuccess = false;
                     if (theme.isDeficitGood) isSuccess = (val < 0);
                     else isSuccess = (val <= theme.budgetLimit && val > 0) || (val <= theme.goldLimit);
-                    if (isSuccess) { streak++; if (i > 0) { const curr = new Date(d); const prev = new Date(sortedDates[i-1]); if (Math.abs(curr - prev) / (1000*60*60*24) > 1.5) break; } } else { break; }
+                    if (isSuccess) { streak++; if (i > 0 && Math.abs(new Date(d) - new Date(sortedDates[i-1])) / 86400000 > 1.5) break; } else { break; }
                 }
             }
 
@@ -377,55 +403,24 @@
                 document.getElementById('stat3-val').innerText = remaining.toLocaleString();
                 document.getElementById('stat3-val').style.color = remaining > 0 ? '#3fb950' : '#ff4d4d';
                 document.getElementById('stat2-val').style.color = '#58a6ff';
-                updateWalletHP(monthSpent, CONFIG.monthlyBudget);
             }
             drawHeatmap(dataMap, theme);
-            
-            // 🌟 手機版自動捲動到最右邊 (最新日期)
-            setTimeout(() => {
-                const scroller = document.getElementById('graph-scroller');
-                if(scroller) scroller.scrollLeft = scroller.scrollWidth;
-            }, 100);
-        }
-
-        function updateWalletHP(spent, budget) {
-            const now = new Date();
-            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            const currentDay = now.getDate();
-            const remaining = budget - spent;
-            const hpPercent = Math.max(0, (remaining / budget) * 100);
-            const theoryRemaining = budget * ((daysInMonth - currentDay) / daysInMonth);
-            
-            document.getElementById('wallet-hp').innerText = remaining.toLocaleString();
-            document.getElementById('wallet-max').innerText = budget.toLocaleString();
-            document.getElementById('theory-hp').innerText = Math.round(theoryRemaining).toLocaleString();
-            const bar = document.getElementById('hp-fill');
-            const container = document.getElementById('budget-container');
-            bar.style.width = hpPercent + '%';
-            if (remaining < theoryRemaining * 0.9) { bar.className = 'hp-fill danger'; container.classList.add('shaking'); } 
-            else { bar.className = 'hp-fill'; container.classList.remove('shaking'); }
+            setTimeout(() => { const scroller = document.getElementById('graph-scroller'); if(scroller) scroller.scrollLeft = scroller.scrollWidth; }, 100);
         }
 
         function drawHeatmap(data, theme) {
-            const container = document.getElementById('heatmap');
-            container.innerHTML = '';
-            const today = new Date();
-            const startDate = new Date();
-            startDate.setDate(today.getDate() - 365);
+            const container = document.getElementById('heatmap'); container.innerHTML = '';
+            const today = new Date(); const startDate = new Date(); startDate.setDate(today.getDate() - 365);
             while (startDate.getDay() !== 0) startDate.setDate(startDate.getDate() - 1);
             let currentDate = new Date(startDate);
-
             while (currentDate <= today) {
                 const dateString = currentDate.toISOString().split('T')[0];
-                const item = data[dateString];
+                const value = data[dateString];
                 const cell = document.createElement('div');
                 cell.classList.add('day-cell');
                 cell.style.backgroundColor = theme.colors[theme.isDeficitGood ? 3 : 2]; 
-
-                if (item !== undefined) {
-                    const value = item.value;
-                    const th = theme.thresholds;
-                    let verdict = "";
+                if (value !== undefined) {
+                    const th = theme.thresholds; let verdict = "";
                     if (theme.isDeficitGood) {
                         if (value < th[0]) cell.style.backgroundColor = theme.colors[0];
                         else if (value < th[1]) cell.style.backgroundColor = theme.colors[1];
@@ -452,8 +447,7 @@
         async function fetchQuotes(id, sheetName) {
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${sheetName}&tq=SELECT A, B, C`;
             try {
-                const res = await fetch(url);
-                const text = await res.text();
+                const res = await fetch(url); const text = await res.text();
                 const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
                 const data = JSON.parse(jsonString);
                 if (data.table.rows.length > 0) {
