@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V16</title>
+    <title>Life Dashboard V17</title>
     <style>
         /* --- 全域風格 --- */
         body {
@@ -56,10 +56,10 @@
         .quote-text { font-size: 1.2rem; font-weight: 500; color: #fff; font-family: serif; margin-bottom: 8px; line-height: 1.4; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .quote-author { font-size: 0.9rem; color: #e6edf3; text-align: right; display: block; font-weight: bold; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 
-        /* --- 數據統計 --- */
+        /* --- 數據統計 (V17: 聚焦版) --- */
         .stats-container { display: flex; gap: 20px; margin-bottom: 20px; width: 100%; justify-content: space-around; }
         .stat-item { display: flex; flex-direction: column; align-items: center; min-width: 100px; }
-        .stat-val { font-size: 2rem; font-weight: 800; margin-bottom: 5px; line-height: 1; }
+        .stat-val { font-size: 2rem; font-weight: 800; margin-bottom: 5px; line-height: 1; transition: color 0.3s; }
         .stat-label { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; }
 
         /* --- 熱力圖與互動 --- */
@@ -81,7 +81,7 @@
         .color-gold { background-color: #ffd700 !important; z-index: 2; }
         @media (hover: hover) { .day-cell:hover { transform: scale(1.4); z-index: 10; border: 1px solid #fff; } }
 
-        /* --- V16 週次導航與戰績 Bar --- */
+        /* --- 週次導航與戰績 Bar --- */
         .weekly-container {
             width: 100%; margin-top: 15px;
             background: rgba(22, 27, 34, 0.8);
@@ -180,12 +180,18 @@
         </div>
 
         <div class="stats-container">
-            <div class="stat-item"><div id="stat1-val" class="stat-val">0</div><div id="stat1-label" class="stat-label">Streak</div></div>
             <div class="stat-item">
-                <div id="stat2-val" class="stat-val">0</div>
-                <div id="stat2-label" class="stat-label">Metric</div>
+                <div id="stat1-val" class="stat-val">0</div>
+                <div id="stat1-label" class="stat-label">連續達標 (天)</div>
             </div>
-            <div class="stat-item"><div id="stat3-val" class="stat-val">0</div><div id="stat3-label" class="stat-label">Total</div></div>
+            <div class="stat-item">
+                <div id="stat2-val" class="stat-val">---</div>
+                <div id="stat2-label" class="stat-label">今日數據</div>
+            </div>
+            <div class="stat-item">
+                <div id="stat3-val" class="stat-val">0</div>
+                <div id="stat3-label" class="stat-label">總紀錄天數</div>
+            </div>
         </div>
 
         <div class="hover-info-bar" id="hover-info">
@@ -267,17 +273,16 @@
         
         let currentMode = 'health';
         let lastActiveMode = 'health'; 
-        let globalDataMap = {}; // V16: 儲存全域資料以便切換週次
+        let globalDataMap = {};
         let globalTheme = {};
-        
-        // V16: 週次偏移量 (0 = 本週, -1 = 上週)
         let weekOffset = 0;
         let comparisonTicker = null; 
 
+        // V17: 更新標籤
         const THEMES = {
             health: { 
                 colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], 
-                statLabels: ['連續達標 (天)', '預估總減脂 (KG)', '累積赤字 (cal)'], 
+                statLabels: ['連續達標 (天)', '今日赤字 (CAL)', '總紀錄天數'], 
                 isDeficitGood: true, 
                 thresholds: [-600, -300, 0, 300, 600], 
                 unit: 'cal',
@@ -285,7 +290,7 @@
             },
             money: { 
                 colors: ['#0e4429', '#26a641', '#161b22', '#d29922', '#bd561d', '#ff4d4d'], 
-                statLabels: ['省錢達標 (天)', '日均花費 ($)', '本月剩餘 ($)'], 
+                statLabels: ['省錢達標 (天)', '今日花費 ($)', '總紀錄天數'], 
                 isDeficitGood: false, 
                 budgetLimit: 300, 
                 goldLimit: 170, 
@@ -368,7 +373,7 @@
 
         function switchApp(mode) {
             currentMode = mode;
-            weekOffset = 0; // 切換模式時重置為本週
+            weekOffset = 0; 
             document.querySelectorAll('.switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
             
             if (comparisonTicker) { clearInterval(comparisonTicker); comparisonTicker = null; }
@@ -381,12 +386,11 @@
                 rewardView.classList.remove('hidden');
                 document.getElementById('app-title').innerText = "🎲 Reward Center";
                 
-                // V16: 進入獎勵頁面時，預設顯示上次模式的數據
                 if(lastActiveMode) {
-                    currentMode = lastActiveMode; // 暫時切換 context 變數以便計算
-                    updateWeeklyInsight(0); // 呼叫這個來更新獎勵數據
+                    currentMode = lastActiveMode; 
+                    updateWeeklyInsight(0); 
                     switchRewardContext(lastActiveMode);
-                    currentMode = 'reward'; // 切回來
+                    currentMode = 'reward'; 
                 }
                 return;
             }
@@ -395,7 +399,7 @@
             dashView.classList.remove('hidden');
             rewardView.classList.add('hidden');
             
-            globalTheme = THEMES[mode]; // V16: 更新全域主題
+            globalTheme = THEMES[mode]; 
             const sheetId = (mode === 'health') ? CONFIG.healthId : CONFIG.moneyId;
             const sheetName = (mode === 'health') ? CONFIG.healthSheet : CONFIG.moneySheet;
             
@@ -403,9 +407,11 @@
             document.getElementById('heatmap').innerHTML = 'Loading data...';
             document.getElementById('hover-info').innerText = '👆 滑動熱力圖查看詳情'; 
             
+            // V17: 更新 Stats Labels
             document.getElementById('stat1-label').innerText = globalTheme.statLabels[0];
             document.getElementById('stat2-label').innerText = globalTheme.statLabels[1];
             document.getElementById('stat3-label').innerText = globalTheme.statLabels[2];
+            
             document.getElementById('budget-container').style.display = (mode === 'money') ? 'flex' : 'none';
             
             if (sheetId) {
@@ -416,28 +422,24 @@
             }
         }
 
-        // V16: 切換週次功能
         function changeWeek(offset) {
             weekOffset += offset;
             updateWeeklyInsight(weekOffset);
         }
 
-        // V16: 更新週次洞察與獎勵數據 (核心邏輯)
         function updateWeeklyInsight(offset) {
             const now = new Date();
-            // 計算該週的起始與結束
             const targetToday = new Date(now);
             targetToday.setDate(now.getDate() + (offset * 7));
             
             const startOfWeek = new Date(targetToday);
-            startOfWeek.setDate(targetToday.getDate() - targetToday.getDay()); // 週日
+            startOfWeek.setDate(targetToday.getDate() - targetToday.getDay()); 
             startOfWeek.setHours(0,0,0,0);
             
             const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6); // 週六
+            endOfWeek.setDate(startOfWeek.getDate() + 6); 
             endOfWeek.setHours(23,59,59,999);
 
-            // 更新 UI 標籤
             const fmt = (d) => `${d.getMonth()+1}/${d.getDate()}`;
             const label = (offset === 0) ? `本週 (${fmt(startOfWeek)} - ${fmt(endOfWeek)})` : 
                           (offset === -1) ? `上週 (${fmt(startOfWeek)} - ${fmt(endOfWeek)})` : 
@@ -445,23 +447,16 @@
             document.getElementById('week-label').innerText = label;
             document.getElementById('reward-period-display').innerText = `📅 結算週期: ${label}`;
 
-            // 計算該週數據
             let weekSum = 0;
-            let hasData = false;
-            
-            // 遍歷該週每一天
             let ptr = new Date(startOfWeek);
             while(ptr <= endOfWeek) {
                 const dStr = ptr.toISOString().split('T')[0];
                 if (globalDataMap[dStr]) {
                     if (globalTheme.isDeficitGood) {
-                         // 熱量模式：只加總赤字 (負數)
                          if(globalDataMap[dStr].value < 0) weekSum += globalDataMap[dStr].value;
                     } else {
-                         // 記帳模式：加總花費
                          weekSum += globalDataMap[dStr].value;
                     }
-                    hasData = true;
                 }
                 ptr.setDate(ptr.getDate() + 1);
             }
@@ -469,9 +464,7 @@
             const weeklyBar = document.getElementById('weekly-equivalents');
             if (comparisonTicker) { clearInterval(comparisonTicker); comparisonTicker = null; }
 
-            // 根據模式顯示 insight
             if (currentMode === 'health' || (currentMode === 'reward' && lastActiveMode === 'health')) {
-                // 熱量模式
                 const weeklyDeficit = Math.abs(weekSum);
                 if (weekSum < 0) {
                      const comparisons = [
@@ -491,16 +484,10 @@
                 } else {
                     weeklyBar.innerHTML = `${label}：尚未累積赤字`;
                 }
-                // 更新獎勵 UI
                 updateRewardUI(Math.abs(weekSum), globalTheme.unit, true);
 
             } else {
-                // 記帳模式
                 const weeklyBudget = CONFIG.monthlyBudget / 4;
-                // 注意：如果該週完全沒資料(hasData=false)，代表花費為0，即省下全額預算。
-                // 若覺得這樣不合理，可判斷 if(!hasData) weekSum = weeklyBudget (視為沒紀錄=沒省錢)
-                // 這裡假設沒紀錄 = 沒花錢 (0)
-                
                 const saved = weeklyBudget - weekSum;
                 if (saved > 0) {
                      const comparisons = [
@@ -521,7 +508,6 @@
                      const over = Math.abs(saved);
                      weeklyBar.innerHTML = `${label}戰績：💸 超支了 <span class="insight-highlight">${over}</span> 元 (少吃 ${Math.round(over/100)} 個便當)`;
                 }
-                // 更新獎勵 UI
                 updateRewardUI(Math.round(saved), globalTheme.unit, saved >= 0);
             }
         }
@@ -541,8 +527,6 @@
             const title = (type === 'health') ? '🔥 該週熱量赤字' : '💰 該週剩餘預算';
             document.getElementById('reward-title').innerText = title;
             document.getElementById('reward-list-input').value = (type === 'health') ? CONFIG.rewardsHealth : CONFIG.rewardsMoney;
-            
-            // 這裡不需要重新計算數值，因為 updateWeeklyInsight 已經做了，或是切換時會自動帶入
         }
 
         function spinWheel() {
@@ -585,10 +569,10 @@
         }
 
         function processData(rows, theme) {
-            // V16: 重置全域資料
             globalDataMap = {}; 
             
-            let totalSum = 0; let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
+            let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
+            const todayStr = now.toISOString().split('T')[0]; // V17: 取得今天日期
             
             rows.forEach(row => {
                 if (!row.c[0] || row.c[1] === null) return;
@@ -603,7 +587,6 @@
                 } catch(e) { return; }
 
                 const value = row.c[1].v; 
-                // V16: 存入 globalDataMap
                 if (globalDataMap[dateStr]) { globalDataMap[dateStr].value += value; } 
                 else { globalDataMap[dateStr] = { value: value }; }
             });
@@ -613,13 +596,7 @@
                 const item = globalDataMap[dateStr];
                 const value = item.value;
                 const itemDate = new Date(dateStr);
-
-                if (theme.isDeficitGood) {
-                    if (value < 0) totalSum += value;
-                } else {
-                    totalSum += value;
-                    if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { monthSpent += value; }
-                }
+                if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { monthSpent += value; }
                 count++;
             });
 
@@ -635,31 +612,38 @@
                 }
             }
 
+            // --- V17 數據顯示邏輯 ---
+            // 1. Streak
             document.getElementById('stat1-val').innerText = streak;
             document.getElementById('stat1-val').style.color = theme.isDeficitGood ? '#ff9b5e' : '#d29922';
 
-            if (currentMode === 'health') {
-                const totalKg = (Math.abs(totalSum) / 7700).toFixed(1);
-                document.getElementById('stat2-val').innerText = totalKg;
-                document.getElementById('stat2-label').innerText = '預估總減脂 (KG)';
-                document.getElementById('stat2-val').style.color = '#3fb950';
-                document.getElementById('stat3-val').innerText = Math.abs(totalSum).toLocaleString();
-                document.getElementById('stat3-val').style.color = '#58a6ff';
+            // 2. Today's Value
+            const todayItem = globalDataMap[todayStr];
+            const todayEl = document.getElementById('stat2-val');
+            if (todayItem) {
+                const val = todayItem.value;
+                todayEl.innerText = val.toLocaleString();
+                if (theme.isDeficitGood) {
+                    todayEl.style.color = (val < 0) ? '#3fb950' : '#ff4d4d'; // 熱量: 負數是綠色(好)
+                } else {
+                    todayEl.style.color = (val <= theme.budgetLimit) ? '#3fb950' : '#ff4d4d'; // 記帳: 低花費是綠色
+                }
             } else {
-                const avg = count > 0 ? Math.round(totalSum / count) : 0;
-                document.getElementById('stat2-val').innerText = avg.toLocaleString();
-                document.getElementById('stat2-label').innerText = '日均花費 ($)';
-                document.getElementById('stat2-val').style.color = '#58a6ff';
-                const remaining = CONFIG.monthlyBudget - monthSpent;
-                document.getElementById('stat3-val').innerText = remaining.toLocaleString();
-                document.getElementById('stat3-val').style.color = remaining > 0 ? '#3fb950' : '#ff4d4d';
+                todayEl.innerText = "待輸入";
+                todayEl.style.color = "#8b949e";
+            }
+
+            // 3. Total Days Recorded
+            document.getElementById('stat3-val').innerText = count.toLocaleString();
+            document.getElementById('stat3-val').style.color = '#58a6ff';
+
+            // 其他更新
+            if (currentMode === 'money') {
                 updateWalletHP(monthSpent, CONFIG.monthlyBudget);
             }
             
             drawHeatmap(globalDataMap, theme);
             setTimeout(() => { const scroller = document.getElementById('graph-scroller'); if(scroller) scroller.scrollLeft = scroller.scrollWidth; }, 100);
-            
-            // V16: 初始化週次洞察 (offset = 0)
             updateWeeklyInsight(0);
         }
 
