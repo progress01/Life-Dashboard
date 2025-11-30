@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V10.1</title>
+    <title>Life Dashboard V10.2</title>
     <style>
         /* --- 全域風格 --- */
         body {
@@ -33,14 +33,8 @@
         .dashboard-view { width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.5s ease; }
         .hidden { display: none !important; }
 
-        /* --- 金句與數據區 --- */
-        .quote-container {
-            background-color: #161b22; background-size: cover; background-position: center;
-            border: 1px solid #30363d; border-left: 5px solid #58a6ff;
-            border-radius: 8px; margin-bottom: 20px; width: 100%; min-height: 100px;
-            display: flex; align-items: center; position: relative; overflow: hidden; transition: 0.5s;
-            box-sizing: border-box;
-        }
+        /* --- 數據與圖表 (保留) --- */
+        .quote-container { background-color: #161b22; background-size: cover; background-position: center; border: 1px solid #30363d; border-left: 5px solid #58a6ff; border-radius: 8px; margin-bottom: 20px; width: 100%; min-height: 100px; display: flex; align-items: center; position: relative; overflow: hidden; transition: 0.5s; box-sizing: border-box; }
         .quote-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(13,17,23,0.98) 0%, rgba(13,17,23,0.6) 100%); z-index: 1; }
         .quote-content-layer { position: relative; z-index: 2; padding: 20px; width: 100%; box-sizing: border-box; }
         .quote-text { font-size: 1.1rem; font-weight: 500; color: #fff; font-family: serif; margin-bottom: 8px; line-height: 1.4; }
@@ -56,29 +50,44 @@
         .day-cell { width: 12px; height: 12px; border-radius: 2px; background-color: #21262d; outline: 1px solid rgba(255,255,255,0.05); }
         .color-gold { background-color: #ffd700 !important; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); z-index: 2; animation: glow 2s infinite alternate; }
         @keyframes glow { from { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); } to { box-shadow: 0 0 15px rgba(255, 215, 0, 0.9); } }
-        @media (hover: hover) { 
-            .day-cell:hover { transform: scale(1.5); z-index: 10; border: 1px solid #fff; }
-            .day-cell:hover::after {
-                content: attr(data-tooltip); position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%);
-                background: #6e7681; color: white; padding: 5px 8px; border-radius: 4px; font-size: 11px;
-                white-space: pre; pointer-events: none; min-width: 100px; text-align: center; z-index: 20;
-            }
-        }
+        @media (hover: hover) { .day-cell:hover { transform: scale(1.5); z-index: 10; border: 1px solid #fff; } }
+        
+        /* --- 預算血條 --- */
+        .budget-bar-container { width: 100%; box-sizing: border-box; margin-bottom: 20px; display: none; flex-direction: column; gap: 8px; background: #161b22; padding: 15px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .budget-header { display: flex; justify-content: space-between; align-items: flex-end; }
+        .hp-track { width: 100%; height: 12px; background: #21262d; border-radius: 6px; overflow: hidden; position: relative; border: 1px solid #30363d; }
+        .hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #2ea043, #3fb950); transition: width 0.5s; }
+        .hp-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
+        .shaking { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
 
-        /* --- 🎲 獎勵轉盤 --- */
+        /* --- 🎲 獎勵轉盤 (V10.2) --- */
         .reward-card {
-            background: #161b22; border: 1px solid #a371f7; border-radius: 12px; padding: 25px;
+            background: #161b22; border: 1px solid #a371f7; border-radius: 12px; padding: 20px;
             width: 100%; box-sizing: border-box; text-align: center;
             box-shadow: 0 0 20px rgba(163, 113, 247, 0.1);
         }
+        /* 獎勵切換 Toggle */
+        .reward-toggle-container {
+            display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;
+        }
+        .sub-toggle-btn {
+            background: #21262d; border: 1px solid #30363d; color: #8b949e;
+            padding: 6px 15px; border-radius: 15px; cursor: pointer; font-size: 13px;
+        }
+        .sub-toggle-btn.active-h { background: #238636; color: white; border-color: #238636; }
+        .sub-toggle-btn.active-m { background: #d29922; color: #1e1e1e; border-color: #d29922; }
+
         .balance-info { font-size: 1rem; color: #8b949e; margin-bottom: 5px; }
-        .balance-amount { font-size: 2.5rem; font-weight: 800; color: #a371f7; text-shadow: 0 0 10px rgba(163, 113, 247, 0.4); }
+        .balance-amount { font-size: 2.5rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        
         .result-box {
             margin: 20px 0; height: 80px; display: flex; align-items: center; justify-content: center;
             background: #0d1117; border: 2px dashed #30363d; border-radius: 8px;
             font-size: 1.5rem; font-weight: bold; color: #fff;
         }
         .result-box.win { border-color: #ffd700; color: #ffd700; animation: pop 0.3s; }
+        
         .spin-btn {
             background: linear-gradient(135deg, #a371f7, #7e22ce); color: white; border: none;
             padding: 15px 40px; border-radius: 30px; font-size: 1.2rem; font-weight: bold;
@@ -86,6 +95,7 @@
         }
         .spin-btn:active { transform: scale(0.95); }
         .spin-btn:disabled { background: #30363d; cursor: not-allowed; box-shadow: none; }
+        
         .reward-list-area {
             width: 100%; background: #0d1117; border: 1px solid #30363d; color: #8b949e;
             padding: 10px; border-radius: 6px; margin-top: 20px; min-height: 100px;
@@ -123,6 +133,15 @@
     <h2 id="app-title">Life Dashboard</h2>
 
     <div id="dashboard-view" class="dashboard-view">
+        <div class="budget-bar-container" id="budget-container">
+            <div class="budget-header">
+                <span style="font-size:14px; font-weight:bold; color:#e6edf3;">💳 錢包 HP</span>
+                <span style="font-size:12px; color:#8b949e;"><span id="wallet-hp">0</span> / <span id="wallet-max">0</span></span>
+            </div>
+            <div class="hp-track"><div class="hp-fill" id="hp-fill"></div></div>
+            <div style="font-size:11px; color:#8b949e; text-align:right; margin-top:2px;">今日理論剩餘: <span id="theory-hp">0</span></div>
+        </div>
+
         <div class="quote-container" id="quote-card">
             <div class="quote-overlay" id="q-overlay"></div>
             <div class="quote-content-layer">
@@ -144,6 +163,11 @@
 
     <div id="reward-view" class="dashboard-view hidden">
         <div class="reward-card">
+            <div class="reward-toggle-container">
+                <button class="sub-toggle-btn" id="reward-health-btn" onclick="switchRewardContext('health')">🔥 熱量獎勵</button>
+                <button class="sub-toggle-btn" id="reward-money-btn" onclick="switchRewardContext('money')">💰 消費獎勵</button>
+            </div>
+
             <div class="balance-info" id="reward-title">本週累積成果</div>
             <div class="balance-amount" id="reward-balance">---</div>
             
@@ -152,7 +176,7 @@
             <button class="spin-btn" onclick="spinWheel()">🎰 抽取獎勵</button>
             
             <div style="text-align:left; margin-top:20px; margin-bottom:5px; font-size:12px; color:#8b949e;">
-                👇 編輯你的獎品清單 (一行一個)
+                👇 編輯此模式的獎品清單 (一行一個)
             </div>
             <textarea id="reward-list-input" class="reward-list-area" oninput="saveRewardList()"></textarea>
         </div>
@@ -162,32 +186,17 @@
         <div class="modal-box">
             <div class="modal-title">⚙️ 資料來源設定</div>
             
-            <div style="color:#58a6ff; font-size:12px; font-weight:bold; margin-bottom:5px;">熱量追蹤</div>
-            <div class="input-group">
-                <label class="input-label">Sheet ID</label>
-                <input type="text" id="input-health-id" class="input-field" placeholder="貼上 ID...">
-            </div>
-            <div class="input-group">
-                <label class="input-label">分頁名稱 (Tab Name)</label>
-                <input type="text" id="input-health-sheet" class="input-field" placeholder="預設: 熱量管理">
-            </div>
-
-            <div style="color:#d29922; font-size:12px; font-weight:bold; margin-bottom:5px; margin-top:15px;">花費管理</div>
-            <div class="input-group">
-                <label class="input-label">Sheet ID</label>
-                <input type="text" id="input-money-id" class="input-field" placeholder="貼上 ID...">
-            </div>
-            <div class="input-group">
-                <label class="input-label">分頁名稱 (Tab Name)</label>
-                <input type="text" id="input-money-sheet" class="input-field" placeholder="預設: 表單回應 1">
-            </div>
-            <div class="input-group">
-                <label class="input-label">記帳月預算</label>
-                <input type="number" id="input-monthly-budget" class="input-field" value="10000">
-            </div>
+            <div class="input-group"><label class="input-label">熱量表 ID</label><input type="text" id="input-health-id" class="input-field"></div>
+            <div class="input-group"><label class="input-label">熱量表分頁名</label><input type="text" id="input-health-sheet" class="input-field"></div>
 
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
-            <div class="input-group"><label class="input-label">金句分頁名稱</label><input type="text" id="input-quote-sheet" class="input-field" placeholder="預設: Quotes"></div>
+
+            <div class="input-group"><label class="input-label">記帳表 ID</label><input type="text" id="input-money-id" class="input-field"></div>
+            <div class="input-group"><label class="input-label">記帳表分頁名</label><input type="text" id="input-money-sheet" class="input-field"></div>
+            <div class="input-group"><label class="input-label">記帳月預算</label><input type="number" id="input-monthly-budget" class="input-field"></div>
+
+            <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
+            <div class="input-group"><label class="input-label">金句分頁名</label><input type="text" id="input-quote-sheet" class="input-field"></div>
             
             <div class="input-group">
                 <label class="input-label">背景風格</label>
@@ -197,7 +206,7 @@
                     <option value="custom">🔗 Excel 網址</option>
                 </select>
             </div>
-            <button class="save-btn" onclick="saveSettings()">💾 儲存並讀取</button>
+            <button class="save-btn" onclick="saveSettings()">💾 儲存設定</button>
             <div style="text-align:center; margin-top:10px; font-size:12px; color:#555; cursor:pointer;" onclick="closeSettings()">關閉</div>
         </div>
     </div>
@@ -209,12 +218,17 @@
             quoteSheet: 'Quotes',
             monthlyBudget: 10000,
             bgStyle: 'nature',
-            rewards: "喝一杯奶茶\n買個小遊戲\n睡午覺 1 小時\n看一部電影\n吃頓好的\n買書" 
+            // V10.2 雙獎勵池
+            rewardsHealth: "喝一杯奶茶\n吃炸雞\n吃甜點\n休息一天",
+            rewardsMoney: "買 Steam 遊戲\n搭計程車\n買新衣服\n吃大餐"
         };
         
         let currentMode = 'health';
-        let lastActiveMode = 'health'; 
-        let currentWeekBalance = 0;    
+        let currentRewardContext = 'health'; // 在獎勵頁面中，目前是看熱量還是錢
+        
+        // 全域餘額記憶 (避免切換時重抓)
+        let balanceHealth = 0;
+        let balanceMoney = 0;
 
         const THEMES = {
             health: { colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], statLabels: ['連續達標 (天)', '預估減脂 (kg)', '累積赤字 (cal)'], isDeficitGood: true, thresholds: [-600, -300, 0, 300, 600], unit: 'cal' },
@@ -227,15 +241,13 @@
             loadSettings();
             if (!CONFIG.healthId && !CONFIG.moneyId) openSettings();
             else switchApp('health');
-            
-            document.getElementById('reward-list-input').value = CONFIG.rewards;
         }
 
         function openSettings() {
             document.getElementById('input-health-id').value = CONFIG.healthId || '';
-            document.getElementById('input-health-sheet').value = CONFIG.healthSheet || '熱量管理';
+            document.getElementById('input-health-sheet').value = CONFIG.healthSheet || '';
             document.getElementById('input-money-id').value = CONFIG.moneyId || '';
-            document.getElementById('input-money-sheet').value = CONFIG.moneySheet || '表單回應 1';
+            document.getElementById('input-money-sheet').value = CONFIG.moneySheet || '';
             document.getElementById('input-monthly-budget').value = CONFIG.monthlyBudget || 10000;
             document.getElementById('input-bg-style').value = CONFIG.bgStyle || 'nature';
             document.getElementById('input-quote-sheet').value = CONFIG.quoteSheet || 'Quotes';
@@ -246,22 +258,24 @@
         function saveSettings() {
             CONFIG.healthId = document.getElementById('input-health-id').value.trim();
             CONFIG.healthSheet = document.getElementById('input-health-sheet').value.trim() || '熱量管理';
-            
             CONFIG.moneyId = document.getElementById('input-money-id').value.trim();
             CONFIG.moneySheet = document.getElementById('input-money-sheet').value.trim() || '表單回應 1';
-            
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
             CONFIG.quoteSheet = document.getElementById('input-quote-sheet').value.trim() || 'Quotes';
-            
-            localStorage.setItem('dashboard_config_v10_1', JSON.stringify(CONFIG)); // New Key V10.1
+            localStorage.setItem('dashboard_config_v10_2', JSON.stringify(CONFIG));
             closeSettings();
             switchApp(currentMode);
         }
         
         function loadSettings() {
-            const saved = localStorage.getItem('dashboard_config_v10_1'); // New Key
-            if (saved) CONFIG = JSON.parse(saved);
+            const saved = localStorage.getItem('dashboard_config_v10_2');
+            if (saved) {
+                CONFIG = JSON.parse(saved);
+                // Migration check for older versions
+                if (!CONFIG.rewardsHealth) CONFIG.rewardsHealth = "喝一杯奶茶\n吃炸雞";
+                if (!CONFIG.rewardsMoney) CONFIG.rewardsMoney = "買遊戲\n看電影";
+            }
             else { 
                 const old = localStorage.getItem('dashboard_config_v10') || localStorage.getItem('dashboard_config_v8_1');
                 if(old) CONFIG = JSON.parse(old);
@@ -269,8 +283,10 @@
         }
 
         function saveRewardList() {
-            CONFIG.rewards = document.getElementById('reward-list-input').value;
-            localStorage.setItem('dashboard_config_v10_1', JSON.stringify(CONFIG));
+            const content = document.getElementById('reward-list-input').value;
+            if (currentRewardContext === 'health') CONFIG.rewardsHealth = content;
+            else CONFIG.rewardsMoney = content;
+            localStorage.setItem('dashboard_config_v10_2', JSON.stringify(CONFIG));
         }
 
         function switchApp(mode) {
@@ -284,27 +300,17 @@
                 dashView.classList.add('hidden');
                 rewardView.classList.remove('hidden');
                 document.getElementById('app-title').innerText = "🎲 Reward Center";
-                
-                const unit = (lastActiveMode === 'health') ? 'cal' : '$';
-                const title = (lastActiveMode === 'health') ? '🔥 本週熱量赤字' : '💰 本週剩餘預算';
-                document.getElementById('reward-title').innerText = title;
-                
-                const valColor = (currentWeekBalance >= 0) ? '#3fb950' : '#ff4d4d';
-                let displayVal = currentWeekBalance;
-                if(lastActiveMode === 'health') displayVal = Math.abs(currentWeekBalance);
-
-                document.getElementById('reward-balance').innerText = `${displayVal} ${unit}`;
-                document.getElementById('reward-balance').style.color = valColor;
+                // 預設打開熱量獎勵
+                switchRewardContext('health');
                 return;
             }
 
-            lastActiveMode = mode; 
             dashView.classList.remove('hidden');
             rewardView.classList.add('hidden');
             
             const theme = THEMES[mode];
             const sheetId = (mode === 'health') ? CONFIG.healthId : CONFIG.moneyId;
-            const sheetName = (mode === 'health') ? CONFIG.healthSheet : CONFIG.moneySheet; // V10.1 Use Config
+            const sheetName = (mode === 'health') ? CONFIG.healthSheet : CONFIG.moneySheet;
             
             document.getElementById('app-title').innerText = (mode === 'health') ? "🔥 Calorie Tracker" : "💰 Expense Tracker";
             document.getElementById('heatmap').innerHTML = 'Loading data...';
@@ -312,6 +318,7 @@
             document.getElementById('stat1-label').innerText = theme.statLabels[0];
             document.getElementById('stat2-label').innerText = theme.statLabels[1];
             document.getElementById('stat3-label').innerText = theme.statLabels[2];
+            document.getElementById('budget-container').style.display = (mode === 'money') ? 'flex' : 'none';
 
             if (sheetId) {
                 fetchData(sheetId, sheetName, theme);
@@ -319,6 +326,32 @@
             } else {
                 document.getElementById('heatmap').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">請點擊右上角 ⚙️ 設定 Sheet ID</div>';
             }
+        }
+
+        // V10.2 雙獎勵池切換邏輯
+        function switchRewardContext(type) {
+            currentRewardContext = type;
+            
+            // UI Toggle
+            document.getElementById('reward-health-btn').classList.toggle('active-h', type === 'health');
+            document.getElementById('reward-money-btn').classList.toggle('active-m', type === 'money');
+
+            // Content Update
+            const title = (type === 'health') ? '🔥 本週熱量赤字' : '💰 本週剩餘預算';
+            const unit = (type === 'health') ? 'cal' : '$';
+            const val = (type === 'health') ? balanceHealth : balanceMoney;
+            const rewardList = (type === 'health') ? CONFIG.rewardsHealth : CONFIG.rewardsMoney;
+
+            document.getElementById('reward-title').innerText = title;
+            document.getElementById('reward-balance').innerText = `${val} ${unit}`;
+            
+            // Color Logic
+            let color = '#fff';
+            if (type === 'health') color = '#ff9b5e'; // Orange
+            else color = '#d29922'; // Gold
+            document.getElementById('reward-balance').style.color = color;
+
+            document.getElementById('reward-list-input').value = rewardList || "";
         }
 
         function spinWheel() {
@@ -361,9 +394,11 @@
 
         function processData(rows, theme) {
             const dataMap = {}; let totalSum = 0; let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
+            
+            // 本週統計初始化
             let weekSum = 0;
             const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
             startOfWeek.setHours(0,0,0,0);
 
             rows.forEach(row => {
@@ -378,6 +413,7 @@
                 if (theme.isDeficitGood) { if (value < 0) totalSum += value; } 
                 else { totalSum += value; if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { monthSpent += value; } }
                 
+                // 本週累計
                 if (itemDate >= startOfWeek) {
                     if (theme.isDeficitGood) { if(value < 0) weekSum += value; } 
                     else { weekSum += value; }
@@ -385,9 +421,15 @@
                 count++;
             });
 
-            if (theme.isDeficitGood) { currentWeekBalance = weekSum; } 
-            else { const weeklyBudget = CONFIG.monthlyBudget / 4; currentWeekBalance = Math.round(weeklyBudget - weekSum); }
+            // 🌟 儲存到全域變數
+            if (theme.isDeficitGood) { 
+                balanceHealth = Math.abs(weekSum); // 轉正數顯示
+            } else { 
+                const weeklyBudget = CONFIG.monthlyBudget / 4; 
+                balanceMoney = Math.round(weeklyBudget - weekSum); 
+            }
 
+            // Streak Calculation
             const sortedDates = Object.keys(dataMap).sort();
             if (sortedDates.length > 0) {
                 for (let i = sortedDates.length - 1; i >= 0; i--) {
@@ -415,9 +457,27 @@
                 document.getElementById('stat3-val').innerText = remaining.toLocaleString();
                 document.getElementById('stat3-val').style.color = remaining > 0 ? '#3fb950' : '#ff4d4d';
                 document.getElementById('stat2-val').style.color = '#58a6ff';
+                updateWalletHP(monthSpent, CONFIG.monthlyBudget);
             }
             drawHeatmap(dataMap, theme);
             setTimeout(() => { const scroller = document.getElementById('graph-scroller'); if(scroller) scroller.scrollLeft = scroller.scrollWidth; }, 100);
+        }
+
+        function updateWalletHP(spent, budget) {
+            const now = new Date();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const currentDay = now.getDate();
+            const remaining = budget - spent;
+            const hpPercent = Math.max(0, (remaining / budget) * 100);
+            const theoryRemaining = budget * ((daysInMonth - currentDay) / daysInMonth);
+            document.getElementById('wallet-hp').innerText = remaining.toLocaleString();
+            document.getElementById('wallet-max').innerText = budget.toLocaleString();
+            document.getElementById('theory-hp').innerText = Math.round(theoryRemaining).toLocaleString();
+            const bar = document.getElementById('hp-fill');
+            const container = document.getElementById('budget-container');
+            bar.style.width = hpPercent + '%';
+            if (remaining < theoryRemaining * 0.9) { bar.className = 'hp-fill danger'; container.classList.add('shaking'); } 
+            else { bar.className = 'hp-fill'; container.classList.remove('shaking'); }
         }
 
         function drawHeatmap(data, theme) {
