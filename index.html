@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V10</title>
+    <title>Life Dashboard V10.1</title>
     <style>
         /* --- 全域風格 --- */
         body {
@@ -22,7 +22,7 @@
         
         .switch-btn.active { background: #238636; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
         .switch-btn.active[data-mode="money"] { background: #d29922; color: #1e1e1e; }
-        .switch-btn.active[data-mode="reward"] { background: #a371f7; color: #fff; } /* 紫色獎勵模式 */
+        .switch-btn.active[data-mode="reward"] { background: #a371f7; color: #fff; } 
 
         .settings-btn { background: #21262d; border: 1px solid #30363d; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; color: #8b949e; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         .settings-btn:hover { color: #58a6ff; transform: rotate(90deg); border-color: #58a6ff; }
@@ -33,7 +33,7 @@
         .dashboard-view { width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.5s ease; }
         .hidden { display: none !important; }
 
-        /* --- 金句與數據區 (保留 V8) --- */
+        /* --- 金句與數據區 --- */
         .quote-container {
             background-color: #161b22; background-size: cover; background-position: center;
             border: 1px solid #30363d; border-left: 5px solid #58a6ff;
@@ -56,9 +56,16 @@
         .day-cell { width: 12px; height: 12px; border-radius: 2px; background-color: #21262d; outline: 1px solid rgba(255,255,255,0.05); }
         .color-gold { background-color: #ffd700 !important; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); z-index: 2; animation: glow 2s infinite alternate; }
         @keyframes glow { from { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); } to { box-shadow: 0 0 15px rgba(255, 215, 0, 0.9); } }
-        @media (hover: hover) { .day-cell:hover { transform: scale(1.5); z-index: 10; border: 1px solid #fff; } }
+        @media (hover: hover) { 
+            .day-cell:hover { transform: scale(1.5); z-index: 10; border: 1px solid #fff; }
+            .day-cell:hover::after {
+                content: attr(data-tooltip); position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%);
+                background: #6e7681; color: white; padding: 5px 8px; border-radius: 4px; font-size: 11px;
+                white-space: pre; pointer-events: none; min-width: 100px; text-align: center; z-index: 20;
+            }
+        }
 
-        /* --- 🎲 獎勵轉盤 (New V10) --- */
+        /* --- 🎲 獎勵轉盤 --- */
         .reward-card {
             background: #161b22; border: 1px solid #a371f7; border-radius: 12px; padding: 25px;
             width: 100%; box-sizing: border-box; text-align: center;
@@ -66,27 +73,23 @@
         }
         .balance-info { font-size: 1rem; color: #8b949e; margin-bottom: 5px; }
         .balance-amount { font-size: 2.5rem; font-weight: 800; color: #a371f7; text-shadow: 0 0 10px rgba(163, 113, 247, 0.4); }
-        
         .result-box {
             margin: 20px 0; height: 80px; display: flex; align-items: center; justify-content: center;
             background: #0d1117; border: 2px dashed #30363d; border-radius: 8px;
             font-size: 1.5rem; font-weight: bold; color: #fff;
         }
         .result-box.win { border-color: #ffd700; color: #ffd700; animation: pop 0.3s; }
-
         .spin-btn {
             background: linear-gradient(135deg, #a371f7, #7e22ce); color: white; border: none;
             padding: 15px 40px; border-radius: 30px; font-size: 1.2rem; font-weight: bold;
-            cursor: pointer; box-shadow: 0 4px 15px rgba(126, 34, 206, 0.4); transition: 0.2s;
-            width: 100%;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(126, 34, 206, 0.4); transition: 0.2s; width: 100%;
         }
         .spin-btn:active { transform: scale(0.95); }
         .spin-btn:disabled { background: #30363d; cursor: not-allowed; box-shadow: none; }
-
         .reward-list-area {
             width: 100%; background: #0d1117; border: 1px solid #30363d; color: #8b949e;
             padding: 10px; border-radius: 6px; margin-top: 20px; min-height: 100px;
-            font-family: monospace; font-size: 14px; resize: vertical;
+            font-family: monospace; font-size: 14px; resize: vertical; box-sizing: border-box;
         }
 
         /* --- Modal 設定面板 --- */
@@ -158,19 +161,43 @@
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-box">
             <div class="modal-title">⚙️ 資料來源設定</div>
-            <div class="input-group"><label class="input-label">熱量表 Sheet ID</label><input type="text" id="input-health-id" class="input-field" placeholder="貼上 ID..."></div>
-            <div class="input-group"><label class="input-label">記帳表 Sheet ID</label><input type="text" id="input-money-id" class="input-field" placeholder="貼上 ID..."></div>
-            <div class="input-group"><label class="input-label">記帳月預算</label><input type="number" id="input-monthly-budget" class="input-field" value="10000"></div>
+            
+            <div style="color:#58a6ff; font-size:12px; font-weight:bold; margin-bottom:5px;">熱量追蹤</div>
+            <div class="input-group">
+                <label class="input-label">Sheet ID</label>
+                <input type="text" id="input-health-id" class="input-field" placeholder="貼上 ID...">
+            </div>
+            <div class="input-group">
+                <label class="input-label">分頁名稱 (Tab Name)</label>
+                <input type="text" id="input-health-sheet" class="input-field" placeholder="預設: 熱量管理">
+            </div>
+
+            <div style="color:#d29922; font-size:12px; font-weight:bold; margin-bottom:5px; margin-top:15px;">花費管理</div>
+            <div class="input-group">
+                <label class="input-label">Sheet ID</label>
+                <input type="text" id="input-money-id" class="input-field" placeholder="貼上 ID...">
+            </div>
+            <div class="input-group">
+                <label class="input-label">分頁名稱 (Tab Name)</label>
+                <input type="text" id="input-money-sheet" class="input-field" placeholder="預設: 表單回應 1">
+            </div>
+            <div class="input-group">
+                <label class="input-label">記帳月預算</label>
+                <input type="number" id="input-monthly-budget" class="input-field" value="10000">
+            </div>
+
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
             <div class="input-group"><label class="input-label">金句分頁名稱</label><input type="text" id="input-quote-sheet" class="input-field" placeholder="預設: Quotes"></div>
-            <div class="input-group"><label class="input-label">背景風格</label>
+            
+            <div class="input-group">
+                <label class="input-label">背景風格</label>
                 <select id="input-bg-style" class="input-select">
                     <option value="nature" selected>🌲 隨機風景</option>
                     <option value="gradient">🌌 科技漸層</option>
                     <option value="custom">🔗 Excel 網址</option>
                 </select>
             </div>
-            <button class="save-btn" onclick="saveSettings()">💾 儲存設定</button>
+            <button class="save-btn" onclick="saveSettings()">💾 儲存並讀取</button>
             <div style="text-align:center; margin-top:10px; font-size:12px; color:#555; cursor:pointer;" onclick="closeSettings()">關閉</div>
         </div>
     </div>
@@ -182,12 +209,12 @@
             quoteSheet: 'Quotes',
             monthlyBudget: 10000,
             bgStyle: 'nature',
-            rewards: "喝一杯奶茶\n買個小遊戲\n睡午覺 1 小時\n看一部電影\n吃頓好的\n買書" // 預設獎品
+            rewards: "喝一杯奶茶\n買個小遊戲\n睡午覺 1 小時\n看一部電影\n吃頓好的\n買書" 
         };
         
         let currentMode = 'health';
-        let lastActiveMode = 'health'; // 紀錄上次是在看熱量還是看錢
-        let currentWeekBalance = 0;    // 用來存本週剩餘
+        let lastActiveMode = 'health'; 
+        let currentWeekBalance = 0;    
 
         const THEMES = {
             health: { colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], statLabels: ['連續達標 (天)', '預估減脂 (kg)', '累積赤字 (cal)'], isDeficitGood: true, thresholds: [-600, -300, 0, 300, 600], unit: 'cal' },
@@ -201,41 +228,49 @@
             if (!CONFIG.healthId && !CONFIG.moneyId) openSettings();
             else switchApp('health');
             
-            // 載入獎品列表到輸入框
             document.getElementById('reward-list-input').value = CONFIG.rewards;
         }
 
         function openSettings() {
             document.getElementById('input-health-id').value = CONFIG.healthId || '';
+            document.getElementById('input-health-sheet').value = CONFIG.healthSheet || '熱量管理';
             document.getElementById('input-money-id').value = CONFIG.moneyId || '';
+            document.getElementById('input-money-sheet').value = CONFIG.moneySheet || '表單回應 1';
             document.getElementById('input-monthly-budget').value = CONFIG.monthlyBudget || 10000;
             document.getElementById('input-bg-style').value = CONFIG.bgStyle || 'nature';
             document.getElementById('input-quote-sheet').value = CONFIG.quoteSheet || 'Quotes';
             document.getElementById('settings-modal').style.display = 'flex';
         }
         function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+        
         function saveSettings() {
             CONFIG.healthId = document.getElementById('input-health-id').value.trim();
+            CONFIG.healthSheet = document.getElementById('input-health-sheet').value.trim() || '熱量管理';
+            
             CONFIG.moneyId = document.getElementById('input-money-id').value.trim();
+            CONFIG.moneySheet = document.getElementById('input-money-sheet').value.trim() || '表單回應 1';
+            
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
             CONFIG.quoteSheet = document.getElementById('input-quote-sheet').value.trim() || 'Quotes';
-            localStorage.setItem('dashboard_config_v10', JSON.stringify(CONFIG));
+            
+            localStorage.setItem('dashboard_config_v10_1', JSON.stringify(CONFIG)); // New Key V10.1
             closeSettings();
             switchApp(currentMode);
         }
+        
         function loadSettings() {
-            const saved = localStorage.getItem('dashboard_config_v10');
+            const saved = localStorage.getItem('dashboard_config_v10_1'); // New Key
             if (saved) CONFIG = JSON.parse(saved);
-            else { // Migration
-                const old = localStorage.getItem('dashboard_config_v8_1') || localStorage.getItem('dashboard_config_v7');
+            else { 
+                const old = localStorage.getItem('dashboard_config_v10') || localStorage.getItem('dashboard_config_v8_1');
                 if(old) CONFIG = JSON.parse(old);
             }
         }
 
         function saveRewardList() {
             CONFIG.rewards = document.getElementById('reward-list-input').value;
-            localStorage.setItem('dashboard_config_v10', JSON.stringify(CONFIG));
+            localStorage.setItem('dashboard_config_v10_1', JSON.stringify(CONFIG));
         }
 
         function switchApp(mode) {
@@ -250,31 +285,26 @@
                 rewardView.classList.remove('hidden');
                 document.getElementById('app-title').innerText = "🎲 Reward Center";
                 
-                // 更新獎勵介面的餘額
                 const unit = (lastActiveMode === 'health') ? 'cal' : '$';
                 const title = (lastActiveMode === 'health') ? '🔥 本週熱量赤字' : '💰 本週剩餘預算';
-                
                 document.getElementById('reward-title').innerText = title;
                 
-                // 簡單處理：如果是正數用綠色，負數用紅色
                 const valColor = (currentWeekBalance >= 0) ? '#3fb950' : '#ff4d4d';
-                // 熱量赤字原本是負數，顯示時轉正比較好懂；花費剩餘是正數
                 let displayVal = currentWeekBalance;
                 if(lastActiveMode === 'health') displayVal = Math.abs(currentWeekBalance);
 
                 document.getElementById('reward-balance').innerText = `${displayVal} ${unit}`;
                 document.getElementById('reward-balance').style.color = valColor;
-
                 return;
             }
 
-            // 一般模式 (Health/Money)
-            lastActiveMode = mode; // 記住最後是哪個模式，給獎勵頁面用
+            lastActiveMode = mode; 
             dashView.classList.remove('hidden');
             rewardView.classList.add('hidden');
             
             const theme = THEMES[mode];
             const sheetId = (mode === 'health') ? CONFIG.healthId : CONFIG.moneyId;
+            const sheetName = (mode === 'health') ? CONFIG.healthSheet : CONFIG.moneySheet; // V10.1 Use Config
             
             document.getElementById('app-title').innerText = (mode === 'health') ? "🔥 Calorie Tracker" : "💰 Expense Tracker";
             document.getElementById('heatmap').innerHTML = 'Loading data...';
@@ -284,14 +314,13 @@
             document.getElementById('stat3-label').innerText = theme.statLabels[2];
 
             if (sheetId) {
-                fetchData(sheetId, (mode === 'health') ? '熱量管理' : '表單回應 1', theme);
+                fetchData(sheetId, sheetName, theme);
                 fetchQuotes(sheetId, CONFIG.quoteSheet);
             } else {
                 document.getElementById('heatmap').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">請點擊右上角 ⚙️ 設定 Sheet ID</div>';
             }
         }
 
-        // --- 🎲 Reward Logic ---
         function spinWheel() {
             const listText = document.getElementById('reward-list-input').value.trim();
             if (!listText) return alert('請先輸入獎品清單！');
@@ -307,13 +336,12 @@
             let count = 0;
             let speed = 50;
 
-            // 跑馬燈效果
             const loop = setInterval(() => {
                 const rand = items[Math.floor(Math.random() * items.length)];
                 resultBox.innerText = rand;
                 count++;
                 
-                if (count > 20) { // 跑 20 次後停下
+                if (count > 20) { 
                     clearInterval(loop);
                     btn.disabled = false;
                     resultBox.classList.add('win');
@@ -321,7 +349,6 @@
             }, speed);
         }
 
-        // --- Data Logic ---
         async function fetchData(id, sheetName, theme) {
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${sheetName}&tq=SELECT A, B`;
             try {
@@ -334,10 +361,7 @@
 
         function processData(rows, theme) {
             const dataMap = {}; let totalSum = 0; let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
-            
-            // 本週統計初始化
             let weekSum = 0;
-            // 計算本週開始日 (週日)
             const startOfWeek = new Date(now);
             startOfWeek.setDate(now.getDate() - now.getDay());
             startOfWeek.setHours(0,0,0,0);
@@ -351,31 +375,19 @@
                 
                 const itemDate = new Date(dateStr);
 
-                // 統計總數
                 if (theme.isDeficitGood) { if (value < 0) totalSum += value; } 
                 else { totalSum += value; if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { monthSpent += value; } }
                 
-                // 統計本週 (Heatmap 邏輯)
                 if (itemDate >= startOfWeek) {
-                    if (theme.isDeficitGood) {
-                        if(value < 0) weekSum += value; // 熱量：只加總赤字
-                    } else {
-                        weekSum += value; // 記帳：加總花費
-                    }
+                    if (theme.isDeficitGood) { if(value < 0) weekSum += value; } 
+                    else { weekSum += value; }
                 }
                 count++;
             });
 
-            // 儲存本週數據給獎勵頁面用
-            if (theme.isDeficitGood) {
-                currentWeekBalance = weekSum; // 熱量赤字 (負數)
-            } else {
-                // 記帳：計算本週剩餘 (假設月預算/4 = 週預算)
-                const weeklyBudget = CONFIG.monthlyBudget / 4;
-                currentWeekBalance = Math.round(weeklyBudget - weekSum);
-            }
+            if (theme.isDeficitGood) { currentWeekBalance = weekSum; } 
+            else { const weeklyBudget = CONFIG.monthlyBudget / 4; currentWeekBalance = Math.round(weeklyBudget - weekSum); }
 
-            // Streak Logic
             const sortedDates = Object.keys(dataMap).sort();
             if (sortedDates.length > 0) {
                 for (let i = sortedDates.length - 1; i >= 0; i--) {
