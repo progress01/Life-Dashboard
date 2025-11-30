@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V11.5</title>
+    <title>Life Dashboard V14</title>
     <style>
-        /* --- 全域風格 --- */
+        /* --- 全域風格 (樸實版) --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             background-color: #0d1117;
@@ -33,33 +33,66 @@
         .dashboard-view { width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.5s ease; }
         .hidden { display: none !important; }
 
-        /* --- 數據與圖表 --- */
-        .quote-container { background-color: #161b22; background-size: cover; background-position: center; border: 1px solid #30363d; border-left: 5px solid #58a6ff; border-radius: 8px; margin-bottom: 20px; width: 100%; min-height: 100px; display: flex; align-items: center; position: relative; overflow: hidden; transition: 0.5s; box-sizing: border-box; }
-        .quote-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(13,17,23,0.98) 0%, rgba(13,17,23,0.6) 100%); z-index: 1; }
+        /* --- 金句卡片 (靜態背景) --- */
+        .quote-container { 
+            background-color: #161b22; 
+            background-size: cover; 
+            background-position: center; 
+            border: 1px solid #30363d; 
+            border-left: 5px solid #58a6ff; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            width: 100%; 
+            min-height: 120px; 
+            display: flex; 
+            align-items: center; 
+            position: relative; 
+            overflow: hidden; 
+            transition: 0.5s; 
+            box-sizing: border-box; 
+        }
+        .quote-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(13,17,23,0.95) 0%, rgba(13,17,23,0.4) 100%); z-index: 1; }
         .quote-content-layer { position: relative; z-index: 2; padding: 20px; width: 100%; box-sizing: border-box; }
-        .quote-text { font-size: 1.1rem; font-weight: 500; color: #fff; font-family: serif; margin-bottom: 8px; line-height: 1.4; }
-        .quote-author { font-size: 0.8rem; color: #8b949e; text-align: right; display: block; font-weight: bold; text-transform: uppercase; }
+        .quote-text { font-size: 1.2rem; font-weight: 500; color: #fff; font-family: serif; margin-bottom: 8px; line-height: 1.4; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .quote-author { font-size: 0.9rem; color: #e6edf3; text-align: right; display: block; font-weight: bold; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 
+        /* --- 數據統計 --- */
         .stats-container { display: flex; gap: 20px; margin-bottom: 20px; width: 100%; justify-content: space-around; }
-        .stat-item { display: flex; flex-direction: column; align-items: center; }
-        .stat-val { font-size: 2rem; font-weight: 800; margin-bottom: 5px; line-height: 1; }
+        .stat-item { display: flex; flex-direction: column; align-items: center; min-width: 100px; }
+        .stat-val { font-size: 2rem; font-weight: 800; margin-bottom: 5px; line-height: 1; transition: opacity 0.5s; }
         .stat-label { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; }
 
+        /* --- 熱力圖與資訊列 --- */
+        .hover-info-bar {
+            height: 24px;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #58a6ff;
+            font-family: monospace;
+            text-align: right;
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
         .graph-wrapper { padding: 15px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; width: 100%; box-sizing: border-box; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .graph-container { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; gap: 3px; }
-        .day-cell { width: 12px; height: 12px; border-radius: 2px; background-color: #21262d; outline: 1px solid rgba(255,255,255,0.05); }
-        .color-gold { background-color: #ffd700 !important; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); z-index: 2; animation: glow 2s infinite alternate; }
-        @keyframes glow { from { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); } to { box-shadow: 0 0 15px rgba(255, 215, 0, 0.9); } }
-        @media (hover: hover) { .day-cell:hover { transform: scale(1.5); z-index: 10; border: 1px solid #fff; } }
         
-        /* --- 預算血條 --- */
+        .day-cell { width: 12px; height: 12px; border-radius: 2px; background-color: #21262d; outline: 1px solid rgba(255,255,255,0.05); cursor: crosshair; transition: transform 0.1s; }
+        
+        /* 移除呼吸動畫，僅保留金色樣式 */
+        .color-gold { background-color: #ffd700 !important; z-index: 2; }
+        
+        @media (hover: hover) { 
+            .day-cell:hover { transform: scale(1.4); z-index: 10; border: 1px solid #fff; } 
+        }
+        
+        /* --- 預算血條 (移除震動) --- */
         .budget-bar-container { width: 100%; box-sizing: border-box; margin-bottom: 20px; display: none; flex-direction: column; gap: 8px; background: #161b22; padding: 15px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .budget-header { display: flex; justify-content: space-between; align-items: flex-end; }
         .hp-track { width: 100%; height: 12px; background: #21262d; border-radius: 6px; overflow: hidden; position: relative; border: 1px solid #30363d; }
         .hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #2ea043, #3fb950); transition: width 0.5s; }
         .hp-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
-        .shaking { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
 
         /* --- 🎲 獎勵轉盤 --- */
         .reward-card {
@@ -67,11 +100,12 @@
             width: 100%; box-sizing: border-box; text-align: center;
             box-shadow: 0 0 20px rgba(163, 113, 247, 0.1);
         }
-        .reward-toggle-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .reward-toggle-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
         .sub-toggle-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; padding: 6px 15px; border-radius: 15px; cursor: pointer; font-size: 13px; }
         .sub-toggle-btn.active-h { background: #238636; color: white; border-color: #238636; }
         .sub-toggle-btn.active-m { background: #d29922; color: #1e1e1e; border-color: #d29922; }
 
+        .reward-period { font-size: 13px; color: #a371f7; margin-bottom: 5px; font-weight: bold; opacity: 0.8; }
         .balance-info { font-size: 1rem; color: #8b949e; margin-bottom: 5px; }
         .balance-amount { font-size: 2.5rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
         .result-box { margin: 20px 0; height: 80px; display: flex; align-items: center; justify-content: center; background: #0d1117; border: 2px dashed #30363d; border-radius: 8px; font-size: 1.5rem; font-weight: bold; color: #fff; }
@@ -132,8 +166,17 @@
 
         <div class="stats-container">
             <div class="stat-item"><div id="stat1-val" class="stat-val">0</div><div id="stat1-label" class="stat-label">Streak</div></div>
-            <div class="stat-item"><div id="stat2-val" class="stat-val">0</div><div id="stat2-label" class="stat-label">Metric</div></div>
+            
+            <div class="stat-item">
+                <div id="stat2-val" class="stat-val">0</div>
+                <div id="stat2-label" class="stat-label">Metric</div>
+            </div>
+            
             <div class="stat-item"><div id="stat3-val" class="stat-val">0</div><div id="stat3-label" class="stat-label">Total</div></div>
+        </div>
+
+        <div class="hover-info-bar" id="hover-info">
+            👆 滑動熱力圖查看詳情
         </div>
 
         <div class="graph-wrapper" id="graph-scroller">
@@ -148,6 +191,8 @@
                 <button class="sub-toggle-btn" id="reward-money-btn" onclick="switchRewardContext('money')">💰 消費獎勵</button>
             </div>
 
+            <div class="reward-period" id="reward-period-display"></div>
+            
             <div class="balance-info" id="reward-title">本週累積成果</div>
             <div class="balance-amount" id="reward-balance">---</div>
             
@@ -165,33 +210,19 @@
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-box">
             <div class="modal-title">⚙️ 資料來源設定</div>
-            
-            <div class="input-group">
-                <label class="input-label">熱量表連結 (或 ID)</label>
-                <input type="text" id="input-health-id" class="input-field" placeholder="貼上完整網址或 ID...">
-                <div class="note">支援直接貼上網址</div>
-            </div>
+            <div class="input-group"><label class="input-label">熱量表連結 (或 ID)</label><input type="text" id="input-health-id" class="input-field" placeholder="貼上完整網址或 ID..."></div>
             <div class="input-group"><label class="input-label">熱量表分頁名</label><input type="text" id="input-health-sheet" class="input-field" placeholder="預設: 表單"></div>
-
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
-
-            <div class="input-group">
-                <label class="input-label">記帳表連結 (或 ID)</label>
-                <input type="text" id="input-money-id" class="input-field" placeholder="貼上完整網址或 ID...">
-                <div class="note">支援直接貼上網址</div>
-            </div>
+            <div class="input-group"><label class="input-label">記帳表連結 (或 ID)</label><input type="text" id="input-money-id" class="input-field" placeholder="貼上完整網址或 ID..."></div>
             <div class="input-group"><label class="input-label">記帳表分頁名</label><input type="text" id="input-money-sheet" class="input-field" placeholder="預設: 表單"></div>
             <div class="input-group"><label class="input-label">記帳月預算</label><input type="number" id="input-monthly-budget" class="input-field" value="10000"></div>
-
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
             <div class="input-group"><label class="input-label">金句分頁名</label><input type="text" id="input-quote-sheet" class="input-field" placeholder="預設: Quotes"></div>
-            
             <div class="input-group">
                 <label class="input-label">背景風格</label>
                 <select id="input-bg-style" class="input-select">
                     <option value="nature" selected>🌲 隨機風景</option>
                     <option value="gradient">🌌 科技漸層</option>
-                    <option value="custom">🔗 Excel 網址</option>
                 </select>
             </div>
             <button class="save-btn" onclick="saveSettings()">💾 儲存設定</button>
@@ -212,31 +243,45 @@
         
         let currentMode = 'health';
         let lastActiveMode = 'health'; 
-        let currentWeekBalance = 0;     
+        let balanceHealth = 0;
+        let balanceMoney = 0;
+        let comparisonTicker = null; // 用來輪播數據的計時器
 
         const THEMES = {
-            health: { colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], statLabels: ['連續達標 (天)', '預估減脂 (kg)', '累積赤字 (cal)'], isDeficitGood: true, thresholds: [-600, -300, 0, 300, 600], unit: 'cal' },
-            money: { colors: ['#0e4429', '#26a641', '#161b22', '#d29922', '#bd561d', '#ff4d4d'], statLabels: ['省錢達標 (天)', '日均花費 ($)', '本月剩餘 ($)'], isDeficitGood: false, budgetLimit: 300, goldLimit: 170, thresholds: [100, 300, 800, 1500, 3000], unit: '$' }
+            health: { 
+                colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], 
+                statLabels: ['連續達標 (天)', '數據分析', '累積赤字 (cal)'], 
+                isDeficitGood: true, 
+                thresholds: [-600, -300, 0, 300, 600], 
+                unit: 'cal',
+                goldLimit: -500 
+            },
+            money: { 
+                colors: ['#0e4429', '#26a641', '#161b22', '#d29922', '#bd561d', '#ff4d4d'], 
+                statLabels: ['省錢達標 (天)', '日均花費 ($)', '本月剩餘 ($)'], 
+                isDeficitGood: false, 
+                budgetLimit: 300, 
+                goldLimit: 170, 
+                thresholds: [100, 300, 800, 1500, 3000], 
+                unit: '$' 
+            }
         };
 
         init();
 
         function init() {
             loadSettings();
+            applyDefaultBackground(); 
             if (!CONFIG.healthId && !CONFIG.moneyId) openSettings();
             else switchApp('health');
-            
             document.getElementById('reward-list-input').value = CONFIG.rewardsHealth;
         }
 
         function openSettings() {
             document.getElementById('input-health-id').value = CONFIG.healthId || '';
-            // V11.5 Update: 預設值改為 '表單'
             document.getElementById('input-health-sheet').value = CONFIG.healthSheet || '表單';
-            
             document.getElementById('input-money-id').value = CONFIG.moneyId || '';
             document.getElementById('input-money-sheet').value = CONFIG.moneySheet || '表單';
-            
             document.getElementById('input-monthly-budget').value = CONFIG.monthlyBudget || 10000;
             document.getElementById('input-bg-style').value = CONFIG.bgStyle || 'nature';
             document.getElementById('input-quote-sheet').value = CONFIG.quoteSheet || 'Quotes';
@@ -245,7 +290,6 @@
         function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
         
         function saveSettings() {
-            // V11.5 Update: 智慧網址識別與新預設值
             const extractId = (val) => {
                 if (!val) return '';
                 const match = val.match(/\/d\/([a-zA-Z0-9-_]+)/);
@@ -254,16 +298,15 @@
 
             CONFIG.healthId = extractId(document.getElementById('input-health-id').value.trim());
             CONFIG.healthSheet = document.getElementById('input-health-sheet').value.trim() || '表單';
-            
             CONFIG.moneyId = extractId(document.getElementById('input-money-id').value.trim());
             CONFIG.moneySheet = document.getElementById('input-money-sheet').value.trim() || '表單';
-            
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
             CONFIG.quoteSheet = document.getElementById('input-quote-sheet').value.trim() || 'Quotes';
             
             localStorage.setItem('dashboard_config_v11', JSON.stringify(CONFIG));
             closeSettings();
+            applyDefaultBackground();
             switchApp(currentMode);
         }
         
@@ -278,15 +321,30 @@
 
         function saveRewardList() {
             const content = document.getElementById('reward-list-input').value;
-            if (currentRewardContext === 'health') CONFIG.rewardsHealth = content;
+            if (currentMode === 'health') CONFIG.rewardsHealth = content;
             else CONFIG.rewardsMoney = content;
             localStorage.setItem('dashboard_config_v11', JSON.stringify(CONFIG));
+        }
+
+        function applyDefaultBackground() {
+            const card = document.getElementById('quote-card');
+            const overlay = document.getElementById('q-overlay');
+            if (CONFIG.bgStyle === 'nature') {
+                card.style.backgroundImage = `url('https://source.unsplash.com/random/800x300?nature,landscape,forest&t=${new Date().getDate()}')`; 
+                overlay.style.display = 'block';
+            } else {
+                card.style.backgroundImage = 'linear-gradient(135deg, #21262d 0%, #0d1117 100%)';
+                overlay.style.display = 'none';
+            }
         }
 
         function switchApp(mode) {
             currentMode = mode;
             document.querySelectorAll('.switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
             
+            // 清除之前的輪播
+            if (comparisonTicker) { clearInterval(comparisonTicker); comparisonTicker = null; }
+
             const dashView = document.getElementById('dashboard-view');
             const rewardView = document.getElementById('reward-view');
 
@@ -310,6 +368,7 @@
             
             document.getElementById('app-title').innerText = (mode === 'health') ? "🔥 Calorie Tracker" : "💰 Expense Tracker";
             document.getElementById('heatmap').innerHTML = 'Loading data...';
+            document.getElementById('hover-info').innerText = '👆 滑動熱力圖查看詳情'; 
             
             document.getElementById('stat1-label').innerText = theme.statLabels[0];
             document.getElementById('stat2-label').innerText = theme.statLabels[1];
@@ -325,9 +384,17 @@
         }
 
         function switchRewardContext(type) {
-            currentRewardContext = type;
             document.getElementById('reward-health-btn').classList.toggle('active-h', type === 'health');
             document.getElementById('reward-money-btn').classList.toggle('active-m', type === 'money');
+
+            const now = new Date();
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay()); 
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6); 
+            
+            const fmt = (d) => `${d.getMonth()+1}/${d.getDate()}`;
+            document.getElementById('reward-period-display').innerText = `📅 結算週期: ${fmt(startOfWeek)} ~ ${fmt(endOfWeek)}`;
 
             const title = (type === 'health') ? '🔥 本週熱量赤字' : '💰 本週剩餘預算';
             const unit = (type === 'health') ? 'cal' : '$';
@@ -344,11 +411,9 @@
         function spinWheel() {
             const listText = document.getElementById('reward-list-input').value.trim();
             if (!listText) return alert('請先輸入獎品清單！');
-            
             const items = listText.split('\n').filter(line => line.trim() !== '');
             const resultBox = document.getElementById('reward-result');
             const btn = document.querySelector('.spin-btn');
-            
             if (items.length === 0) return;
 
             btn.disabled = true;
@@ -360,7 +425,6 @@
                 const rand = items[Math.floor(Math.random() * items.length)];
                 resultBox.innerText = rand;
                 count++;
-                
                 if (count > 20) { 
                     clearInterval(loop);
                     btn.disabled = false;
@@ -371,7 +435,6 @@
 
         async function fetchData(id, sheetName, theme) {
             const encodedSheet = encodeURIComponent(sheetName);
-            // 查詢 B(日期) 和 C(數值) 欄位
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=SELECT B, C OFFSET 1`;
             try {
                 const res = await fetch(url); const text = await res.text();
@@ -404,17 +467,11 @@
                 } catch(e) { return; }
 
                 const value = row.c[1].v; 
-                
-                if (dataMap[dateStr]) {
-                    dataMap[dateStr].value += value;
-                } else {
-                    dataMap[dateStr] = { value: value, note: "" };
-                }
+                if (dataMap[dateStr]) { dataMap[dateStr].value += value; } 
+                else { dataMap[dateStr] = { value: value }; }
             });
             
-            totalSum = 0; count = 0; streak = 0; monthSpent = 0; weekSum = 0;
             const sortedDates = Object.keys(dataMap).sort();
-            
             sortedDates.forEach(dateStr => {
                 const item = dataMap[dateStr];
                 const value = item.value;
@@ -451,20 +508,57 @@
             document.getElementById('stat1-val').innerText = streak;
             document.getElementById('stat1-val').style.color = theme.isDeficitGood ? '#ff9b5e' : '#d29922';
 
+            // --- V14: 數據呈現邏輯 (具體化比較) ---
+            const stat2Val = document.getElementById('stat2-val');
+            const stat2Label = document.getElementById('stat2-label');
+            
             if (currentMode === 'health') {
-                const kg = (Math.abs(totalSum) / 7700).toFixed(1);
-                document.getElementById('stat2-val').innerText = kg;
-                document.getElementById('stat3-val').innerText = Math.abs(totalSum).toLocaleString();
-                document.getElementById('stat2-val').style.color = '#3fb950'; document.getElementById('stat3-val').style.color = '#58a6ff';
+                const deficit = Math.abs(totalSum);
+                // 定義比較物 (卡路里參考值)
+                const comparisons = [
+                    { label: '預估減脂 (KG)', val: (deficit / 7700).toFixed(1) },
+                    { label: '少喝珍奶 (杯)', val: Math.round(deficit / 650) },
+                    { label: '少吃雞排 (份)', val: Math.round(deficit / 600) },
+                    { label: '少吃大麥克 (個)', val: Math.round(deficit / 550) },
+                    { label: '少吃白飯 (碗)', val: Math.round(deficit / 280) }
+                ];
+                
+                let cIndex = 0;
+                // 初始化顯示
+                stat2Val.innerText = comparisons[0].val;
+                stat2Label.innerText = comparisons[0].label;
+                stat2Val.style.color = '#3fb950';
+
+                // 啟動輪播
+                comparisonTicker = setInterval(() => {
+                    // 淡出
+                    stat2Val.style.opacity = 0;
+                    setTimeout(() => {
+                        cIndex = (cIndex + 1) % comparisons.length;
+                        stat2Val.innerText = comparisons[cIndex].val;
+                        stat2Label.innerText = comparisons[cIndex].label;
+                        // 淡入
+                        stat2Val.style.opacity = 1;
+                    }, 500);
+                }, 4000); // 每 4 秒切換一次
+
+                document.getElementById('stat3-val').innerText = deficit.toLocaleString();
+                document.getElementById('stat3-val').style.color = '#58a6ff';
+
             } else {
+                // 記帳模式維持原樣
                 const avg = count > 0 ? Math.round(totalSum / count) : 0;
-                document.getElementById('stat2-val').innerText = avg.toLocaleString();
+                stat2Val.innerText = avg.toLocaleString();
+                stat2Label.innerText = '日均花費 ($)';
+                stat2Val.style.color = '#58a6ff';
+                stat2Val.style.opacity = 1;
+
                 const remaining = CONFIG.monthlyBudget - monthSpent;
                 document.getElementById('stat3-val').innerText = remaining.toLocaleString();
                 document.getElementById('stat3-val').style.color = remaining > 0 ? '#3fb950' : '#ff4d4d';
-                document.getElementById('stat2-val').style.color = '#58a6ff';
                 updateWalletHP(monthSpent, CONFIG.monthlyBudget);
             }
+            
             drawHeatmap(dataMap, theme);
             setTimeout(() => { const scroller = document.getElementById('graph-scroller'); if(scroller) scroller.scrollLeft = scroller.scrollWidth; }, 100);
         }
@@ -482,8 +576,13 @@
             const bar = document.getElementById('hp-fill');
             const container = document.getElementById('budget-container');
             bar.style.width = hpPercent + '%';
-            if (remaining < theoryRemaining * 0.9) { bar.className = 'hp-fill danger'; container.classList.add('shaking'); } 
-            else { bar.className = 'hp-fill'; container.classList.remove('shaking'); }
+            if (remaining < theoryRemaining * 0.9) { 
+                bar.className = 'hp-fill danger'; 
+                // container.classList.add('shaking'); // V14: 移除震動
+            } else { 
+                bar.className = 'hp-fill'; 
+                // container.classList.remove('shaking'); 
+            }
         }
 
         function drawHeatmap(data, theme) {
@@ -491,16 +590,20 @@
             const today = new Date(); const startDate = new Date(); startDate.setDate(today.getDate() - 365);
             while (startDate.getDay() !== 0) startDate.setDate(startDate.getDate() - 1);
             let currentDate = new Date(startDate);
+            const hoverBar = document.getElementById('hover-info');
+
             while (currentDate <= today) {
                 const dateString = currentDate.toISOString().split('T')[0];
                 const item = data[dateString];
                 const cell = document.createElement('div');
                 cell.classList.add('day-cell');
                 cell.style.backgroundColor = theme.colors[theme.isDeficitGood ? 3 : 2]; 
+                
                 if (item !== undefined) {
                     const value = item.value; const th = theme.thresholds; let verdict = "";
                     if (theme.isDeficitGood) {
-                        if (value < th[0]) cell.style.backgroundColor = theme.colors[0];
+                        if (value <= theme.goldLimit) { cell.classList.add('color-gold'); verdict = "🔥 燃脂"; }
+                        else if (value < th[0]) cell.style.backgroundColor = theme.colors[0];
                         else if (value < th[1]) cell.style.backgroundColor = theme.colors[1];
                         else if (value < 0) cell.style.backgroundColor = theme.colors[2];
                         else if (value == 0) cell.style.backgroundColor = theme.colors[3];
@@ -508,14 +611,18 @@
                         else if (value < th[4]) cell.style.backgroundColor = theme.colors[5];
                         else cell.style.backgroundColor = theme.colors[6];
                     } else {
-                        if (value <= theme.goldLimit && value > 0) { cell.classList.add('color-gold'); verdict = "🏆 神之省錢"; }
+                        if (value <= theme.goldLimit && value > 0) { cell.classList.add('color-gold'); verdict = "🏆 神省"; }
                         else if (value === 0) cell.style.backgroundColor = theme.colors[2];
                         else if (value <= th[1]) { cell.style.backgroundColor = theme.colors[1]; verdict = "✅ 安全"; }
                         else if (value <= th[2]) { cell.style.backgroundColor = theme.colors[3]; }
                         else if (value <= th[3]) { cell.style.backgroundColor = theme.colors[4]; }
                         else cell.style.backgroundColor = theme.colors[5];
                     }
-                    cell.setAttribute('data-tooltip', `${dateString}\n${verdict}\n${theme.unit}: ${value}`);
+
+                    const tooltipText = `${dateString} | ${verdict} ${theme.unit}: ${value}`;
+                    cell.setAttribute('title', tooltipText);
+                    cell.onmouseover = () => { hoverBar.innerText = tooltipText; hoverBar.style.color = '#fff'; };
+                    cell.onmouseout = () => { hoverBar.innerText = '👆 滑動熱力圖查看詳情'; hoverBar.style.color = '#58a6ff'; };
                 }
                 container.appendChild(cell);
                 currentDate.setDate(currentDate.getDate() + 1);
@@ -523,6 +630,7 @@
         }
 
         async function fetchQuotes(id, sheetName) {
+            if (!id || !sheetName) return;
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${sheetName}&tq=SELECT A, B, C`;
             try {
                 const res = await fetch(url); const text = await res.text();
@@ -537,12 +645,15 @@
                     document.getElementById('q-author').innerText = qAuth;
                     const card = document.getElementById('quote-card');
                     const overlay = document.getElementById('q-overlay');
-                    if (CONFIG.bgStyle === 'custom' && qImg) { card.style.backgroundImage = `url('${qImg}')`; overlay.style.display = 'block'; }
-                    else if (CONFIG.bgStyle === 'nature') { card.style.backgroundImage = `url('https://source.unsplash.com/random/800x300?nature,landscape,mountain&t=${Date.now()}')`; overlay.style.display = 'block'; }
-                    else { card.style.backgroundImage = 'linear-gradient(135deg, #21262d 0%, #0d1117 100%)'; overlay.style.display = 'none'; }
-                    card.style.display = 'flex';
+                    if (CONFIG.bgStyle === 'custom' && qImg) { 
+                        card.style.backgroundImage = `url('${qImg}')`; 
+                        overlay.style.display = 'block'; 
+                    }
                 }
-            } catch (e) { console.log('Quote fetch failed'); }
+            } catch (e) { 
+                console.log('Quote fetch failed');
+                document.getElementById('q-text').innerText = "Focus on your goal.";
+            }
         }
     </script>
 </body>
