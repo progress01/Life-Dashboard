@@ -55,6 +55,7 @@
 
 需要讀取 Google Sheet 中的特定分頁，以計算儀表板上顯示的指標，例如熱量追蹤、錢包 HP (Wallet HP)、今日理論剩餘、連續紀錄天數以及獎勵計算等。
 1.開啟檢視者權限
+
 ---
 
 <img width="464" height="83" alt="image" src="https://github.com/user-attachments/assets/299df808-8f70-4243-a9c2-bbc801caa013" />
