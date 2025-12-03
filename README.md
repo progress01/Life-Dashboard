@@ -56,14 +56,23 @@
 需要讀取 Google Sheet 中的特定分頁，以計算儀表板上顯示的指標，例如熱量追蹤、錢包 HP (Wallet HP)、今日理論剩餘、連續紀錄天數以及獎勵計算等。
 1.開啟檢視者權限
 ---
+
 <img width="464" height="83" alt="image" src="https://github.com/user-attachments/assets/299df808-8f70-4243-a9c2-bbc801caa013" />
+
 ---
+
 2.熱量資料表B欄與C欄的順序不能調換(若以google form收集資料A欄位常預設為時間戳記)
+
 ---
+
 <img width="308" height="90" alt="image" src="https://github.com/user-attachments/assets/64cccc42-f42f-46cb-af66-8f8c378ff9dd" />
+
 ---
+
 3.記帳資料表B欄與C欄的順序不能調換(若以google form收集資料A欄位常預設為時間戳記)
+
 ---
+
 <img width="304" height="88" alt="image" src="https://github.com/user-attachments/assets/aaf0252f-880c-458d-9732-f7e884346b55" />
 
 
