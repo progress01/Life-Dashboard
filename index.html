@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V21 - Battle Card</title>
+    <title>Life Dashboard V23 - Mobile Optimized</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         /* --- 全域風格 --- */
@@ -121,35 +121,49 @@
         .input-field, .input-select { width: 100%; padding: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; box-sizing: border-box; font-size: 14px; }
         .save-btn { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px;}
 
-        /* --- 狀態警示卡片 --- */
-        .alert-box { width: 100%; max-width: 900px; background: rgba(210, 153, 34, 0.15); border: 1px solid #d29922; border-radius: 8px; padding: 15px; margin-top: 15px; display: flex; align-items: flex-start; gap: 15px; box-sizing: border-box; animation: pulse-border 2s infinite; }
-        .alert-icon { font-size: 24px; }
-        .alert-content { flex: 1; }
-        .alert-title { color: #d29922; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
-        .alert-desc { color: #eac54f; font-size: 0.95rem; line-height: 1.5; }
-        .recovery-tag { background: #d29922; color: #0d1117; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 800; margin-left: 5px; }
-        @keyframes pulse-border { 0% { box-shadow: 0 0 0 0 rgba(210, 153, 34, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(210, 153, 34, 0); } 100% { box-shadow: 0 0 0 0 rgba(210, 153, 34, 0); } }
+        /* --- 狀態警示卡片 (V23: 手機優化版) --- */
+        .alert-box { 
+            width: 100%; max-width: 900px; 
+            background: rgba(210, 153, 34, 0.1); 
+            border: 1px solid rgba(210, 153, 34, 0.5); border-left: 5px solid #d29922; border-radius: 8px; 
+            padding: 15px; margin-top: 15px; 
+            display: flex; align-items: flex-start; gap: 15px; 
+            box-sizing: border-box; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+        }
+        .alert-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+        .alert-content { flex: 1; min-width: 0; }
+        
+        .alert-title { 
+            color: #d29922; font-weight: bold; font-size: 1.1rem; 
+            margin-bottom: 8px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            flex-wrap: wrap; gap: 5px; 
+        }
+        .alert-desc { color: #eac54f; font-size: 0.95rem; line-height: 1.6; }
+        
+        .recovery-tag { 
+            display: inline-block; 
+            background: #d29922; color: #0d1117; 
+            padding: 2px 8px; border-radius: 12px; 
+            font-size: 12px; font-weight: 800; 
+            margin: 2px 2px; 
+            white-space: nowrap; /* 禁止數字斷行 */
+        }
 
         /* --- 戰報分享卡片 (Share Card) --- */
-        .share-card-container { position: fixed; left: -9999px; top: 0; } /* 隱藏但可被渲染 */
+        .share-card-container { position: fixed; left: -9999px; top: 0; }
         .share-card {
-            width: 400px;
-            height: 600px;
-            background-color: #161b22;
-            position: relative;
-            border-radius: 16px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            font-family: serif;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            width: 400px; height: 600px;
+            background-color: #161b22; position: relative; border-radius: 16px; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: space-between;
+            font-family: serif; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
         .sc-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(2px); z-index: 0; transition: background 0.5s;}
         .sc-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(13,17,23,0.3) 0%, rgba(13,17,23,0.85) 60%, rgba(13,17,23,1) 100%); z-index: 1; }
         
         .sc-content-top { position: relative; z-index: 2; padding: 40px 30px; text-align: center; }
-        .sc-date { font-size: 1.2rem; color: #8b949e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; font-family: sans-serif; font-weight: bold; }
+        .sc-date { font-size: 1.1rem; color: #8b949e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; font-family: sans-serif; font-weight: bold; line-height: 1.4; white-space: pre-line; }
         .sc-main-val { font-size: 3.5rem; font-weight: 800; color: #fff; margin-bottom: 10px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); font-family: sans-serif; }
         .sc-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 1rem; font-weight: bold; margin-bottom: 20px; backdrop-filter: blur(5px); }
         .sc-streak { font-size: 1.1rem; color: #e6edf3; font-weight: 500; }
@@ -163,6 +177,25 @@
 
         @media (max-width: 600px) {
             body { padding: 10px; } .nav-bar { flex-direction: row; gap: 8px; } .switch-container { flex: 1; padding: 3px; } .switch-btn { padding: 8px 5px; font-size: 13px; flex: 1; text-align: center; } .stats-container { gap: 10px; } .stat-val { font-size: 1.5rem; } .graph-wrapper { padding: 10px; width: 100vw; margin-left: -10px; border-radius: 0; border-left: none; border-right: none;}
+            
+            /* Mobile Alert Fix */
+            .alert-title {
+                flex-direction: column; /* 標題與數值上下排列 */
+                align-items: flex-start;
+                gap: 2px;
+            }
+            .alert-title span:last-child {
+                /* 數值部分放大 */
+                font-size: 1.5rem; 
+                color: #ff9b5e;
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+            .alert-desc {
+                margin-top: 8px;
+                padding-top: 8px;
+                border-top: 1px dashed rgba(210, 153, 34, 0.3); /* 分隔線 */
+            }
         }
     </style>
 </head>
@@ -175,7 +208,7 @@
             <button class="switch-btn" data-mode="reward" onclick="switchApp('reward')">🎲 獎勵</button>
         </div>
         <div class="nav-right-group">
-            <button class="icon-btn" onclick="captureShareCard()" title="製作今日戰報">📷</button>
+            <button class="icon-btn" onclick="captureShareCard()" title="製作本週戰報">📷</button>
             <button class="icon-btn settings-btn" onclick="openSettings()">⚙️</button>
         </div>
     </div>
@@ -256,7 +289,7 @@
             <div class="sc-bg" id="sc-bg"></div>
             <div class="sc-overlay"></div>
             <div class="sc-content-top">
-                <div class="sc-date" id="sc-date">DEC 20 SAT</div>
+                <div class="sc-date" id="sc-date">WEEKLY REPORT</div>
                 <div class="sc-main-val" id="sc-val">-500</div>
                 <div class="sc-badge" id="sc-badge">🔥 燃脂神人</div>
                 <div class="sc-streak">⚡ 連續紀錄: <span id="sc-streak-val">12</span> 天</div>
@@ -331,7 +364,7 @@
         let globalTheme = {};
         let weekOffset = 0;
         let comparisonTicker = null; 
-        let currentBgUrl = ''; // 追蹤當前背景圖
+        let currentBgUrl = ''; 
 
         const DEFAULT_QUOTES = [
             { text: "只要記住你的名字，不管你在世界的哪個地方，我一定會去見你。", author: "你的名字" },
@@ -454,33 +487,49 @@
             card.style.backgroundImage = `url('${currentBgUrl}')`;
         }
 
-        // --- V21: 戰報卡片生成邏輯 ---
-        function getLatestDataEntry(dataMap) {
-            const sortedDates = Object.keys(dataMap).sort();
-            if (sortedDates.length === 0) return null;
-            // 回傳最後一筆資料
-            const lastDate = sortedDates[sortedDates.length - 1];
-            return { date: lastDate, value: dataMap[lastDate].value };
-        }
-
+        // --- V22: 週報卡片生成邏輯 ---
         function captureShareCard() {
-            const btn = document.querySelector('.icon-btn[title="製作今日戰報"]');
+            const btn = document.querySelector('.icon-btn[title="製作本週戰報"]');
             const originalText = btn.innerText;
             btn.innerText = '⏳';
             
-            // 1. 取得最新資料
-            const entry = getLatestDataEntry(globalDataMap);
-            const dateObj = entry ? new Date(entry.date) : new Date();
-            const value = entry ? entry.value : 0;
-            const streakVal = document.getElementById('stat1-val').innerText; // 直接抓介面算好的 Streak
+            // 1. 計算本週累積數據
+            const now = new Date();
+            const startOfWeek = new Date(now);
+            const day = now.getDay();
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1); // 週一開始
+            startOfWeek.setDate(diff); startOfWeek.setHours(0,0,0,0);
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6); endOfWeek.setHours(23,59,59,999);
+
+            let weeklySum = 0;
+            let ptr = new Date(startOfWeek);
+            while(ptr <= endOfWeek) {
+                const dStr = formatLocalYMD(ptr);
+                if (globalDataMap[dStr]) {
+                    if (globalTheme.isDeficitGood) {
+                         // Health模式：不管正負都加總，才能反映總赤字或盈餘
+                         if(globalDataMap[dStr].value !== 0) weeklySum += globalDataMap[dStr].value;
+                    } else {
+                         weeklySum += globalDataMap[dStr].value;
+                    }
+                }
+                ptr.setDate(ptr.getDate() + 1);
+            }
+
+            const streakVal = document.getElementById('stat1-val').innerText;
 
             // 2. 填充卡片 DOM
-            const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-            const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-            document.getElementById('sc-date').innerText = `${months[dateObj.getMonth()]} ${dateObj.getDate()} ${days[dateObj.getDay()]}`;
-            document.getElementById('sc-val').innerText = value.toLocaleString();
+            const fmt = (d) => `${d.getMonth()+1}/${d.getDate()}`;
+            document.getElementById('sc-date').innerText = `WEEKLY REPORT\n${fmt(startOfWeek)} - ${fmt(endOfWeek)}`;
+            
+            // 處理數值顯示 (+號)
+            let displayVal = weeklySum.toLocaleString();
+            if (weeklySum > 0) displayVal = "+" + displayVal;
+            document.getElementById('sc-val').innerText = displayVal;
+            
             document.getElementById('sc-streak-val').innerText = streakVal;
-            document.getElementById('sc-quote-text').innerText = document.getElementById('q-text').innerText; // 沿用當前金句
 
             // 3. 設定背景
             const scBg = document.getElementById('sc-bg');
@@ -490,20 +539,54 @@
                 scBg.style.backgroundImage = 'linear-gradient(135deg, #21262d 0%, #0d1117 100%)';
             }
 
-            // 4. 設定 Badge 狀態與顏色
+            // 4. 設定 Badge 與 底部文字 (智慧切換)
             const badgeEl = document.getElementById('sc-badge');
+            const quoteEl = document.getElementById('sc-quote-text');
+            const quoteBorder = document.querySelector('.sc-quote');
+            
             let badgeText = "保持紀錄";
-            let badgeColor = "#58a6ff"; // 預設藍
+            let badgeColor = "#58a6ff"; 
+
+            // 還原預設樣式
+            quoteBorder.style.borderLeftColor = "#58a6ff"; 
+            quoteBorder.style.color = "#c9d1d9";
+            quoteBorder.style.fontStyle = "italic";
 
             if (currentMode === 'health') {
-                if (value < 0) { badgeText = "🔥 燃脂神人"; badgeColor = "#3fb950"; }
-                else if (value === 0) { badgeText = "✨ 完美平衡"; badgeColor = "#8b949e"; }
-                else { badgeText = "🍔 熱量囤積中"; badgeColor = "#d29922"; }
+                if (weeklySum < 0) { 
+                    badgeText = "🔥 本週燃脂中"; badgeColor = "#3fb950"; 
+                    quoteEl.innerText = document.getElementById('q-text').innerText; // 顯示金句
+                }
+                else if (weeklySum === 0) { 
+                    badgeText = "✨ 完美平衡"; badgeColor = "#8b949e"; 
+                    quoteEl.innerText = document.getElementById('q-text').innerText;
+                }
+                else { 
+                    // 警示狀態：顯示補救計畫
+                    badgeText = "⚠️ 赤字失守"; badgeColor = "#d29922"; 
+                    const walkMins = Math.round(weeklySum / 5); 
+                    quoteEl.innerHTML = `本週熱量累積中！<br>目標：只要再多走 <b>${walkMins} 分鐘</b>，就能把這週的進度追回來。`;
+                    
+                    // 改變樣式以強調
+                    quoteBorder.style.borderLeftColor = "#d29922";
+                    quoteBorder.style.color = "#fff";
+                    quoteBorder.style.fontStyle = "normal";
+                }
             } else {
-                const budget = CONFIG.monthlyBudget / 30; // 粗略日預算
-                if (value === 0) { badgeText = "🏆 0 元挑戰成功"; badgeColor = "#ffd700"; }
-                else if (value <= budget) { badgeText = "💰 省錢達人"; badgeColor = "#3fb950"; }
-                else { badgeText = "💸 錢包失血"; badgeColor = "#ff4d4d"; }
+                // Money Mode
+                const weeklyBudget = CONFIG.monthlyBudget / 4;
+                const saved = weeklyBudget - weeklySum;
+                if (saved >= 0) { 
+                    badgeText = "💰 預算控制佳"; badgeColor = "#3fb950"; 
+                    quoteEl.innerText = document.getElementById('q-text').innerText;
+                }
+                else { 
+                    badgeText = "💸 超支警報"; badgeColor = "#ff4d4d"; 
+                    quoteEl.innerHTML = `本週已超支 ${Math.abs(Math.round(saved))} 元。<br>下週請減少非必要開支，平衡回來！`;
+                    quoteBorder.style.borderLeftColor = "#ff4d4d";
+                    quoteBorder.style.color = "#fff";
+                    quoteBorder.style.fontStyle = "normal";
+                }
             }
             
             badgeEl.innerText = badgeText;
@@ -519,8 +602,8 @@
                 scale: 2 // 高解析度
             }).then(canvas => {
                 const link = document.createElement('a');
-                const dStr = formatLocalYMD(dateObj);
-                link.download = `BattleCard_${dStr}.png`;
+                const dStr = formatLocalYMD(now);
+                link.download = `WeeklyReport_${dStr}.png`;
                 link.href = canvas.toDataURL();
                 link.click();
                 btn.innerText = originalText;
