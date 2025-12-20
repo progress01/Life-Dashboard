@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V20</title>
+    <title>Life Dashboard V21 - Battle Card</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         /* --- 全域風格 --- */
@@ -25,9 +25,8 @@
         .switch-btn.active[data-mode="money"] { background: #d29922; color: #1e1e1e; }
         .switch-btn.active[data-mode="reward"] { background: #a371f7; color: #fff; } 
 
-        /* V20: 右側按鈕群組 */
+        /* 右側按鈕群組 */
         .nav-right-group { display: flex; gap: 10px; }
-        
         .icon-btn { background: #21262d; border: 1px solid #30363d; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; color: #8b949e; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         .icon-btn:hover { color: #58a6ff; border-color: #58a6ff; transform: scale(1.1); }
         .settings-btn:hover { transform: rotate(90deg); }
@@ -59,7 +58,6 @@
             user-select: none; 
         }
         .quote-container:active { transform: scale(0.98); opacity: 0.9; }
-        
         .quote-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(13,17,23,0.95) 0%, rgba(13,17,23,0.4) 100%); z-index: 1; }
         .quote-content-layer { position: relative; z-index: 2; padding: 20px; width: 100%; box-sizing: border-box; pointer-events: none; }
         .quote-text { font-size: 1.1rem; font-weight: 500; color: #fff; font-family: serif; margin-bottom: 8px; line-height: 1.4; text-shadow: 0 2px 4px rgba(0,0,0,0.5); white-space: pre-line; }
@@ -72,18 +70,7 @@
         .stat-label { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; }
 
         /* --- 熱力圖與互動 --- */
-        .hover-info-bar {
-            height: 24px;
-            margin-bottom: 5px;
-            font-size: 14px;
-            color: #58a6ff;
-            font-family: monospace;
-            text-align: right;
-            width: 100%;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-        }
+        .hover-info-bar { height: 24px; margin-bottom: 5px; font-size: 14px; color: #58a6ff; font-family: monospace; text-align: right; width: 100%; display: flex; justify-content: flex-end; align-items: center; }
         .graph-wrapper { padding: 15px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; width: 100%; box-sizing: border-box; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .graph-container { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; gap: 3px; }
         .day-cell { width: 12px; height: 12px; border-radius: 2px; background-color: #21262d; outline: 1px solid rgba(255,255,255,0.05); cursor: crosshair; transition: transform 0.1s; }
@@ -91,33 +78,15 @@
         @media (hover: hover) { .day-cell:hover { transform: scale(1.4); z-index: 10; border: 1px solid #fff; } }
 
         /* --- 週次導航與戰績 Bar --- */
-        .weekly-container {
-            width: 100%; margin-top: 15px;
-            background: rgba(22, 27, 34, 0.8);
-            border: 1px solid #30363d; border-radius: 8px;
-            display: flex; flex-direction: column; overflow: hidden;
-            animation: fadeIn 0.5s ease;
-        }
-        .week-nav {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 8px 15px; background: #21262d; border-bottom: 1px solid #30363d;
-        }
+        .weekly-container { width: 100%; margin-top: 15px; background: rgba(22, 27, 34, 0.8); border: 1px solid #30363d; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; animation: fadeIn 0.5s ease; }
+        .week-nav { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; background: #21262d; border-bottom: 1px solid #30363d; }
         .nav-arrow { background: none; border: none; color: #8b949e; font-size: 18px; cursor: pointer; padding: 0 10px; transition: 0.2s; }
         .nav-arrow:hover { color: #fff; transform: scale(1.2); }
-        
         .week-center-group { display: flex; align-items: center; gap: 8px; }
         .week-label { font-size: 14px; font-weight: bold; color: #e6edf3; }
-        .nav-reset { 
-            background: rgba(48, 54, 61, 0.5); border: 1px solid #30363d; border-radius: 4px; 
-            color: #58a6ff; cursor: pointer; padding: 2px 8px; font-size: 12px; 
-            display: none; 
-            transition: 0.2s; 
-        }
+        .nav-reset { background: rgba(48, 54, 61, 0.5); border: 1px solid #30363d; border-radius: 4px; color: #58a6ff; cursor: pointer; padding: 2px 8px; font-size: 12px; display: none; transition: 0.2s; }
         .nav-reset:hover { background: #30363d; color: #fff; }
-        
-        .weekly-insight-content {
-            padding: 15px; text-align: center; color: #58a6ff; font-size: 1.1rem; font-weight: 600;
-        }
+        .weekly-insight-content { padding: 15px; text-align: center; color: #58a6ff; font-size: 1.1rem; font-weight: 600; }
         .insight-highlight { color: #fff; font-weight: 800; margin: 0 5px; }
 
         /* --- 預算血條 --- */
@@ -128,16 +97,11 @@
         .hp-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
 
         /* --- 🎲 獎勵轉盤 --- */
-        .reward-card {
-            background: #161b22; border: 1px solid #a371f7; border-radius: 12px; padding: 20px;
-            width: 100%; box-sizing: border-box; text-align: center;
-            box-shadow: 0 0 20px rgba(163, 113, 247, 0.1);
-        }
+        .reward-card { background: #161b22; border: 1px solid #a371f7; border-radius: 12px; padding: 20px; width: 100%; box-sizing: border-box; text-align: center; box-shadow: 0 0 20px rgba(163, 113, 247, 0.1); }
         .reward-toggle-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
         .sub-toggle-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; padding: 6px 15px; border-radius: 15px; cursor: pointer; font-size: 13px; }
         .sub-toggle-btn.active-h { background: #238636; color: white; border-color: #238636; }
         .sub-toggle-btn.active-m { background: #d29922; color: #1e1e1e; border-color: #d29922; }
-
         .reward-period { font-size: 13px; color: #a371f7; margin-bottom: 5px; font-weight: bold; opacity: 0.8; }
         .balance-info { font-size: 1rem; color: #8b949e; margin-bottom: 5px; }
         .balance-amount { font-size: 2.5rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
@@ -156,7 +120,43 @@
         .input-label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 5px; }
         .input-field, .input-select { width: 100%; padding: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; box-sizing: border-box; font-size: 14px; }
         .save-btn { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px;}
-        .note { font-size: 11px; color: #58a6ff; margin-top: 2px; }
+
+        /* --- 狀態警示卡片 --- */
+        .alert-box { width: 100%; max-width: 900px; background: rgba(210, 153, 34, 0.15); border: 1px solid #d29922; border-radius: 8px; padding: 15px; margin-top: 15px; display: flex; align-items: flex-start; gap: 15px; box-sizing: border-box; animation: pulse-border 2s infinite; }
+        .alert-icon { font-size: 24px; }
+        .alert-content { flex: 1; }
+        .alert-title { color: #d29922; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
+        .alert-desc { color: #eac54f; font-size: 0.95rem; line-height: 1.5; }
+        .recovery-tag { background: #d29922; color: #0d1117; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 800; margin-left: 5px; }
+        @keyframes pulse-border { 0% { box-shadow: 0 0 0 0 rgba(210, 153, 34, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(210, 153, 34, 0); } 100% { box-shadow: 0 0 0 0 rgba(210, 153, 34, 0); } }
+
+        /* --- 戰報分享卡片 (Share Card) --- */
+        .share-card-container { position: fixed; left: -9999px; top: 0; } /* 隱藏但可被渲染 */
+        .share-card {
+            width: 400px;
+            height: 600px;
+            background-color: #161b22;
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: serif;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .sc-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(2px); z-index: 0; transition: background 0.5s;}
+        .sc-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(13,17,23,0.3) 0%, rgba(13,17,23,0.85) 60%, rgba(13,17,23,1) 100%); z-index: 1; }
+        
+        .sc-content-top { position: relative; z-index: 2; padding: 40px 30px; text-align: center; }
+        .sc-date { font-size: 1.2rem; color: #8b949e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; font-family: sans-serif; font-weight: bold; }
+        .sc-main-val { font-size: 3.5rem; font-weight: 800; color: #fff; margin-bottom: 10px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); font-family: sans-serif; }
+        .sc-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 1rem; font-weight: bold; margin-bottom: 20px; backdrop-filter: blur(5px); }
+        .sc-streak { font-size: 1.1rem; color: #e6edf3; font-weight: 500; }
+        
+        .sc-content-bottom { position: relative; z-index: 2; padding: 30px; }
+        .sc-quote { font-size: 1.1rem; color: #c9d1d9; line-height: 1.6; font-style: italic; border-left: 3px solid #58a6ff; padding-left: 15px; margin-bottom: 20px; }
+        .sc-footer { text-align: right; font-size: 0.8rem; color: #58a6ff; font-family: monospace; opacity: 0.8; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -175,7 +175,7 @@
             <button class="switch-btn" data-mode="reward" onclick="switchApp('reward')">🎲 獎勵</button>
         </div>
         <div class="nav-right-group">
-            <button class="icon-btn" onclick="captureScreenshot()" title="截圖分享">📷</button>
+            <button class="icon-btn" onclick="captureShareCard()" title="製作今日戰報">📷</button>
             <button class="icon-btn settings-btn" onclick="openSettings()">⚙️</button>
         </div>
     </div>
@@ -222,6 +222,19 @@
         <div class="graph-wrapper" id="graph-scroller">
             <div id="heatmap" class="graph-container"></div>
         </div>
+
+        <div id="health-alert-box" class="alert-box hidden">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-content">
+                <div class="alert-title">
+                    <span>本週熱量監測警報</span>
+                    <span id="surplus-val" style="font-family:monospace;">+0</span>
+                </div>
+                <div class="alert-desc" id="recovery-plan">
+                    計算中...
+                </div>
+            </div>
+        </div>
         
         <div class="weekly-container" id="weekly-container">
             <div class="week-nav">
@@ -234,6 +247,23 @@
             </div>
             <div id="weekly-equivalents" class="weekly-insight-content">
                 計算中...
+            </div>
+        </div>
+    </div>
+
+    <div class="share-card-container">
+        <div id="share-card" class="share-card">
+            <div class="sc-bg" id="sc-bg"></div>
+            <div class="sc-overlay"></div>
+            <div class="sc-content-top">
+                <div class="sc-date" id="sc-date">DEC 20 SAT</div>
+                <div class="sc-main-val" id="sc-val">-500</div>
+                <div class="sc-badge" id="sc-badge">🔥 燃脂神人</div>
+                <div class="sc-streak">⚡ 連續紀錄: <span id="sc-streak-val">12</span> 天</div>
+            </div>
+            <div class="sc-content-bottom">
+                <div class="sc-quote" id="sc-quote-text">...</div>
+                <div class="sc-footer">Life Dashboard</div>
             </div>
         </div>
     </div>
@@ -301,25 +331,15 @@
         let globalTheme = {};
         let weekOffset = 0;
         let comparisonTicker = null; 
+        let currentBgUrl = ''; // 追蹤當前背景圖
 
-        // Mega Quotes Library
         const DEFAULT_QUOTES = [
             { text: "只要記住你的名字，不管你在世界的哪個地方，我一定會去見你。", author: "你的名字" },
             { text: "幸福是每一個微小的生活願望達成。\nHappiness is having each tiny wish come true.", author: "天外奇蹟" },
             { text: "I love you. I knew it the minute I met you.\n我愛你，當我遇見你的那一刻就知道了。", author: "派特的幸福劇本" },
             { text: "Whatever happens tomorrow, we had today.\n無論明天發生什麼事，至少我們擁有當下。", author: "真愛挑日子" },
             { text: "Call me by your name, and I'll call you by mine.\n以你的名字呼喚我，而我也將以我的名字喚你。", author: "以你的名字呼喚我" },
-            { text: "You complete me！\n你完整了我的人生。", author: "征服情海" },
-            { text: "I want all of you, forever, you and me, every day.\n我想要全部的你，一輩子、每一天就只有你跟我。", author: "手札情緣" },
-            { text: "Our greatest glory is not in never falling, but in rising every time we fall.\n我們最大的榮耀不在於從未跌倒，而在於每次跌倒後都能重新站起。", author: "蝙蝠俠：開戰時刻" },
-            { text: "It's not about how hard you hit. It's about how hard you can get hit and keep moving forward.\n重點不在於你能打得多重，而在於你能承受多重的打擊，並持續前進。", author: "洛基：勇者無懼" },
-            { text: "Don't ever let somebody tell you you can't do something.\n永遠不要讓任何人告訴你，你做不到某件事。", author: "當幸福來敲門" },
-            { text: "Keep your eyes on the stars, and your feet on the ground.\n仰望星空，腳踏實地。", author: "登月先鋒" },
-            { text: "Your time is limited, don't waste it living someone else's life.\n你的時間有限，別浪費在過別人的生活上。", author: "賈伯斯" },
-            { text: "If you can dream it, you can do it.\n如果你能夢想它，你就能實現它。", author: "明日世界" },
-            { text: "Life is like a box of chocolates. You never know what you're gonna get.\n人生就像一盒巧克力，你永遠不知道會得到什麼。", author: "阿甘正傳" },
-            { text: "After all, tomorrow is another day.\n畢竟，明天又是新的一天。", author: "亂世佳人" },
-            { text: "Happiness can be found even in the darkest of times, if one only remembers to turn on the light.\n即使在最黑暗的時刻也能找到快樂，只要記得點亮燈光。", author: "哈利波特" }
+            { text: "Our greatest glory is not in never falling, but in rising every time we fall.", author: "Batman Begins" }
         ];
 
         const THEMES = {
@@ -384,7 +404,6 @@
                 const match = val.match(/\/d\/([a-zA-Z0-9-_]+)/);
                 return match ? match[1] : val;
             };
-
             CONFIG.healthId = extractId(document.getElementById('input-health-id').value.trim());
             CONFIG.healthSheet = document.getElementById('input-health-sheet').value.trim() || '表單';
             CONFIG.moneyId = extractId(document.getElementById('input-money-id').value.trim());
@@ -392,7 +411,6 @@
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
             CONFIG.quoteSheet = document.getElementById('input-quote-sheet').value.trim() || 'Quotes';
-            
             localStorage.setItem('dashboard_config_v11', JSON.stringify(CONFIG));
             closeSettings();
             applyDefaultBackground();
@@ -403,8 +421,6 @@
             const saved = localStorage.getItem('dashboard_config_v11');
             if (saved) {
                 CONFIG = JSON.parse(saved);
-                if (!CONFIG.rewardsHealth) CONFIG.rewardsHealth = "喝一杯奶茶\n吃炸雞";
-                if (!CONFIG.rewardsMoney) CONFIG.rewardsMoney = "買遊戲\n看電影";
             }
         }
 
@@ -420,9 +436,11 @@
             const overlay = document.getElementById('q-overlay');
             if (CONFIG.bgStyle === 'nature') {
                 const day = new Date().getDate();
-                card.style.backgroundImage = `url('https://loremflickr.com/800/300/nature,landscape?lock=${day}')`; 
+                currentBgUrl = `https://loremflickr.com/800/300/nature,landscape?lock=${day}`;
+                card.style.backgroundImage = `url('${currentBgUrl}')`; 
                 overlay.style.display = 'block';
             } else {
+                currentBgUrl = '';
                 card.style.backgroundImage = 'linear-gradient(135deg, #21262d 0%, #0d1117 100%)';
                 overlay.style.display = 'none';
             }
@@ -432,30 +450,83 @@
             setRandomFallbackQuote();
             if (CONFIG.bgStyle !== 'nature') return;
             const card = document.getElementById('quote-card');
-            card.style.backgroundImage = `url('https://loremflickr.com/800/300/nature,landscape?random=${Date.now()}')`;
+            currentBgUrl = `https://loremflickr.com/800/300/nature,landscape?random=${Date.now()}`;
+            card.style.backgroundImage = `url('${currentBgUrl}')`;
         }
 
-        // V20: 截圖分享功能
-        function captureScreenshot() {
-            const btn = document.querySelector('.icon-btn[title="截圖分享"]');
+        // --- V21: 戰報卡片生成邏輯 ---
+        function getLatestDataEntry(dataMap) {
+            const sortedDates = Object.keys(dataMap).sort();
+            if (sortedDates.length === 0) return null;
+            // 回傳最後一筆資料
+            const lastDate = sortedDates[sortedDates.length - 1];
+            return { date: lastDate, value: dataMap[lastDate].value };
+        }
+
+        function captureShareCard() {
+            const btn = document.querySelector('.icon-btn[title="製作今日戰報"]');
             const originalText = btn.innerText;
-            btn.innerText = '📸';
+            btn.innerText = '⏳';
             
-            // 使用 html2canvas 截取 body
-            html2canvas(document.body, {
-                useCORS: true, // 允許跨域圖片 (如果圖片伺服器支援)
-                backgroundColor: '#0d1117',
-                scrollY: 0
+            // 1. 取得最新資料
+            const entry = getLatestDataEntry(globalDataMap);
+            const dateObj = entry ? new Date(entry.date) : new Date();
+            const value = entry ? entry.value : 0;
+            const streakVal = document.getElementById('stat1-val').innerText; // 直接抓介面算好的 Streak
+
+            // 2. 填充卡片 DOM
+            const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+            const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+            document.getElementById('sc-date').innerText = `${months[dateObj.getMonth()]} ${dateObj.getDate()} ${days[dateObj.getDay()]}`;
+            document.getElementById('sc-val').innerText = value.toLocaleString();
+            document.getElementById('sc-streak-val').innerText = streakVal;
+            document.getElementById('sc-quote-text').innerText = document.getElementById('q-text').innerText; // 沿用當前金句
+
+            // 3. 設定背景
+            const scBg = document.getElementById('sc-bg');
+            if (CONFIG.bgStyle === 'nature' && currentBgUrl) {
+                scBg.style.backgroundImage = `url('${currentBgUrl}')`;
+            } else {
+                scBg.style.backgroundImage = 'linear-gradient(135deg, #21262d 0%, #0d1117 100%)';
+            }
+
+            // 4. 設定 Badge 狀態與顏色
+            const badgeEl = document.getElementById('sc-badge');
+            let badgeText = "保持紀錄";
+            let badgeColor = "#58a6ff"; // 預設藍
+
+            if (currentMode === 'health') {
+                if (value < 0) { badgeText = "🔥 燃脂神人"; badgeColor = "#3fb950"; }
+                else if (value === 0) { badgeText = "✨ 完美平衡"; badgeColor = "#8b949e"; }
+                else { badgeText = "🍔 熱量囤積中"; badgeColor = "#d29922"; }
+            } else {
+                const budget = CONFIG.monthlyBudget / 30; // 粗略日預算
+                if (value === 0) { badgeText = "🏆 0 元挑戰成功"; badgeColor = "#ffd700"; }
+                else if (value <= budget) { badgeText = "💰 省錢達人"; badgeColor = "#3fb950"; }
+                else { badgeText = "💸 錢包失血"; badgeColor = "#ff4d4d"; }
+            }
+            
+            badgeEl.innerText = badgeText;
+            badgeEl.style.borderColor = badgeColor;
+            badgeEl.style.color = badgeColor;
+            badgeEl.style.background = `rgba(${parseInt(badgeColor.slice(1,3),16)}, ${parseInt(badgeColor.slice(3,5),16)}, ${parseInt(badgeColor.slice(5,7),16)}, 0.1)`;
+
+            // 5. 截圖
+            const cardDom = document.getElementById('share-card');
+            html2canvas(cardDom, {
+                useCORS: true, 
+                backgroundColor: null,
+                scale: 2 // 高解析度
             }).then(canvas => {
                 const link = document.createElement('a');
-                const today = formatLocalYMD(new Date());
-                link.download = `LifeDashboard_${today}.png`;
+                const dStr = formatLocalYMD(dateObj);
+                link.download = `BattleCard_${dStr}.png`;
                 link.href = canvas.toDataURL();
                 link.click();
                 btn.innerText = originalText;
             }).catch(err => {
                 console.error(err);
-                alert('截圖失敗，可能是背景圖片安全性限制。請嘗試更換背景或手動截圖。');
+                alert('圖片生成失敗，請稍後再試。');
                 btn.innerText = originalText;
             });
         }
@@ -501,6 +572,7 @@
             document.getElementById('stat3-label').innerText = globalTheme.statLabels[2];
             
             document.getElementById('budget-container').style.display = (mode === 'money') ? 'flex' : 'none';
+            document.getElementById('health-alert-box').classList.add('hidden'); 
             
             if (sheetId) {
                 fetchData(sheetId, sheetName, globalTheme);
@@ -549,10 +621,10 @@
             let weekSum = 0;
             let ptr = new Date(startOfWeek);
             while(ptr <= endOfWeek) {
-                const dStr = formatLocalYMD(ptr); // Use helper
+                const dStr = formatLocalYMD(ptr);
                 if (globalDataMap[dStr]) {
                     if (globalTheme.isDeficitGood) {
-                         if(globalDataMap[dStr].value < 0) weekSum += globalDataMap[dStr].value;
+                         if(globalDataMap[dStr].value !== 0) weekSum += globalDataMap[dStr].value;
                     } else {
                          weekSum += globalDataMap[dStr].value;
                     }
@@ -561,12 +633,27 @@
             }
 
             const weeklyBar = document.getElementById('weekly-equivalents');
+            const alertBox = document.getElementById('health-alert-box'); 
+
             if (comparisonTicker) { clearInterval(comparisonTicker); comparisonTicker = null; }
 
+            // --- Health Logic ---
             if (currentMode === 'health' || (currentMode === 'reward' && lastActiveMode === 'health')) {
-                const weeklyDeficit = Math.abs(weekSum);
-                if (weekSum < 0) {
-                     const comparisons = [
+                const isSurplus = weekSum > 0; 
+                if (isSurplus && offset === 0) {
+                    alertBox.classList.remove('hidden');
+                    document.getElementById('surplus-val').innerText = `+${weekSum} cal`;
+                    const walkMins = Math.round(weekSum / 5); 
+                    const riceBowls = (weekSum / 280).toFixed(1);
+                    document.getElementById('recovery-plan').innerHTML = 
+                        `本週熱量暫時失控！<br>💡 <b>補救方案：</b>只要在剩下的幾天多走 <span class="recovery-tag">${walkMins} 分鐘</span> <br>或是少吃 <span class="recovery-tag">${riceBowls} 碗飯</span>，就能讓進度回到正軌。加油！`;
+                } else {
+                    alertBox.classList.add('hidden');
+                }
+
+                if (!isSurplus && weekSum < 0) {
+                    const weeklyDeficit = Math.abs(weekSum);
+                    const comparisons = [
                         { text: '🥤 少喝了', unit: '杯珍奶', val: Math.round(weeklyDeficit / 650) },
                         { text: '🍗 少吃了', unit: '塊雞排', val: Math.round(weeklyDeficit / 600) },
                         { text: '🍔 少吃了', unit: '個大麥克', val: Math.round(weeklyDeficit / 550) },
@@ -580,12 +667,19 @@
                     };
                     updateBar();
                     comparisonTicker = setInterval(updateBar, 3000);
+                    weeklyBar.style.color = "#58a6ff"; 
+                } else if (isSurplus) {
+                    weeklyBar.innerHTML = `${label}：⚠️ 熱量累積中...請參考上方補救建議`;
+                    weeklyBar.style.color = "#d29922";
                 } else {
                     weeklyBar.innerHTML = `${label}：尚未累積赤字`;
+                    weeklyBar.style.color = "#58a6ff";
                 }
-                updateRewardUI(Math.abs(weekSum), globalTheme.unit, true);
+                updateRewardUI(Math.abs(weekSum), globalTheme.unit, !isSurplus);
 
             } else {
+                // --- Money Logic ---
+                alertBox.classList.add('hidden');
                 const weeklyBudget = CONFIG.monthlyBudget / 4;
                 const saved = weeklyBudget - weekSum;
                 if (saved > 0) {
@@ -603,9 +697,11 @@
                     };
                     updateBar();
                     comparisonTicker = setInterval(updateBar, 3000);
+                    weeklyBar.style.color = "#58a6ff";
                 } else {
                      const over = Math.abs(saved);
                      weeklyBar.innerHTML = `${label}戰績：💸 超支了 <span class="insight-highlight">${over}</span> 元 (少吃 ${Math.round(over/100)} 個便當)`;
+                     weeklyBar.style.color = "#58a6ff";
                 }
                 updateRewardUI(Math.round(saved), globalTheme.unit, saved >= 0);
             }
@@ -622,7 +718,6 @@
         function switchRewardContext(type) {
             document.getElementById('reward-health-btn').classList.toggle('active-h', type === 'health');
             document.getElementById('reward-money-btn').classList.toggle('active-m', type === 'money');
-            
             const title = (type === 'health') ? '🔥 該週熱量赤字' : '💰 該週剩餘預算';
             document.getElementById('reward-title').innerText = title;
             document.getElementById('reward-list-input').value = (type === 'health') ? CONFIG.rewardsHealth : CONFIG.rewardsMoney;
@@ -707,20 +802,11 @@
             let checkDate = new Date();
             let checkStr = formatLocalYMD(checkDate);
             
-            if (globalDataMap[checkStr]) {
-                streak = 1; 
-            } else {
-                streak = 0; 
-            }
-            
+            if (globalDataMap[checkStr]) { streak = 1; } else { streak = 0; }
             while (true) {
                 checkDate.setDate(checkDate.getDate() - 1);
                 checkStr = formatLocalYMD(checkDate);
-                if (globalDataMap[checkStr]) {
-                    streak++;
-                } else {
-                    break;
-                }
+                if (globalDataMap[checkStr]) { streak++; } else { break; }
             }
 
             document.getElementById('stat1-val').innerText = streak;
@@ -731,11 +817,7 @@
             if (todayItem) {
                 const val = todayItem.value;
                 todayEl.innerText = val.toLocaleString();
-                if (theme.isDeficitGood) {
-                    todayEl.style.color = (val < 0) ? '#3fb950' : '#ff4d4d'; 
-                } else {
-                    todayEl.style.color = (val <= theme.budgetLimit) ? '#3fb950' : '#ff4d4d'; 
-                }
+                todayEl.style.color = theme.isDeficitGood ? ((val < 0) ? '#3fb950' : '#ff4d4d') : ((val <= theme.budgetLimit) ? '#3fb950' : '#ff4d4d');
             } else {
                 todayEl.innerText = "待輸入";
                 todayEl.style.color = "#8b949e";
@@ -744,9 +826,7 @@
             document.getElementById('stat3-val').innerText = count.toLocaleString();
             document.getElementById('stat3-val').style.color = '#58a6ff';
 
-            if (currentMode === 'money') {
-                updateWalletHP(monthSpent, CONFIG.monthlyBudget);
-            }
+            if (currentMode === 'money') { updateWalletHP(monthSpent, CONFIG.monthlyBudget); }
             
             drawHeatmap(globalDataMap, theme);
             setTimeout(() => { const scroller = document.getElementById('graph-scroller'); if(scroller) scroller.scrollLeft = scroller.scrollWidth; }, 100);
@@ -771,14 +851,13 @@
         function drawHeatmap(data, theme) {
             const container = document.getElementById('heatmap'); container.innerHTML = '';
             const today = new Date(); const startDate = new Date(); startDate.setDate(today.getDate() - 365);
-            // Monday start
             while (startDate.getDay() !== 1) startDate.setDate(startDate.getDate() - 1);
             
             let currentDate = new Date(startDate);
             const hoverBar = document.getElementById('hover-info');
 
             while (currentDate <= today) {
-                const dateString = formatLocalYMD(currentDate); // Use helper
+                const dateString = formatLocalYMD(currentDate); 
                 const item = data[dateString];
                 const cell = document.createElement('div');
                 cell.classList.add('day-cell');
@@ -803,7 +882,6 @@
                         else if (value <= th[3]) { cell.style.backgroundColor = theme.colors[4]; }
                         else cell.style.backgroundColor = theme.colors[5];
                     }
-
                     const tooltipText = `${dateString} | ${verdict} ${theme.unit}: ${value}`;
                     cell.setAttribute('title', tooltipText);
                     cell.onmouseover = () => { hoverBar.innerText = tooltipText; hoverBar.style.color = '#fff'; };
@@ -829,14 +907,12 @@
                     const qText = row.c[0] ? row.c[0].v : "";
                     const qAuth = row.c[1] ? row.c[1].v : "";
                     const qImg  = row.c[2] ? row.c[2].v : null;
-                    
                     if(qText) {
                         document.getElementById('q-text').innerText = qText;
                         document.getElementById('q-author').innerText = qAuth;
                     } else {
                         setRandomFallbackQuote();
                     }
-
                     if (CONFIG.bgStyle === 'custom' && qImg) { 
                         const card = document.getElementById('quote-card');
                         const overlay = document.getElementById('q-overlay');
