@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V24 (Optimized)</title>
+    <title>Life Dashboard V25 (Final)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         /* --- 全域風格 --- */
@@ -14,7 +14,7 @@
             display: flex; flex-direction: column; align-items: center;
             padding: 20px; margin: 0;
             transition: background 0.5s;
-            overflow-x: hidden; /* 防止手機橫向滾動 */
+            overflow-x: hidden;
         }
 
         /* --- 導航列 --- */
@@ -64,13 +64,12 @@
         .color-gold { background-color: #ffd700 !important; z-index: 2; }
         @media (hover: hover) { .day-cell:hover { transform: scale(1.4); z-index: 10; border: 1px solid #fff; } }
 
-        /* --- [外掛] 消費抵銷 (Free Cash) 風格 --- */
+        /* --- [外掛] 消費抵銷 (Free Cash) --- */
         .free-cash-box { 
             width: 100%; margin-top: 15px; padding: 15px; 
             background: rgba(31, 111, 235, 0.1); border: 1px solid rgba(31, 111, 235, 0.4); 
             border-radius: 8px; text-align: center; box-sizing: border-box;
-            display: none; /* 預設隱藏 */
-            animation: fadeIn 0.5s ease;
+            display: none; animation: fadeIn 0.5s ease;
         }
         .free-cash-label { font-size: 0.9rem; color: #58a6ff; font-weight: bold; margin-bottom: 5px; }
         .free-cash-val { font-size: 2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(88, 166, 255, 0.3); }
@@ -91,7 +90,7 @@
         .weekly-insight-content { padding: 15px; text-align: center; color: #58a6ff; font-size: 1.1rem; font-weight: 600; line-height: 1.5; }
         .insight-highlight { color: #fff; font-weight: 800; margin: 0 5px; }
 
-        /* --- [外掛] 四象限筆記風格 --- */
+        /* --- [外掛] 四象限筆記 --- */
         .quadrant-section { width: 100%; max-width: 900px; margin-top: 30px; margin-bottom: 50px; animation: fadeIn 0.5s ease; }
         .quadrant-title { color: #8b949e; font-size: 14px; font-weight: bold; margin-bottom: 10px; margin-left: 5px; }
         .quadrant-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; height: 300px; }
@@ -230,7 +229,7 @@
             <div style="font-size:11px; color:#8b949e; text-align:right; margin-top:2px;">今日理論剩餘: <span id="theory-hp">0</span></div>
         </div>
 
-        <div class="quote-container" id="quote-card" onclick="refreshBanner()" title="👆 點擊更換風景與名言">
+        <div class="quote-container" id="quote-card" onclick="refreshBanner()" title="👆 點擊隨機切換金句">
             <div class="quote-overlay" id="q-overlay"></div>
             <div class="quote-content-layer">
                 <div class="quote-text" id="q-text"></div>
@@ -361,6 +360,17 @@
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-box">
             <div class="modal-title">⚙️ 資料來源設定</div>
+            
+            <div class="input-group">
+                <label class="input-label" style="color:#58a6ff;">📖 金句/靈感清單 (本機儲存)</label>
+                <div style="font-size:10px; color:#666; margin-bottom:4px;">格式: 句子 -- 作者 (一行一句，程式會隨機顯示)</div>
+                <textarea id="input-quote-list" class="input-field" 
+                          placeholder="只要記住你的名字...&#10;幸福是每一個微小的生活願望達成... -- 天外奇蹟" 
+                          style="min-height:100px; line-height:1.5;"></textarea>
+            </div>
+
+            <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
+
             <div class="input-group"><label class="input-label">熱量表連結 (或 ID)</label><input type="text" id="input-health-id" class="input-field" placeholder="貼上完整網址或 ID..."></div>
             <div class="input-group"><label class="input-label">熱量表分頁名</label><input type="text" id="input-health-sheet" class="input-field" placeholder="預設: 表單"></div>
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
@@ -379,7 +389,7 @@
                 <textarea id="input-subscriptions" class="input-field" placeholder="Netflix: 270&#10;Spotify: 149" style="min-height:60px;"></textarea>
             </div>
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
-            <div class="input-group"><label class="input-label">金句分頁名</label><input type="text" id="input-quote-sheet" class="input-field" placeholder="預設: Quotes"></div>
+            
             <div class="input-group">
                 <label class="input-label">背景風格</label>
                 <select id="input-bg-style" class="input-select">
@@ -396,14 +406,14 @@
         let CONFIG = {
             healthId: '', healthSheet: '表單',
             moneyId: '', moneySheet: '表單',
-            quoteSheet: 'Quotes',
             monthlyBudget: 10000,
             bgStyle: 'nature',
             rewardsHealth: "喝一杯奶茶\n吃炸雞\n吃甜點\n休息一天",
             rewardsMoney: "買 Steam 遊戲\n搭計程車\n買新衣服\n吃大餐",
-            // 外掛欄位預設值
             weeklyBudget: 3000,
-            subscriptions: ""
+            subscriptions: "",
+            // V25 新增: 本機金句清單
+            quoteList: "只要記住你的名字，不管你在世界的哪個地方，我一定會去見你。 -- 你的名字\n所謂愛一個人，不是喜歡對方的體溫，而是要跟對方的體溫越來越接近。 -- 請回答1988\n幸福是每一個微小的生活願望達成。 -- 天外奇蹟\nWhatever happens tomorrow, we had today. -- 真愛挑日子\nOur greatest glory is not in never falling, but in rising every time we fall. -- Batman Begins" 
         };
         
         let currentMode = 'health';
@@ -413,15 +423,6 @@
         let weekOffset = 0;
         let comparisonTicker = null; 
         let currentBgUrl = ''; 
-
-        const DEFAULT_QUOTES = [
-            { text: "只要記住你的名字，不管你在世界的哪個地方，我一定會去見你。", author: "你的名字" },
-            { text: "所謂愛一個人，不是喜歡對方的體溫，而是要跟對方的體溫越來越接近。", author: "請回答1988" },
-            { text: "手牽手到最後都不會放手的心。", author: "請回答1988" },
-            { text: "幸福是每一個微小的生活願望達成。", author: "天外奇蹟" },
-            { text: "Whatever happens tomorrow, we had today.", author: "真愛挑日子" },
-            { text: "Our greatest glory is not in never falling, but in rising every time we fall.", author: "Batman Begins" }
-        ];
 
         const THEMES = {
             health: { 
@@ -447,7 +448,7 @@
 
         function init() {
             loadSettings();
-            setRandomFallbackQuote(); 
+            pickRandomQuoteFromList(); // V25 改用本機隨機選取
             applyDefaultBackground(); 
             
             if (!CONFIG.healthId && !CONFIG.moneyId) openSettings();
@@ -457,10 +458,29 @@
             loadQuadrants(); 
         }
 
-        function setRandomFallbackQuote() {
-            const r = DEFAULT_QUOTES[Math.floor(Math.random() * DEFAULT_QUOTES.length)];
-            document.getElementById('q-text').innerText = r.text;
-            document.getElementById('q-author').innerText = r.author;
+        // V25 新功能: 從本機清單隨機選取
+        function pickRandomQuoteFromList() {
+            const rawText = CONFIG.quoteList || "";
+            const quotes = rawText.split('\n').filter(line => line.trim() !== "");
+            
+            if (quotes.length === 0) {
+                document.getElementById('q-text').innerText = "Life Dashboard";
+                document.getElementById('q-author').innerText = "Welcome";
+                return;
+            }
+
+            const randomLine = quotes[Math.floor(Math.random() * quotes.length)];
+            let qText = randomLine;
+            let qAuthor = "Life Dashboard";
+
+            if (randomLine.includes("--")) {
+                const parts = randomLine.split("--");
+                qText = parts[0].trim();
+                qAuthor = parts[1].trim();
+            }
+
+            document.getElementById('q-text').innerText = qText;
+            document.getElementById('q-author').innerText = qAuthor;
         }
 
         function formatLocalYMD(date) {
@@ -477,7 +497,9 @@
             document.getElementById('input-money-sheet').value = CONFIG.moneySheet || '表單';
             document.getElementById('input-monthly-budget').value = CONFIG.monthlyBudget || 10000;
             document.getElementById('input-bg-style').value = CONFIG.bgStyle || 'nature';
-            document.getElementById('input-quote-sheet').value = CONFIG.quoteSheet || 'Quotes';
+            
+            // V25: 讀取金句清單
+            document.getElementById('input-quote-list').value = CONFIG.quoteList || '';
             
             document.getElementById('input-weekly-budget').value = CONFIG.weeklyBudget || 3000;
             document.getElementById('input-subscriptions').value = CONFIG.subscriptions || '';
@@ -498,19 +520,24 @@
             CONFIG.moneySheet = document.getElementById('input-money-sheet').value.trim() || '表單';
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
-            CONFIG.quoteSheet = document.getElementById('input-quote-sheet').value.trim() || 'Quotes';
+            
+            // V25: 儲存金句清單
+            CONFIG.quoteList = document.getElementById('input-quote-list').value;
             
             CONFIG.weeklyBudget = parseInt(document.getElementById('input-weekly-budget').value) || 3000;
             CONFIG.subscriptions = document.getElementById('input-subscriptions').value;
 
-            localStorage.setItem('dashboard_config_v23_plus', JSON.stringify(CONFIG));
+            localStorage.setItem('dashboard_config_v25', JSON.stringify(CONFIG)); // 更新 key 版本
             closeSettings();
+            
             applyDefaultBackground();
+            pickRandomQuoteFromList(); // 儲存後立即刷新
             switchApp(currentMode);
         }
         
         function loadSettings() {
-            const saved = localStorage.getItem('dashboard_config_v23_plus') || localStorage.getItem('dashboard_config_v11'); 
+            // 相容舊版本 key，若有則遷移
+            const saved = localStorage.getItem('dashboard_config_v25') || localStorage.getItem('dashboard_config_v23_plus') || localStorage.getItem('dashboard_config_v11'); 
             if (saved) {
                 const parsed = JSON.parse(saved);
                 CONFIG = { ...CONFIG, ...parsed }; 
@@ -521,7 +548,7 @@
             const content = document.getElementById('reward-list-input').value;
             if (currentMode === 'health') CONFIG.rewardsHealth = content;
             else CONFIG.rewardsMoney = content;
-            localStorage.setItem('dashboard_config_v23_plus', JSON.stringify(CONFIG));
+            localStorage.setItem('dashboard_config_v25', JSON.stringify(CONFIG));
         }
 
         function applyDefaultBackground() {
@@ -540,7 +567,7 @@
         }
 
         function refreshBanner() {
-            setRandomFallbackQuote();
+            pickRandomQuoteFromList(); // 點擊時隨機切換
             if (CONFIG.bgStyle !== 'nature') return;
             const card = document.getElementById('quote-card');
             currentBgUrl = `https://loremflickr.com/800/300/nature,landscape?random=${Date.now()}`;
@@ -567,9 +594,9 @@
                 const dStr = formatLocalYMD(ptr);
                 if (globalDataMap[dStr]) {
                     if (globalTheme.isDeficitGood) {
-                         if(globalDataMap[dStr].value !== 0) weeklySum += globalDataMap[dStr].value;
+                          if(globalDataMap[dStr].value !== 0) weeklySum += globalDataMap[dStr].value;
                     } else {
-                         weeklySum += globalDataMap[dStr].value;
+                          weeklySum += globalDataMap[dStr].value;
                     }
                 }
                 ptr.setDate(ptr.getDate() + 1);
@@ -708,7 +735,6 @@
 
             if (sheetId) {
                 fetchData(sheetId, sheetName, globalTheme);
-                fetchQuotes(sheetId, CONFIG.quoteSheet);
             } else {
                 document.getElementById('heatmap').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">請點擊右上角 ⚙️ 設定 Sheet ID</div>';
             }
@@ -756,9 +782,9 @@
                 const dStr = formatLocalYMD(ptr);
                 if (globalDataMap[dStr]) {
                     if (globalTheme.isDeficitGood) {
-                         if(globalDataMap[dStr].value !== 0) weekSum += globalDataMap[dStr].value;
+                          if(globalDataMap[dStr].value !== 0) weekSum += globalDataMap[dStr].value;
                     } else {
-                         weekSum += globalDataMap[dStr].value;
+                          weekSum += globalDataMap[dStr].value;
                     }
                 }
                 ptr.setDate(ptr.getDate() + 1);
@@ -1044,16 +1070,33 @@
                 
                 if (item !== undefined) {
                     const value = item.value; const th = theme.thresholds; let verdict = "";
+                    
                     if (theme.isDeficitGood) {
-                        if (value <= theme.goldLimit) { cell.classList.add('color-gold'); verdict = "🔥 燃脂"; }
-                        else if (value < th[0]) { cell.style.backgroundColor = theme.colors[0]; verdict = "💪 大赤字"; }
-                        else if (value < th[1]) { cell.style.backgroundColor = theme.colors[1]; verdict = "👍 赤字"; }
-                        else if (value < 0) { cell.style.backgroundColor = theme.colors[2]; verdict = "👌 小赤字"; }
-                        else if (value == 0) { cell.style.backgroundColor = theme.colors[3]; verdict = "⚖️ 平衡"; }
-                        else if (value < th[3]) { cell.style.backgroundColor = theme.colors[4]; verdict = "🍔 小超標"; }
-                        else if (value < th[4]) { cell.style.backgroundColor = theme.colors[5]; verdict = "🍕 中超標"; }
-                        else { cell.style.backgroundColor = theme.colors[6]; verdict = "🚨 大超標"; }
+                        // V25 修正重點：先判定底色 (由小到大)
+                        // Colors: DeepGreen(0), MidGreen(1), LightGreen(2), Zero(3), LightRed(4), MidRed(5), DeepRed(6)
+                        if (value < th[0]) {      // < -600
+                            cell.style.backgroundColor = theme.colors[0]; verdict = "💪 大赤字";
+                        } else if (value < th[1]) { // < -300
+                            cell.style.backgroundColor = theme.colors[1]; verdict = "👍 赤字";
+                        } else if (value < 0) {     // < 0
+                            cell.style.backgroundColor = theme.colors[2]; verdict = "👌 小赤字";
+                        } else if (value == 0) {
+                            cell.style.backgroundColor = theme.colors[3]; verdict = "⚖️ 平衡";
+                        } else if (value < th[3]) { // < 300
+                            cell.style.backgroundColor = theme.colors[4]; verdict = "🍔 小超標";
+                        } else if (value < th[4]) { // < 600
+                            cell.style.backgroundColor = theme.colors[5]; verdict = "🍕 中超標";
+                        } else {                    // > 600
+                            cell.style.backgroundColor = theme.colors[6]; verdict = "🚨 大超標";
+                        }
+
+                        // V25 修正重點：額外疊加金牌特效 (不影響底色判定)
+                        if (value <= theme.goldLimit) { 
+                            cell.classList.add('color-gold'); 
+                            verdict = "🔥 燃脂"; 
+                        }
                     } else {
+                        // 記帳模式維持原樣
                         if (value <= theme.goldLimit && value > 0) { cell.classList.add('color-gold'); verdict = "🏆 神省"; }
                         else if (value === 0) { cell.style.backgroundColor = theme.colors[2]; verdict = "⛔ 無消費"; }
                         else if (value <= th[1]) { cell.style.backgroundColor = theme.colors[1]; verdict = "✅ 安全"; }
@@ -1069,37 +1112,6 @@
                 container.appendChild(cell);
                 currentDate.setDate(currentDate.getDate() + 1);
             }
-        }
-
-        async function fetchQuotes(id, sheetName) {
-            if (!id || !sheetName) { 
-                setRandomFallbackQuote(); 
-                return; 
-            }
-            const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${sheetName}&tq=SELECT A, B, C`;
-            try {
-                const res = await fetch(url); const text = await res.text();
-                const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
-                const data = JSON.parse(jsonString);
-                if (data.table.rows.length > 0) {
-                    const row = data.table.rows[Math.floor(Math.random() * data.table.rows.length)];
-                    const qText = row.c[0] ? row.c[0].v : "";
-                    const qAuth = row.c[1] ? row.c[1].v : "";
-                    const qImg  = row.c[2] ? row.c[2].v : null;
-                    if(qText) {
-                        document.getElementById('q-text').innerText = qText;
-                        document.getElementById('q-author').innerText = qAuth;
-                    } else {
-                        setRandomFallbackQuote();
-                    }
-                    if (CONFIG.bgStyle === 'custom' && qImg) { 
-                        const card = document.getElementById('quote-card');
-                        const overlay = document.getElementById('q-overlay');
-                        card.style.backgroundImage = `url('${qImg}')`; 
-                        overlay.style.display = 'block'; 
-                    }
-                }
-            } catch (e) { setRandomFallbackQuote(); }
         }
 
         // --- [外掛] 四象限筆記功能 ---
