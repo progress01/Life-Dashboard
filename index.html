@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard V23 - Mobile Optimized</title>
+    <title>Life Dashboard V24 (Optimized)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         /* --- 全域風格 --- */
@@ -14,6 +14,7 @@
             display: flex; flex-direction: column; align-items: center;
             padding: 20px; margin: 0;
             transition: background 0.5s;
+            overflow-x: hidden; /* 防止手機橫向滾動 */
         }
 
         /* --- 導航列 --- */
@@ -25,7 +26,6 @@
         .switch-btn.active[data-mode="money"] { background: #d29922; color: #1e1e1e; }
         .switch-btn.active[data-mode="reward"] { background: #a371f7; color: #fff; } 
 
-        /* 右側按鈕群組 */
         .nav-right-group { display: flex; gap: 10px; }
         .icon-btn { background: #21262d; border: 1px solid #30363d; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; color: #8b949e; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         .icon-btn:hover { color: #58a6ff; border-color: #58a6ff; transform: scale(1.1); }
@@ -39,23 +39,10 @@
 
         /* --- 金句卡片 --- */
         .quote-container { 
-            background-color: #161b22; 
-            background-size: cover; 
-            background-position: center; 
-            border: 1px solid #30363d; 
-            border-left: 5px solid #58a6ff; 
-            border-radius: 8px; 
-            margin-bottom: 20px; 
-            width: 100%; 
-            min-height: 120px; 
-            display: flex; 
-            align-items: center; 
-            position: relative; 
-            overflow: hidden; 
-            transition: 0.5s; 
-            box-sizing: border-box; 
-            cursor: pointer; 
-            user-select: none; 
+            background-color: #161b22; background-size: cover; background-position: center; 
+            border: 1px solid #30363d; border-left: 5px solid #58a6ff; border-radius: 8px; 
+            margin-bottom: 20px; width: 100%; min-height: 120px; display: flex; align-items: center; 
+            position: relative; overflow: hidden; transition: 0.5s; box-sizing: border-box; cursor: pointer; user-select: none; 
         }
         .quote-container:active { transform: scale(0.98); opacity: 0.9; }
         .quote-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(13,17,23,0.95) 0%, rgba(13,17,23,0.4) 100%); z-index: 1; }
@@ -69,15 +56,30 @@
         .stat-val { font-size: 2rem; font-weight: 800; margin-bottom: 5px; line-height: 1; transition: color 0.3s; }
         .stat-label { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; }
 
-        /* --- 熱力圖與互動 --- */
+        /* --- 熱力圖 --- */
         .hover-info-bar { height: 24px; margin-bottom: 5px; font-size: 14px; color: #58a6ff; font-family: monospace; text-align: right; width: 100%; display: flex; justify-content: flex-end; align-items: center; }
         .graph-wrapper { padding: 15px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; width: 100%; box-sizing: border-box; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .graph-container { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; gap: 3px; }
+        .graph-container { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; gap: 3px; min-width: max-content; }
         .day-cell { width: 12px; height: 12px; border-radius: 2px; background-color: #21262d; outline: 1px solid rgba(255,255,255,0.05); cursor: crosshair; transition: transform 0.1s; }
         .color-gold { background-color: #ffd700 !important; z-index: 2; }
         @media (hover: hover) { .day-cell:hover { transform: scale(1.4); z-index: 10; border: 1px solid #fff; } }
 
-        /* --- 週次導航與戰績 Bar --- */
+        /* --- [外掛] 消費抵銷 (Free Cash) 風格 --- */
+        .free-cash-box { 
+            width: 100%; margin-top: 15px; padding: 15px; 
+            background: rgba(31, 111, 235, 0.1); border: 1px solid rgba(31, 111, 235, 0.4); 
+            border-radius: 8px; text-align: center; box-sizing: border-box;
+            display: none; /* 預設隱藏 */
+            animation: fadeIn 0.5s ease;
+        }
+        .free-cash-label { font-size: 0.9rem; color: #58a6ff; font-weight: bold; margin-bottom: 5px; }
+        .free-cash-val { font-size: 2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(88, 166, 255, 0.3); }
+        .free-cash-desc { font-size: 0.8rem; color: #8b949e; margin-top: 5px; }
+        .is-debt { background: rgba(218, 54, 51, 0.1) !important; border-color: rgba(218, 54, 51, 0.4) !important; }
+        .is-debt .free-cash-label { color: #f85149 !important; }
+        .is-debt .free-cash-val { color: #ff7b72 !important; }
+
+        /* --- 週次導航 --- */
         .weekly-container { width: 100%; margin-top: 15px; background: rgba(22, 27, 34, 0.8); border: 1px solid #30363d; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; animation: fadeIn 0.5s ease; }
         .week-nav { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; background: #21262d; border-bottom: 1px solid #30363d; }
         .nav-arrow { background: none; border: none; color: #8b949e; font-size: 18px; cursor: pointer; padding: 0 10px; transition: 0.2s; }
@@ -86,8 +88,27 @@
         .week-label { font-size: 14px; font-weight: bold; color: #e6edf3; }
         .nav-reset { background: rgba(48, 54, 61, 0.5); border: 1px solid #30363d; border-radius: 4px; color: #58a6ff; cursor: pointer; padding: 2px 8px; font-size: 12px; display: none; transition: 0.2s; }
         .nav-reset:hover { background: #30363d; color: #fff; }
-        .weekly-insight-content { padding: 15px; text-align: center; color: #58a6ff; font-size: 1.1rem; font-weight: 600; }
+        .weekly-insight-content { padding: 15px; text-align: center; color: #58a6ff; font-size: 1.1rem; font-weight: 600; line-height: 1.5; }
         .insight-highlight { color: #fff; font-weight: 800; margin: 0 5px; }
+
+        /* --- [外掛] 四象限筆記風格 --- */
+        .quadrant-section { width: 100%; max-width: 900px; margin-top: 30px; margin-bottom: 50px; animation: fadeIn 0.5s ease; }
+        .quadrant-title { color: #8b949e; font-size: 14px; font-weight: bold; margin-bottom: 10px; margin-left: 5px; }
+        .quadrant-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; height: 300px; }
+        .q-box { 
+            background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px; 
+            display: flex; flex-direction: column; transition: 0.3s;
+        }
+        .q-box:focus-within { border-color: #58a6ff; box-shadow: 0 0 10px rgba(88, 166, 255, 0.1); }
+        .q-header { font-size: 12px; color: #8b949e; margin-bottom: 5px; font-weight: bold; user-select: none;}
+        .q-input { 
+            background: transparent; border: none; color: #c9d1d9; width: 100%; height: 100%; 
+            resize: none; font-size: 14px; font-family: inherit; outline: none; line-height: 1.4; 
+        }
+        .q-1 .q-header { color: #f85149; } /* 急/重 */
+        .q-2 .q-header { color: #d29922; } /* 重/不急 */
+        .q-3 .q-header { color: #2ea043; } /* 靈感 */
+        .q-4 .q-header { color: #58a6ff; } /* 備忘 */
 
         /* --- 預算血條 --- */
         .budget-bar-container { width: 100%; box-sizing: border-box; margin-bottom: 20px; display: none; flex-direction: column; gap: 8px; background: #161b22; padding: 15px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
@@ -96,7 +117,7 @@
         .hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #2ea043, #3fb950); transition: width 0.5s; }
         .hp-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
 
-        /* --- 🎲 獎勵轉盤 --- */
+        /* --- 獎勵轉盤 --- */
         .reward-card { background: #161b22; border: 1px solid #a371f7; border-radius: 12px; padding: 20px; width: 100%; box-sizing: border-box; text-align: center; box-shadow: 0 0 20px rgba(163, 113, 247, 0.1); }
         .reward-toggle-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
         .sub-toggle-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; padding: 6px 15px; border-radius: 15px; cursor: pointer; font-size: 13px; }
@@ -121,7 +142,7 @@
         .input-field, .input-select { width: 100%; padding: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; box-sizing: border-box; font-size: 14px; }
         .save-btn { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px;}
 
-        /* --- 狀態警示卡片 (V23: 手機優化版) --- */
+        /* --- 狀態警示卡片 --- */
         .alert-box { 
             width: 100%; max-width: 900px; 
             background: rgba(210, 153, 34, 0.1); 
@@ -133,7 +154,6 @@
         }
         .alert-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
         .alert-content { flex: 1; min-width: 0; }
-        
         .alert-title { 
             color: #d29922; font-weight: bold; font-size: 1.1rem; 
             margin-bottom: 8px; 
@@ -141,17 +161,13 @@
             flex-wrap: wrap; gap: 5px; 
         }
         .alert-desc { color: #eac54f; font-size: 0.95rem; line-height: 1.6; }
-        
         .recovery-tag { 
-            display: inline-block; 
-            background: #d29922; color: #0d1117; 
-            padding: 2px 8px; border-radius: 12px; 
-            font-size: 12px; font-weight: 800; 
-            margin: 2px 2px; 
-            white-space: nowrap; /* 禁止數字斷行 */
+            display: inline-block; background: #d29922; color: #0d1117; 
+            padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 800; 
+            margin: 2px 2px; white-space: nowrap; 
         }
 
-        /* --- 戰報分享卡片 (Share Card) --- */
+        /* --- 戰報分享卡片 --- */
         .share-card-container { position: fixed; left: -9999px; top: 0; }
         .share-card {
             width: 400px; height: 600px;
@@ -176,26 +192,15 @@
         @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
         @media (max-width: 600px) {
-            body { padding: 10px; } .nav-bar { flex-direction: row; gap: 8px; } .switch-container { flex: 1; padding: 3px; } .switch-btn { padding: 8px 5px; font-size: 13px; flex: 1; text-align: center; } .stats-container { gap: 10px; } .stat-val { font-size: 1.5rem; } .graph-wrapper { padding: 10px; width: 100vw; margin-left: -10px; border-radius: 0; border-left: none; border-right: none;}
+            body { padding: 10px; } .nav-bar { flex-direction: row; gap: 8px; } .switch-container { flex: 1; padding: 3px; } .switch-btn { padding: 8px 5px; font-size: 13px; flex: 1; text-align: center; } .stats-container { gap: 10px; } .stat-val { font-size: 1.5rem; } .graph-wrapper { padding: 10px; margin-left: -10px; margin-right: -10px; width: 100vw; border-radius: 0; border-left: none; border-right: none;}
             
             /* Mobile Alert Fix */
-            .alert-title {
-                flex-direction: column; /* 標題與數值上下排列 */
-                align-items: flex-start;
-                gap: 2px;
-            }
-            .alert-title span:last-child {
-                /* 數值部分放大 */
-                font-size: 1.5rem; 
-                color: #ff9b5e;
-                margin-top: 5px;
-                margin-bottom: 5px;
-            }
-            .alert-desc {
-                margin-top: 8px;
-                padding-top: 8px;
-                border-top: 1px dashed rgba(210, 153, 34, 0.3); /* 分隔線 */
-            }
+            .alert-title { flex-direction: column; align-items: flex-start; gap: 2px; }
+            .alert-title span:last-child { font-size: 1.5rem; color: #ff9b5e; margin-top: 5px; margin-bottom: 5px; }
+            .alert-desc { margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(210, 153, 34, 0.3); }
+
+            /* Quadrant Fix */
+            .quadrant-grid { height: 400px; }
         }
     </style>
 </head>
@@ -218,7 +223,7 @@
     <div id="dashboard-view" class="dashboard-view">
         <div class="budget-bar-container" id="budget-container">
             <div class="budget-header">
-                <span style="font-size:14px; font-weight:bold; color:#e6edf3;">💳 錢包 HP</span>
+                <span style="font-size:14px; font-weight:bold; color:#e6edf3;">💳 錢包 HP (月度)</span>
                 <span style="font-size:12px; color:#8b949e;"><span id="wallet-hp">0</span> / <span id="wallet-max">0</span></span>
             </div>
             <div class="hp-track"><div class="hp-fill" id="hp-fill"></div></div>
@@ -256,6 +261,12 @@
             <div id="heatmap" class="graph-container"></div>
         </div>
 
+        <div id="free-cash-container" class="free-cash-box">
+            <div class="free-cash-label">💰 本週可支配餘額 (Free Cash)</div>
+            <div class="free-cash-val" id="free-cash-val">$0</div>
+            <div class="free-cash-desc" id="free-cash-desc">計算中...</div>
+        </div>
+
         <div id="health-alert-box" class="alert-box hidden">
             <div class="alert-icon">⚠️</div>
             <div class="alert-content">
@@ -282,6 +293,29 @@
                 計算中...
             </div>
         </div>
+
+        <div class="quadrant-section">
+            <div class="quadrant-title">📝 隨手筆記 (本機儲存)</div>
+            <div class="quadrant-grid">
+                <div class="q-box q-1">
+                    <div class="q-header">🔴 急/重要</div>
+                    <textarea class="q-input" id="q-note-0" oninput="saveQuadrant(0)" placeholder="趕快做..."></textarea>
+                </div>
+                <div class="q-box q-2">
+                    <div class="q-header">🟠 重要/不急</div>
+                    <textarea class="q-input" id="q-note-1" oninput="saveQuadrant(1)" placeholder="規劃中..."></textarea>
+                </div>
+                <div class="q-box q-3">
+                    <div class="q-header">🟢 靈感/雜事</div>
+                    <textarea class="q-input" id="q-note-2" oninput="saveQuadrant(2)" placeholder="想到的..."></textarea>
+                </div>
+                <div class="q-box q-4">
+                    <div class="q-header">🔵 備忘/清單</div>
+                    <textarea class="q-input" id="q-note-3" oninput="saveQuadrant(3)" placeholder="買牛奶..."></textarea>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <div class="share-card-container">
@@ -332,7 +366,18 @@
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
             <div class="input-group"><label class="input-label">記帳表連結 (或 ID)</label><input type="text" id="input-money-id" class="input-field" placeholder="貼上完整網址或 ID..."></div>
             <div class="input-group"><label class="input-label">記帳表分頁名</label><input type="text" id="input-money-sheet" class="input-field" placeholder="預設: 表單"></div>
-            <div class="input-group"><label class="input-label">記帳月預算</label><input type="number" id="input-monthly-budget" class="input-field" value="10000"></div>
+            <div class="input-group"><label class="input-label">記帳月預算 (宏觀)</label><input type="number" id="input-monthly-budget" class="input-field" value="10000"></div>
+
+            <div style="border-top:1px dashed #30363d; margin:10px 0;"></div>
+            <div class="input-group">
+                <label class="input-label" style="color:#58a6ff;">(外掛) 每週變動預算目標</label>
+                <input type="number" id="input-weekly-budget" class="input-field" value="3000" placeholder="例如: 3000">
+            </div>
+            <div class="input-group">
+                <label class="input-label" style="color:#58a6ff;">(外掛) 固定訂閱/支出 (月繳)</label>
+                <div style="font-size:10px; color:#666; margin-bottom:4px;">格式: 項目:金額 (一行一個)</div>
+                <textarea id="input-subscriptions" class="input-field" placeholder="Netflix: 270&#10;Spotify: 149" style="min-height:60px;"></textarea>
+            </div>
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
             <div class="input-group"><label class="input-label">金句分頁名</label><input type="text" id="input-quote-sheet" class="input-field" placeholder="預設: Quotes"></div>
             <div class="input-group">
@@ -355,7 +400,10 @@
             monthlyBudget: 10000,
             bgStyle: 'nature',
             rewardsHealth: "喝一杯奶茶\n吃炸雞\n吃甜點\n休息一天",
-            rewardsMoney: "買 Steam 遊戲\n搭計程車\n買新衣服\n吃大餐"
+            rewardsMoney: "買 Steam 遊戲\n搭計程車\n買新衣服\n吃大餐",
+            // 外掛欄位預設值
+            weeklyBudget: 3000,
+            subscriptions: ""
         };
         
         let currentMode = 'health';
@@ -368,10 +416,10 @@
 
         const DEFAULT_QUOTES = [
             { text: "只要記住你的名字，不管你在世界的哪個地方，我一定會去見你。", author: "你的名字" },
-            { text: "幸福是每一個微小的生活願望達成。\nHappiness is having each tiny wish come true.", author: "天外奇蹟" },
-            { text: "I love you. I knew it the minute I met you.\n我愛你，當我遇見你的那一刻就知道了。", author: "派特的幸福劇本" },
-            { text: "Whatever happens tomorrow, we had today.\n無論明天發生什麼事，至少我們擁有當下。", author: "真愛挑日子" },
-            { text: "Call me by your name, and I'll call you by mine.\n以你的名字呼喚我，而我也將以我的名字喚你。", author: "以你的名字呼喚我" },
+            { text: "所謂愛一個人，不是喜歡對方的體溫，而是要跟對方的體溫越來越接近。", author: "請回答1988" },
+            { text: "手牽手到最後都不會放手的心。", author: "請回答1988" },
+            { text: "幸福是每一個微小的生活願望達成。", author: "天外奇蹟" },
+            { text: "Whatever happens tomorrow, we had today.", author: "真愛挑日子" },
             { text: "Our greatest glory is not in never falling, but in rising every time we fall.", author: "Batman Begins" }
         ];
 
@@ -401,9 +449,12 @@
             loadSettings();
             setRandomFallbackQuote(); 
             applyDefaultBackground(); 
+            
             if (!CONFIG.healthId && !CONFIG.moneyId) openSettings();
             else switchApp('health');
             document.getElementById('reward-list-input').value = CONFIG.rewardsHealth;
+
+            loadQuadrants(); 
         }
 
         function setRandomFallbackQuote() {
@@ -427,6 +478,10 @@
             document.getElementById('input-monthly-budget').value = CONFIG.monthlyBudget || 10000;
             document.getElementById('input-bg-style').value = CONFIG.bgStyle || 'nature';
             document.getElementById('input-quote-sheet').value = CONFIG.quoteSheet || 'Quotes';
+            
+            document.getElementById('input-weekly-budget').value = CONFIG.weeklyBudget || 3000;
+            document.getElementById('input-subscriptions').value = CONFIG.subscriptions || '';
+
             document.getElementById('settings-modal').style.display = 'flex';
         }
         function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
@@ -444,16 +499,21 @@
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
             CONFIG.quoteSheet = document.getElementById('input-quote-sheet').value.trim() || 'Quotes';
-            localStorage.setItem('dashboard_config_v11', JSON.stringify(CONFIG));
+            
+            CONFIG.weeklyBudget = parseInt(document.getElementById('input-weekly-budget').value) || 3000;
+            CONFIG.subscriptions = document.getElementById('input-subscriptions').value;
+
+            localStorage.setItem('dashboard_config_v23_plus', JSON.stringify(CONFIG));
             closeSettings();
             applyDefaultBackground();
             switchApp(currentMode);
         }
         
         function loadSettings() {
-            const saved = localStorage.getItem('dashboard_config_v11');
+            const saved = localStorage.getItem('dashboard_config_v23_plus') || localStorage.getItem('dashboard_config_v11'); 
             if (saved) {
-                CONFIG = JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                CONFIG = { ...CONFIG, ...parsed }; 
             }
         }
 
@@ -461,7 +521,7 @@
             const content = document.getElementById('reward-list-input').value;
             if (currentMode === 'health') CONFIG.rewardsHealth = content;
             else CONFIG.rewardsMoney = content;
-            localStorage.setItem('dashboard_config_v11', JSON.stringify(CONFIG));
+            localStorage.setItem('dashboard_config_v23_plus', JSON.stringify(CONFIG));
         }
 
         function applyDefaultBackground() {
@@ -487,17 +547,15 @@
             card.style.backgroundImage = `url('${currentBgUrl}')`;
         }
 
-        // --- V22: 週報卡片生成邏輯 ---
         function captureShareCard() {
             const btn = document.querySelector('.icon-btn[title="製作本週戰報"]');
             const originalText = btn.innerText;
             btn.innerText = '⏳';
             
-            // 1. 計算本週累積數據
             const now = new Date();
             const startOfWeek = new Date(now);
             const day = now.getDay();
-            const diff = now.getDate() - day + (day === 0 ? -6 : 1); // 週一開始
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1);
             startOfWeek.setDate(diff); startOfWeek.setHours(0,0,0,0);
             
             const endOfWeek = new Date(startOfWeek);
@@ -509,7 +567,6 @@
                 const dStr = formatLocalYMD(ptr);
                 if (globalDataMap[dStr]) {
                     if (globalTheme.isDeficitGood) {
-                         // Health模式：不管正負都加總，才能反映總赤字或盈餘
                          if(globalDataMap[dStr].value !== 0) weeklySum += globalDataMap[dStr].value;
                     } else {
                          weeklySum += globalDataMap[dStr].value;
@@ -520,18 +577,15 @@
 
             const streakVal = document.getElementById('stat1-val').innerText;
 
-            // 2. 填充卡片 DOM
             const fmt = (d) => `${d.getMonth()+1}/${d.getDate()}`;
             document.getElementById('sc-date').innerText = `WEEKLY REPORT\n${fmt(startOfWeek)} - ${fmt(endOfWeek)}`;
             
-            // 處理數值顯示 (+號)
             let displayVal = weeklySum.toLocaleString();
             if (weeklySum > 0) displayVal = "+" + displayVal;
             document.getElementById('sc-val').innerText = displayVal;
             
             document.getElementById('sc-streak-val').innerText = streakVal;
 
-            // 3. 設定背景
             const scBg = document.getElementById('sc-bg');
             if (CONFIG.bgStyle === 'nature' && currentBgUrl) {
                 scBg.style.backgroundImage = `url('${currentBgUrl}')`;
@@ -539,7 +593,6 @@
                 scBg.style.backgroundImage = 'linear-gradient(135deg, #21262d 0%, #0d1117 100%)';
             }
 
-            // 4. 設定 Badge 與 底部文字 (智慧切換)
             const badgeEl = document.getElementById('sc-badge');
             const quoteEl = document.getElementById('sc-quote-text');
             const quoteBorder = document.querySelector('.sc-quote');
@@ -547,7 +600,6 @@
             let badgeText = "保持紀錄";
             let badgeColor = "#58a6ff"; 
 
-            // 還原預設樣式
             quoteBorder.style.borderLeftColor = "#58a6ff"; 
             quoteBorder.style.color = "#c9d1d9";
             quoteBorder.style.fontStyle = "italic";
@@ -555,25 +607,22 @@
             if (currentMode === 'health') {
                 if (weeklySum < 0) { 
                     badgeText = "🔥 本週燃脂中"; badgeColor = "#3fb950"; 
-                    quoteEl.innerText = document.getElementById('q-text').innerText; // 顯示金句
+                    quoteEl.innerText = document.getElementById('q-text').innerText; 
                 }
                 else if (weeklySum === 0) { 
                     badgeText = "✨ 完美平衡"; badgeColor = "#8b949e"; 
                     quoteEl.innerText = document.getElementById('q-text').innerText;
                 }
                 else { 
-                    // 警示狀態：顯示補救計畫
                     badgeText = "⚠️ 赤字失守"; badgeColor = "#d29922"; 
                     const walkMins = Math.round(weeklySum / 5); 
                     quoteEl.innerHTML = `本週熱量累積中！<br>目標：只要再多走 <b>${walkMins} 分鐘</b>，就能把這週的進度追回來。`;
                     
-                    // 改變樣式以強調
                     quoteBorder.style.borderLeftColor = "#d29922";
                     quoteBorder.style.color = "#fff";
                     quoteBorder.style.fontStyle = "normal";
                 }
             } else {
-                // Money Mode
                 const weeklyBudget = CONFIG.monthlyBudget / 4;
                 const saved = weeklyBudget - weeklySum;
                 if (saved >= 0) { 
@@ -594,12 +643,11 @@
             badgeEl.style.color = badgeColor;
             badgeEl.style.background = `rgba(${parseInt(badgeColor.slice(1,3),16)}, ${parseInt(badgeColor.slice(3,5),16)}, ${parseInt(badgeColor.slice(5,7),16)}, 0.1)`;
 
-            // 5. 截圖
             const cardDom = document.getElementById('share-card');
             html2canvas(cardDom, {
                 useCORS: true, 
                 backgroundColor: null,
-                scale: 2 // 高解析度
+                scale: 2 
             }).then(canvas => {
                 const link = document.createElement('a');
                 const dStr = formatLocalYMD(now);
@@ -609,7 +657,7 @@
                 btn.innerText = originalText;
             }).catch(err => {
                 console.error(err);
-                alert('圖片生成失敗，請稍後再試。');
+                alert('圖片生成失敗 (可能是跨域問題)，請稍後再試。');
                 btn.innerText = originalText;
             });
         }
@@ -656,7 +704,8 @@
             
             document.getElementById('budget-container').style.display = (mode === 'money') ? 'flex' : 'none';
             document.getElementById('health-alert-box').classList.add('hidden'); 
-            
+            document.getElementById('free-cash-container').style.display = 'none';
+
             if (sheetId) {
                 fetchData(sheetId, sheetName, globalTheme);
                 fetchQuotes(sheetId, CONFIG.quoteSheet);
@@ -719,6 +768,8 @@
             const alertBox = document.getElementById('health-alert-box'); 
 
             if (comparisonTicker) { clearInterval(comparisonTicker); comparisonTicker = null; }
+
+            renderFreeCashModule(weekSum, offset);
 
             // --- Health Logic ---
             if (currentMode === 'health' || (currentMode === 'reward' && lastActiveMode === 'health')) {
@@ -787,6 +838,51 @@
                      weeklyBar.style.color = "#58a6ff";
                 }
                 updateRewardUI(Math.round(saved), globalTheme.unit, saved >= 0);
+            }
+        }
+
+        function calculateWeeklyFixedCost() {
+            if (!CONFIG.subscriptions) return 0;
+            const lines = CONFIG.subscriptions.split('\n');
+            let monthlyTotal = 0;
+            lines.forEach(line => {
+                const parts = line.split(/[:：]/);
+                if (parts.length >= 2) {
+                    const price = parseInt(parts[1].replace(/[^0-9]/g, ''));
+                    if (!isNaN(price)) monthlyTotal += price;
+                }
+            });
+            // 月費轉週費 (除以 4.3)
+            return Math.round(monthlyTotal / 4.3);
+        }
+
+        function renderFreeCashModule(currentWeekSpending, offset) {
+            const box = document.getElementById('free-cash-container');
+            
+            // 只在「記帳模式」且「查看本週」時顯示
+            if (currentMode !== 'money' || offset !== 0) {
+                box.style.display = 'none';
+                return;
+            }
+
+            box.style.display = 'block';
+            
+            const grossBudget = CONFIG.weeklyBudget || 3000;
+            const fixedCost = calculateWeeklyFixedCost();
+            const netBudget = grossBudget - fixedCost; 
+            const remaining = netBudget - currentWeekSpending;
+
+            const valEl = document.getElementById('free-cash-val');
+            const descEl = document.getElementById('free-cash-desc');
+
+            valEl.innerText = `$${remaining.toLocaleString()}`;
+
+            if (remaining >= 0) {
+                box.className = "free-cash-box";
+                descEl.innerHTML = `已扣除固定訂閱 ($${fixedCost}/週)<br>本週還能放心花費的額度`;
+            } else {
+                box.className = "free-cash-box is-debt";
+                descEl.innerHTML = `⚠️ 警告：已超過本週可支配額度<br>超支 $${Math.abs(remaining).toLocaleString()}`;
             }
         }
 
@@ -881,7 +977,7 @@
                 count++;
             });
 
-            // Streak Logic (Check backwards starting from Today)
+            // Streak Logic
             let checkDate = new Date();
             let checkStr = formatLocalYMD(checkDate);
             
@@ -950,20 +1046,20 @@
                     const value = item.value; const th = theme.thresholds; let verdict = "";
                     if (theme.isDeficitGood) {
                         if (value <= theme.goldLimit) { cell.classList.add('color-gold'); verdict = "🔥 燃脂"; }
-                        else if (value < th[0]) cell.style.backgroundColor = theme.colors[0];
-                        else if (value < th[1]) cell.style.backgroundColor = theme.colors[1];
-                        else if (value < 0) cell.style.backgroundColor = theme.colors[2];
-                        else if (value == 0) cell.style.backgroundColor = theme.colors[3];
-                        else if (value < th[3]) cell.style.backgroundColor = theme.colors[4];
-                        else if (value < th[4]) cell.style.backgroundColor = theme.colors[5];
-                        else cell.style.backgroundColor = theme.colors[6];
+                        else if (value < th[0]) { cell.style.backgroundColor = theme.colors[0]; verdict = "💪 大赤字"; }
+                        else if (value < th[1]) { cell.style.backgroundColor = theme.colors[1]; verdict = "👍 赤字"; }
+                        else if (value < 0) { cell.style.backgroundColor = theme.colors[2]; verdict = "👌 小赤字"; }
+                        else if (value == 0) { cell.style.backgroundColor = theme.colors[3]; verdict = "⚖️ 平衡"; }
+                        else if (value < th[3]) { cell.style.backgroundColor = theme.colors[4]; verdict = "🍔 小超標"; }
+                        else if (value < th[4]) { cell.style.backgroundColor = theme.colors[5]; verdict = "🍕 中超標"; }
+                        else { cell.style.backgroundColor = theme.colors[6]; verdict = "🚨 大超標"; }
                     } else {
                         if (value <= theme.goldLimit && value > 0) { cell.classList.add('color-gold'); verdict = "🏆 神省"; }
-                        else if (value === 0) cell.style.backgroundColor = theme.colors[2];
+                        else if (value === 0) { cell.style.backgroundColor = theme.colors[2]; verdict = "⛔ 無消費"; }
                         else if (value <= th[1]) { cell.style.backgroundColor = theme.colors[1]; verdict = "✅ 安全"; }
-                        else if (value <= th[2]) { cell.style.backgroundColor = theme.colors[3]; }
-                        else if (value <= th[3]) { cell.style.backgroundColor = theme.colors[4]; }
-                        else cell.style.backgroundColor = theme.colors[5];
+                        else if (value <= th[2]) { cell.style.backgroundColor = theme.colors[3]; verdict = "💸 正常"; }
+                        else if (value <= th[3]) { cell.style.backgroundColor = theme.colors[4]; verdict = "💸 略多"; }
+                        else { cell.style.backgroundColor = theme.colors[5]; verdict = "💸 噴錢"; }
                     }
                     const tooltipText = `${dateString} | ${verdict} ${theme.unit}: ${value}`;
                     cell.setAttribute('title', tooltipText);
@@ -1004,6 +1100,19 @@
                     }
                 }
             } catch (e) { setRandomFallbackQuote(); }
+        }
+
+        // --- [外掛] 四象限筆記功能 ---
+        function loadQuadrants() {
+            for(let i=0; i<4; i++) {
+                const txt = localStorage.getItem(`q_note_plugin_${i}`);
+                if(txt) document.getElementById(`q-note-${i}`).value = txt;
+            }
+        }
+
+        function saveQuadrant(idx) {
+            const val = document.getElementById(`q-note-${idx}`).value;
+            localStorage.setItem(`q_note_plugin_${idx}`, val);
         }
     </script>
 </body>
