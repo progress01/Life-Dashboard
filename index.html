@@ -1026,7 +1026,8 @@
 
         async function fetchData(id, sheetName, theme) {
             const encodedSheet = encodeURIComponent(sheetName);
-            const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=SELECT B, C OFFSET 1&_=${Date.now()}`;
+            const query = encodeURIComponent("SELECT B, C OFFSET 1");
+            const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=${query}&_=${Date.now()}`;
             try {
                 const res = await fetch(url); const text = await res.text();
                 const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
