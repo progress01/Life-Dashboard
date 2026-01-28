@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Dashboard V27 (Quote Tab)</title>
+    <title>Life Dashboard V27 (Fixed)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         /* --- 全域風格 --- */
@@ -914,7 +914,7 @@
                 const weeklyBudget = CONFIG.monthlyBudget / 4;
                 const saved = weeklyBudget - weekSum;
                 if (saved > 0) {
-                     const comparisons = [
+                      const comparisons = [
                         { text: '☕ 省下了', unit: '杯星巴克', val: Math.round(saved / 150) },
                         { text: '🍱 省下了', unit: '個便當', val: Math.round(saved / 100) },
                         { text: '🎬 省下了', unit: '張電影票', val: Math.round(saved / 300) },
@@ -930,9 +930,9 @@
                     comparisonTicker = setInterval(updateBar, 3000);
                     weeklyBar.style.color = "#58a6ff";
                 } else {
-                     const over = Math.abs(saved);
-                     weeklyBar.innerHTML = `${label}戰績：💸 超支了 <span class="insight-highlight">${over}</span> 元 (少吃 ${Math.round(over/100)} 個便當)`;
-                     weeklyBar.style.color = "#58a6ff";
+                      const over = Math.abs(saved);
+                      weeklyBar.innerHTML = `${label}戰績：💸 超支了 <span class="insight-highlight">${over}</span> 元 (少吃 ${Math.round(over/100)} 個便當)`;
+                      weeklyBar.style.color = "#58a6ff";
                 }
                 updateRewardUI(Math.round(saved), globalTheme.unit, saved >= 0);
             }
@@ -1025,11 +1025,14 @@
         }
 
         async function fetchData(id, sheetName, theme) {
+            // FIX: 使用 encodeURIComponent 確保分頁名稱與查詢語法被正確編碼
             const encodedSheet = encodeURIComponent(sheetName);
             const query = encodeURIComponent("SELECT B, C OFFSET 1");
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=${query}&_=${Date.now()}`;
+            
             try {
                 const res = await fetch(url); const text = await res.text();
+                // 處理回應字串，取出 JSON
                 const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
                 const data = JSON.parse(jsonString);
                 processData(data.table.rows, theme);
@@ -1121,6 +1124,107 @@
         function saveQuadrant(idx) {
             const val = document.getElementById(`q-note-${idx}`).value;
             localStorage.setItem(`q_note_plugin_${idx}`, val);
+        }
+
+        // --- 補回遺失的繪圖函式 (Fixed) ---
+
+        function updateWalletHP(spent, budget) {
+            const hpFill = document.getElementById('hp-fill');
+            const hpText = document.getElementById('wallet-hp');
+            const maxText = document.getElementById('wallet-max');
+            const theoryText = document.getElementById('theory-hp');
+
+            if (!hpFill) return;
+
+            const remaining = budget - spent;
+            const percentage = Math.max(0, Math.min(100, (remaining / budget) * 100));
+            
+            hpText.innerText = remaining.toLocaleString();
+            maxText.innerText = budget.toLocaleString();
+            hpFill.style.width = percentage + "%";
+            
+            if (percentage < 20) hpFill.className = 'hp-fill danger';
+            else hpFill.className = 'hp-fill';
+
+            // 計算今日理論剩餘 (假設線性花費)
+            const now = new Date();
+            const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const dayPassed = now.getDate();
+            const theoryLeft = Math.round(budget - (budget / totalDays * dayPassed));
+            theoryText.innerText = theoryLeft.toLocaleString();
+        }
+
+        function drawHeatmap(dataMap, theme) {
+            const container = document.getElementById('heatmap');
+            container.innerHTML = '';
+            
+            // 產生過去 365 天 (53週)
+            const today = new Date();
+            const startDate = new Date();
+            startDate.setDate(today.getDate() - 365);
+            
+            // 修正開始日為星期日，讓熱力圖排版整齊
+            const day = startDate.getDay(); 
+            startDate.setDate(startDate.getDate() - day);
+
+            const resultFragment = document.createDocumentFragment();
+
+            for (let i = 0; i <= 370; i++) {
+                const curr = new Date(startDate);
+                curr.setDate(startDate.getDate() + i);
+                const dStr = formatLocalYMD(curr);
+                
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                
+                const dataItem = dataMap[dStr];
+                let val = 0;
+                let hasData = false;
+
+                if (dataItem) {
+                    val = dataItem.value;
+                    hasData = true;
+                    
+                    // 上色邏輯
+                    if (theme.isDeficitGood) {
+                         if (val <= theme.goldLimit) cell.classList.add('color-gold');
+                    } else {
+                         if (val > 0 && val <= theme.goldLimit) cell.classList.add('color-gold');
+                    }
+
+                    // 顏色分級映射
+                    if (theme.isDeficitGood) {
+                        // Health Colors: [-600, -300, 0, 300, 600]
+                        if (val < -600) cell.style.backgroundColor = theme.colors[0];
+                        else if (val < -300) cell.style.backgroundColor = theme.colors[1];
+                        else if (val < 0) cell.style.backgroundColor = theme.colors[2];
+                        else if (val === 0) cell.style.backgroundColor = theme.colors[3];
+                        else if (val < 300) cell.style.backgroundColor = theme.colors[4];
+                        else if (val < 600) cell.style.backgroundColor = theme.colors[5];
+                        else cell.style.backgroundColor = theme.colors[6];
+                    } else {
+                        // Money Colors: [100, 300, 800, 1500, 3000]
+                        if (val === 0) cell.style.backgroundColor = theme.colors[2]; 
+                        else if (val < 100) cell.style.backgroundColor = theme.colors[0]; 
+                        else if (val < 300) cell.style.backgroundColor = theme.colors[1]; 
+                        else if (val < 800) cell.style.backgroundColor = theme.colors[3]; 
+                        else if (val < 1500) cell.style.backgroundColor = theme.colors[4]; 
+                        else cell.style.backgroundColor = theme.colors[5]; 
+                    }
+                }
+
+                // Tooltip
+                cell.title = `${dStr}\n${hasData ? val : '無紀錄'} ${theme.unit}`;
+                
+                // 點擊顯示於 Stat2
+                cell.onclick = () => {
+                     document.getElementById('stat2-val').innerText = hasData ? val.toLocaleString() : "---";
+                     document.getElementById('stat2-label').innerText = `${dStr} 數據`;
+                };
+
+                resultFragment.appendChild(cell);
+            }
+            container.appendChild(resultFragment);
         }
     </script>
 </body>
