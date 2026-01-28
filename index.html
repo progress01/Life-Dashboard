@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Dashboard V26 (Mobile+UX)</title>
+    <title>Life Dashboard V27 (Quote Tab)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         /* --- 全域風格 --- */
@@ -20,11 +20,12 @@
         /* --- 導航列 --- */
         .nav-bar { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; }
         .switch-container { background: #161b22; padding: 4px; border-radius: 30px; border: 1px solid #30363d; display: flex; gap: 4px; flex: 1; justify-content: center; }
-        .switch-btn { background: transparent; border: none; color: #8b949e; padding: 8px 20px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 25px; transition: 0.3s; white-space: nowrap; }
+        .switch-btn { background: transparent; border: none; color: #8b949e; padding: 8px 12px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 25px; transition: 0.3s; white-space: nowrap; }
         
         .switch-btn.active { background: #238636; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
         .switch-btn.active[data-mode="money"] { background: #d29922; color: #1e1e1e; }
-        .switch-btn.active[data-mode="reward"] { background: #a371f7; color: #fff; } 
+        .switch-btn.active[data-mode="reward"] { background: #a371f7; color: #fff; }
+        .switch-btn.active[data-mode="quote"] { background: #58a6ff; color: #fff; }
 
         .nav-right-group { display: flex; gap: 8px; }
         .icon-btn { background: #21262d; border: 1px solid #30363d; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; color: #8b949e; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
@@ -37,7 +38,7 @@
         .dashboard-view { width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.5s ease; }
         .hidden { display: none !important; }
 
-        /* --- 金句卡片 --- */
+        /* --- 金句卡片 (共用樣式) --- */
         .quote-container { 
             background-color: #161b22; background-size: cover; background-position: center; 
             border: 1px solid #30363d; border-left: 5px solid #58a6ff; border-radius: 8px; 
@@ -116,7 +117,7 @@
         .hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #2ea043, #3fb950); transition: width 0.5s; }
         .hp-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
 
-        /* --- 獎勵轉盤 --- */
+        /* --- 獎勵 / 金句 頁面共用卡片 --- */
         .reward-card { background: #161b22; border: 1px solid #a371f7; border-radius: 12px; padding: 20px; width: 100%; box-sizing: border-box; text-align: center; box-shadow: 0 0 20px rgba(163, 113, 247, 0.1); }
         .reward-toggle-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
         .sub-toggle-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; padding: 6px 15px; border-radius: 15px; cursor: pointer; font-size: 13px; }
@@ -199,7 +200,7 @@
             /* 導航列：強迫不換行，縮小文字以塞入小螢幕 */
             .nav-bar { gap: 6px; } 
             .switch-container { padding: 2px; } 
-            .switch-btn { padding: 8px 0; font-size: 12px; flex: 1; text-align: center; } 
+            .switch-btn { padding: 8px 4px; font-size: 12px; flex: 1; text-align: center; } 
             .icon-btn { width: 36px; height: 36px; font-size: 18px; }
 
             /* 數據區：縮小間距 */
@@ -238,9 +239,9 @@
             <button class="switch-btn active" data-mode="health" onclick="switchApp('health')">💪 熱量</button>
             <button class="switch-btn" data-mode="money" onclick="switchApp('money')">💰 記帳</button>
             <button class="switch-btn" data-mode="reward" onclick="switchApp('reward')">🎲 獎勵</button>
+            <button class="switch-btn" data-mode="quote" onclick="switchApp('quote')">🧘 金句</button>
         </div>
         <div class="nav-right-group">
-            <button class="icon-btn" onclick="openQuoteEditor()" title="編輯金句">📖</button>
             <button class="icon-btn" onclick="captureShareCard()" title="製作本週戰報">📷</button>
             <button class="icon-btn settings-btn" onclick="openSettings()">⚙️</button>
         </div>
@@ -386,20 +387,31 @@
         </div>
     </div>
 
+    <div id="quote-view" class="dashboard-view hidden">
+        <div class="reward-card" style="border-color: #58a6ff;">
+            <div class="balance-info" style="color:#58a6ff;">目前展示預覽</div>
+            
+            <div class="quote-container" id="quote-preview-card" onclick="refreshQuotePreview()" style="margin-bottom:20px; cursor:pointer;" title="點擊預覽切換">
+                <div class="quote-overlay"></div>
+                <div class="quote-content-layer">
+                    <div class="quote-text" id="qp-text">...</div>
+                    <div class="quote-author" id="qp-author">...</div>
+                </div>
+            </div>
+
+            <button class="spin-btn" style="background: linear-gradient(135deg, #58a6ff, #1f6feb); box-shadow: 0 4px 15px rgba(31, 111, 235, 0.4);" onclick="refreshQuotePreview()">🔄 隨機切換展示</button>
+            
+            <div style="text-align:left; margin-top:25px; margin-bottom:5px; font-size:12px; color:#8b949e;">
+                👇 編輯金句清單 (一行一句，格式: 內容 -- 作者)
+            </div>
+            <textarea id="quote-list-input" class="reward-list-area" style="min-height:300px; line-height:1.6;" oninput="saveQuoteList()"></textarea>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-box">
             <div class="modal-title">⚙️ 資料來源設定</div>
             
-            <div class="input-group">
-                <label class="input-label" style="color:#58a6ff;">📖 金句/靈感清單 (本機儲存)</label>
-                <div style="font-size:10px; color:#666; margin-bottom:4px;">格式: 句子 -- 作者 (一行一句，程式會隨機顯示)</div>
-                <textarea id="input-quote-list" class="input-field" 
-                          placeholder="只要記住你的名字...&#10;幸福是每一個微小的生活願望達成... -- 天外奇蹟" 
-                          style="min-height:100px; line-height:1.5;"></textarea>
-            </div>
-
-            <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
-
             <div class="input-group"><label class="input-label">熱量表連結 (或 ID)</label><input type="text" id="input-health-id" class="input-field" placeholder="貼上完整網址或 ID..."></div>
             <div class="input-group"><label class="input-label">熱量表分頁名</label><input type="text" id="input-health-sheet" class="input-field" placeholder="預設: 表單"></div>
             <div style="border-top:1px solid #30363d; margin:15px 0;"></div>
@@ -483,32 +495,53 @@
             if (!CONFIG.healthId && !CONFIG.moneyId) openSettings();
             else switchApp('health');
             document.getElementById('reward-list-input').value = CONFIG.rewardsHealth;
+            document.getElementById('quote-list-input').value = CONFIG.quoteList;
 
             loadQuadrants(); 
         }
 
+        // 這是更新「首頁」與「金句頁」的邏輯
         function pickRandomQuoteFromList() {
             const rawText = CONFIG.quoteList || "";
             const quotes = rawText.split('\n').filter(line => line.trim() !== "");
             
-            if (quotes.length === 0) {
-                document.getElementById('q-text').innerText = "Life Dashboard";
-                document.getElementById('q-author').innerText = "Welcome";
-                return;
+            let qText = "Life Dashboard";
+            let qAuthor = "Welcome";
+
+            if (quotes.length > 0) {
+                const randomLine = quotes[Math.floor(Math.random() * quotes.length)];
+                if (randomLine.includes("--")) {
+                    const parts = randomLine.split("--");
+                    qText = parts[0].trim();
+                    qAuthor = parts[1].trim();
+                } else {
+                    qText = randomLine;
+                }
             }
 
-            const randomLine = quotes[Math.floor(Math.random() * quotes.length)];
-            let qText = randomLine;
-            let qAuthor = "Life Dashboard";
+            // 更新首頁卡片
+            const mainText = document.getElementById('q-text');
+            if(mainText) mainText.innerText = qText;
+            const mainAuthor = document.getElementById('q-author');
+            if(mainAuthor) mainAuthor.innerText = qAuthor;
 
-            if (randomLine.includes("--")) {
-                const parts = randomLine.split("--");
-                qText = parts[0].trim();
-                qAuthor = parts[1].trim();
-            }
+            // 更新金句頁預覽卡片
+            const pvText = document.getElementById('qp-text');
+            if(pvText) pvText.innerText = qText;
+            const pvAuthor = document.getElementById('qp-author');
+            if(pvAuthor) pvAuthor.innerText = qAuthor;
+        }
 
-            document.getElementById('q-text').innerText = qText;
-            document.getElementById('q-author').innerText = qAuthor;
+        // 專門給金句頁預覽用的 (連動背景圖)
+        function refreshQuotePreview() {
+            pickRandomQuoteFromList();
+            if (CONFIG.bgStyle !== 'nature') return;
+            // 隨機換圖
+            const newUrl = `https://loremflickr.com/800/300/nature,landscape?random=${Date.now()}`;
+            currentBgUrl = newUrl;
+            
+            document.getElementById('quote-card').style.backgroundImage = `url('${newUrl}')`;
+            document.getElementById('quote-preview-card').style.backgroundImage = `url('${newUrl}')`;
         }
 
         function formatLocalYMD(date) {
@@ -518,17 +551,6 @@
             return `${y}-${m}-${d}`;
         }
 
-        // V26 新增：快速打開金句編輯
-        function openQuoteEditor() {
-            openSettings(); // 先打開設定面板
-            const input = document.getElementById('input-quote-list');
-            // 延遲一下確保 modal 動畫跑完（或 DOM 渲染完成）
-            setTimeout(() => {
-                input.focus(); // 聚焦
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 滾動到該處
-            }, 100);
-        }
-
         function openSettings() {
             document.getElementById('input-health-id').value = CONFIG.healthId || '';
             document.getElementById('input-health-sheet').value = CONFIG.healthSheet || '表單';
@@ -536,8 +558,6 @@
             document.getElementById('input-money-sheet').value = CONFIG.moneySheet || '表單';
             document.getElementById('input-monthly-budget').value = CONFIG.monthlyBudget || 10000;
             document.getElementById('input-bg-style').value = CONFIG.bgStyle || 'nature';
-            
-            document.getElementById('input-quote-list').value = CONFIG.quoteList || '';
             
             document.getElementById('input-weekly-budget').value = CONFIG.weeklyBudget || 3000;
             document.getElementById('input-subscriptions').value = CONFIG.subscriptions || '';
@@ -559,12 +579,10 @@
             CONFIG.monthlyBudget = parseInt(document.getElementById('input-monthly-budget').value) || 10000;
             CONFIG.bgStyle = document.getElementById('input-bg-style').value;
             
-            CONFIG.quoteList = document.getElementById('input-quote-list').value;
-            
             CONFIG.weeklyBudget = parseInt(document.getElementById('input-weekly-budget').value) || 3000;
             CONFIG.subscriptions = document.getElementById('input-subscriptions').value;
 
-            localStorage.setItem('dashboard_config_v26', JSON.stringify(CONFIG)); 
+            localStorage.setItem('dashboard_config_v27', JSON.stringify(CONFIG)); 
             closeSettings();
             
             applyDefaultBackground();
@@ -573,7 +591,7 @@
         }
         
         function loadSettings() {
-            const saved = localStorage.getItem('dashboard_config_v26') || localStorage.getItem('dashboard_config_v25') || localStorage.getItem('dashboard_config_v23_plus') || localStorage.getItem('dashboard_config_v11'); 
+            const saved = localStorage.getItem('dashboard_config_v27') || localStorage.getItem('dashboard_config_v26') || localStorage.getItem('dashboard_config_v25') || localStorage.getItem('dashboard_config_v23_plus'); 
             if (saved) {
                 const parsed = JSON.parse(saved);
                 CONFIG = { ...CONFIG, ...parsed }; 
@@ -584,30 +602,38 @@
             const content = document.getElementById('reward-list-input').value;
             if (currentMode === 'health') CONFIG.rewardsHealth = content;
             else CONFIG.rewardsMoney = content;
-            localStorage.setItem('dashboard_config_v26', JSON.stringify(CONFIG));
+            localStorage.setItem('dashboard_config_v27', JSON.stringify(CONFIG));
+        }
+
+        function saveQuoteList() {
+            CONFIG.quoteList = document.getElementById('quote-list-input').value;
+            localStorage.setItem('dashboard_config_v27', JSON.stringify(CONFIG));
         }
 
         function applyDefaultBackground() {
             const card = document.getElementById('quote-card');
+            const pvCard = document.getElementById('quote-preview-card');
             const overlay = document.getElementById('q-overlay');
+            
             if (CONFIG.bgStyle === 'nature') {
                 const day = new Date().getDate();
                 currentBgUrl = `https://loremflickr.com/800/300/nature,landscape?lock=${day}`;
-                card.style.backgroundImage = `url('${currentBgUrl}')`; 
-                overlay.style.display = 'block';
+                const cssUrl = `url('${currentBgUrl}')`;
+                
+                if(card) card.style.backgroundImage = cssUrl;
+                if(pvCard) pvCard.style.backgroundImage = cssUrl;
+                if(overlay) overlay.style.display = 'block';
             } else {
                 currentBgUrl = '';
-                card.style.backgroundImage = 'linear-gradient(135deg, #21262d 0%, #0d1117 100%)';
-                overlay.style.display = 'none';
+                const grad = 'linear-gradient(135deg, #21262d 0%, #0d1117 100%)';
+                if(card) card.style.backgroundImage = grad;
+                if(pvCard) pvCard.style.backgroundImage = grad;
+                if(overlay) overlay.style.display = 'none';
             }
         }
 
         function refreshBanner() {
-            pickRandomQuoteFromList(); 
-            if (CONFIG.bgStyle !== 'nature') return;
-            const card = document.getElementById('quote-card');
-            currentBgUrl = `https://loremflickr.com/800/300/nature,landscape?random=${Date.now()}`;
-            card.style.backgroundImage = `url('${currentBgUrl}')`;
+            refreshQuotePreview(); // 統一邏輯
         }
 
         function captureShareCard() {
@@ -734,24 +760,33 @@
 
             const dashView = document.getElementById('dashboard-view');
             const rewardView = document.getElementById('reward-view');
+            const quoteView = document.getElementById('quote-view');
+
+            // 先全部隱藏
+            dashView.classList.add('hidden');
+            rewardView.classList.add('hidden');
+            quoteView.classList.add('hidden');
 
             if (mode === 'reward') {
-                dashView.classList.add('hidden');
                 rewardView.classList.remove('hidden');
                 document.getElementById('app-title').innerText = "🎲 Reward Center";
                 
-                if(lastActiveMode) {
-                    currentMode = lastActiveMode; 
-                    updateWeeklyInsight(0); 
+                if(lastActiveMode !== 'quote' && lastActiveMode !== 'reward') {
+                    // 為了讓獎勵知道要顯示哪個模式的獎勵
                     switchRewardContext(lastActiveMode);
-                    currentMode = 'reward'; 
                 }
                 return;
             }
 
+            if (mode === 'quote') {
+                quoteView.classList.remove('hidden');
+                document.getElementById('app-title').innerText = "🧘 Daily Wisdom";
+                return;
+            }
+
+            // 一般模式 (Health / Money)
             lastActiveMode = mode; 
             dashView.classList.remove('hidden');
-            rewardView.classList.add('hidden');
             
             globalTheme = THEMES[mode]; 
             const sheetId = (mode === 'health') ? CONFIG.healthId : CONFIG.moneyId;
@@ -1072,82 +1107,6 @@
             drawHeatmap(globalDataMap, theme);
             setTimeout(() => { const scroller = document.getElementById('graph-scroller'); if(scroller) scroller.scrollLeft = scroller.scrollWidth; }, 100);
             updateWeeklyInsight(0);
-        }
-
-        function updateWalletHP(spent, budget) {
-            const now = new Date();
-            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            const currentDay = now.getDate();
-            const remaining = budget - spent;
-            const hpPercent = Math.max(0, (remaining / budget) * 100);
-            const theoryRemaining = budget * ((daysInMonth - currentDay) / daysInMonth);
-            document.getElementById('wallet-hp').innerText = remaining.toLocaleString();
-            document.getElementById('wallet-max').innerText = budget.toLocaleString();
-            document.getElementById('theory-hp').innerText = Math.round(theoryRemaining).toLocaleString();
-            const bar = document.getElementById('hp-fill');
-            bar.style.width = hpPercent + '%';
-            if (remaining < theoryRemaining * 0.9) { bar.className = 'hp-fill danger'; } else { bar.className = 'hp-fill'; }
-        }
-
-        function drawHeatmap(data, theme) {
-            const container = document.getElementById('heatmap'); container.innerHTML = '';
-            const today = new Date(); const startDate = new Date(); startDate.setDate(today.getDate() - 365);
-            while (startDate.getDay() !== 1) startDate.setDate(startDate.getDate() - 1);
-            
-            let currentDate = new Date(startDate);
-            const hoverBar = document.getElementById('hover-info');
-
-            while (currentDate <= today) {
-                const dateString = formatLocalYMD(currentDate); 
-                const item = data[dateString];
-                const cell = document.createElement('div');
-                cell.classList.add('day-cell');
-                cell.style.backgroundColor = theme.colors[theme.isDeficitGood ? 3 : 2]; 
-                
-                if (item !== undefined) {
-                    const value = item.value; const th = theme.thresholds; let verdict = "";
-                    
-                    if (theme.isDeficitGood) {
-                        // V25 修正重點：先判定底色 (由小到大)
-                        // Colors: DeepGreen(0), MidGreen(1), LightGreen(2), Zero(3), LightRed(4), MidRed(5), DeepRed(6)
-                        if (value < th[0]) {      // < -600
-                            cell.style.backgroundColor = theme.colors[0]; verdict = "💪 大赤字";
-                        } else if (value < th[1]) { // < -300
-                            cell.style.backgroundColor = theme.colors[1]; verdict = "👍 赤字";
-                        } else if (value < 0) {     // < 0
-                            cell.style.backgroundColor = theme.colors[2]; verdict = "👌 小赤字";
-                        } else if (value == 0) {
-                            cell.style.backgroundColor = theme.colors[3]; verdict = "⚖️ 平衡";
-                        } else if (value < th[3]) { // < 300
-                            cell.style.backgroundColor = theme.colors[4]; verdict = "🍔 小超標";
-                        } else if (value < th[4]) { // < 600
-                            cell.style.backgroundColor = theme.colors[5]; verdict = "🍕 中超標";
-                        } else {                    // > 600
-                            cell.style.backgroundColor = theme.colors[6]; verdict = "🚨 大超標";
-                        }
-
-                        // V25 修正重點：額外疊加金牌特效 (不影響底色判定)
-                        if (value <= theme.goldLimit) { 
-                            cell.classList.add('color-gold'); 
-                            verdict = "🔥 燃脂"; 
-                        }
-                    } else {
-                        // 記帳模式維持原樣
-                        if (value <= theme.goldLimit && value > 0) { cell.classList.add('color-gold'); verdict = "🏆 神省"; }
-                        else if (value === 0) { cell.style.backgroundColor = theme.colors[2]; verdict = "⛔ 無消費"; }
-                        else if (value <= th[1]) { cell.style.backgroundColor = theme.colors[1]; verdict = "✅ 安全"; }
-                        else if (value <= th[2]) { cell.style.backgroundColor = theme.colors[3]; verdict = "💸 正常"; }
-                        else if (value <= th[3]) { cell.style.backgroundColor = theme.colors[4]; verdict = "💸 略多"; }
-                        else { cell.style.backgroundColor = theme.colors[5]; verdict = "💸 噴錢"; }
-                    }
-                    const tooltipText = `${dateString} | ${verdict} ${theme.unit}: ${value}`;
-                    cell.setAttribute('title', tooltipText);
-                    cell.onmouseover = () => { hoverBar.innerText = tooltipText; hoverBar.style.color = '#fff'; };
-                    cell.onmouseout = () => { hoverBar.innerText = '👆 滑動熱力圖查看詳情'; hoverBar.style.color = '#58a6ff'; };
-                }
-                container.appendChild(cell);
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
         }
 
         // --- [外掛] 四象限筆記功能 ---
