@@ -1066,13 +1066,20 @@
                             else if (val < 800) colorHex = theme.colors[5]; // 紅
                             else colorHex = theme.colors[6]; // 亮紅 (Worst)
                         } else {
-                            // Money Mode: 花費(正數)越少越好
-                            if (val === 0) colorHex = theme.colors[2]; // 黑
-                            else if (val < 150) colorHex = theme.colors[1]; // 亮綠
-                            else if (val < 300) colorHex = theme.colors[0]; // 暗綠
-                            else if (val < 800) colorHex = theme.colors[3]; // 黃
-                            else if (val < 1500) colorHex = theme.colors[4]; // 橘
-                            else colorHex = theme.colors[5]; // 紅
+                            // Money Mode: 
+                            // 1. 賺錢 (>0) = 亮綠 (收入)
+                            // 2. 省錢 (花費在 -300 以內) = 暗綠 (鼓勵低消費)
+                            // 3. 花大錢 (花費超過 -1500) = 紅色 (警示)
+                            
+                            if (val >= 0) {
+                                colorHex = theme.colors[1]; // 收入/沒花錢 -> 亮綠
+                            } else {
+                                // 負數 (花費)
+                                if (val > -300) colorHex = theme.colors[0]; // 小花費 (-1 ~ -299) -> 暗綠 (安全)
+                                else if (val > -800) colorHex = theme.colors[3]; // 中花費 (-300 ~ -799) -> 黃
+                                else if (val > -1500) colorHex = theme.colors[4]; // 大花費 (-800 ~ -1499) -> 橘
+                                else colorHex = theme.colors[5]; // 爆預算 (<-1500) -> 紅
+                            }
                         }
                         cell.style.backgroundColor = colorHex;
                     }
