@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Dashboard V27 (Ultimate Fix)</title>
+    <title>Life Dashboard V27 (Final Expanded)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         /* --- 全域風格 --- */
@@ -11,231 +11,976 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             background-color: #0d1117;
             color: #c9d1d9;
-            display: flex; flex-direction: column; align-items: center;
-            padding: 20px; margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
             transition: background 0.5s;
             overflow-x: hidden;
         }
 
         /* --- 導航列 --- */
-        .nav-bar { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; }
-        .switch-container { background: #161b22; padding: 4px; border-radius: 30px; border: 1px solid #30363d; display: flex; gap: 4px; flex: 1; justify-content: center; }
-        .switch-btn { background: transparent; border: none; color: #8b949e; padding: 8px 12px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 25px; transition: 0.3s; white-space: nowrap; }
-        
-        .switch-btn.active { background: #238636; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-        .switch-btn.active[data-mode="money"] { background: #d29922; color: #1e1e1e; }
-        .switch-btn.active[data-mode="reward"] { background: #a371f7; color: #fff; }
-        .switch-btn.active[data-mode="quote"] { background: #58a6ff; color: #fff; }
+        .nav-bar {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
 
-        .nav-right-group { display: flex; gap: 8px; }
-        .icon-btn { background: #21262d; border: 1px solid #30363d; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; color: #8b949e; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
-        .icon-btn:hover { color: #58a6ff; border-color: #58a6ff; transform: scale(1.1); }
-        .settings-btn:hover { transform: rotate(90deg); }
+        .switch-container {
+            background: #161b22;
+            padding: 4px;
+            border-radius: 30px;
+            border: 1px solid #30363d;
+            display: flex;
+            gap: 4px;
+            flex: 1;
+            justify-content: center;
+        }
 
-        h2 { margin: 0 0 15px 0; font-weight: 600; letter-spacing: 1px; font-size: 1.5rem; text-align: center; }
+        .switch-btn {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 25px;
+            transition: 0.3s;
+            white-space: nowrap;
+        }
+
+        .switch-btn.active {
+            background: #238636;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .switch-btn.active[data-mode="money"] {
+            background: #d29922;
+            color: #1e1e1e;
+        }
+
+        .switch-btn.active[data-mode="reward"] {
+            background: #a371f7;
+            color: #fff;
+        }
+
+        .switch-btn.active[data-mode="quote"] {
+            background: #58a6ff;
+            color: #fff;
+        }
+
+        .nav-right-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: #21262d;
+            border: 1px solid #30363d;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            color: #8b949e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+
+        .icon-btn:hover {
+            color: #58a6ff;
+            border-color: #58a6ff;
+            transform: scale(1.1);
+        }
+
+        .settings-btn:hover {
+            transform: rotate(90deg);
+        }
+
+        h2 {
+            margin: 0 0 15px 0;
+            font-weight: 600;
+            letter-spacing: 1px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
 
         /* --- 通用容器 --- */
-        .dashboard-view { width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.5s ease; }
-        .hidden { display: none !important; }
+        .dashboard-view {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .hidden {
+            display: none !important;
+        }
 
         /* --- 金句卡片 (共用樣式) --- */
-        .quote-container { 
-            background-color: #161b22; background-size: cover; background-position: center; 
-            border: 1px solid #30363d; border-left: 5px solid #58a6ff; border-radius: 8px; 
-            margin-bottom: 20px; width: 100%; min-height: 120px; display: flex; align-items: center; 
-            position: relative; overflow: hidden; transition: 0.5s; box-sizing: border-box; cursor: pointer; user-select: none; 
+        .quote-container {
+            background-color: #161b22;
+            background-size: cover;
+            background-position: center;
+            border: 1px solid #30363d;
+            border-left: 5px solid #58a6ff;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            width: 100%;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            transition: 0.5s;
+            box-sizing: border-box;
+            cursor: pointer;
+            user-select: none;
         }
-        .quote-container:active { transform: scale(0.98); opacity: 0.9; }
-        .quote-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(13,17,23,0.95) 0%, rgba(13,17,23,0.4) 100%); z-index: 1; }
-        .quote-content-layer { position: relative; z-index: 2; padding: 20px; width: 100%; box-sizing: border-box; pointer-events: none; }
-        .quote-text { font-size: 1.1rem; font-weight: 500; color: #fff; font-family: serif; margin-bottom: 8px; line-height: 1.4; text-shadow: 0 2px 4px rgba(0,0,0,0.5); white-space: pre-line; }
-        .quote-author { font-size: 0.9rem; color: #e6edf3; text-align: right; display: block; font-weight: bold; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+
+        .quote-container:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .quote-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, rgba(13, 17, 23, 0.95) 0%, rgba(13, 17, 23, 0.4) 100%);
+            z-index: 1;
+        }
+
+        .quote-content-layer {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .quote-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #fff;
+            font-family: serif;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            white-space: pre-line;
+        }
+
+        .quote-author {
+            font-size: 0.9rem;
+            color: #e6edf3;
+            text-align: right;
+            display: block;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
 
         /* --- 數據統計 --- */
-        .stats-container { display: flex; gap: 20px; margin-bottom: 20px; width: 100%; justify-content: space-around; }
-        .stat-item { display: flex; flex-direction: column; align-items: center; min-width: 100px; }
-        .stat-val { font-size: 2rem; font-weight: 800; margin-bottom: 5px; line-height: 1; transition: color 0.3s; }
-        .stat-label { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; }
+        .stats-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            width: 100%;
+            justify-content: space-around;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 100px;
+        }
+
+        .stat-val {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            line-height: 1;
+            transition: color 0.3s;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #8b949e;
+            text-transform: uppercase;
+        }
 
         /* --- 熱力圖 --- */
-        .hover-info-bar { height: 24px; margin-bottom: 5px; font-size: 14px; color: #58a6ff; font-family: monospace; text-align: right; width: 100%; display: flex; justify-content: flex-end; align-items: center; }
-        .graph-wrapper { padding: 15px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; width: 100%; box-sizing: border-box; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .graph-container { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; gap: 3px; min-width: max-content; }
-        .day-cell { width: 12px; height: 12px; border-radius: 2px; background-color: #21262d; outline: 1px solid rgba(255,255,255,0.05); cursor: crosshair; transition: transform 0.1s; }
-        
-        /* FIX: 讓金牌樣式使用 !important 確保不被 JS 覆蓋 */
-        .color-gold { 
-            background-color: #ffd700 !important; 
-            z-index: 2; 
+        .hover-info-bar {
+            height: 24px;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #58a6ff;
+            font-family: monospace;
+            text-align: right;
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .graph-wrapper {
+            padding: 15px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .graph-container {
+            display: grid;
+            grid-template-rows: repeat(7, 12px);
+            grid-auto-flow: column;
+            gap: 3px;
+            min-width: max-content;
+        }
+
+        .day-cell {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            background-color: #21262d;
+            outline: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: crosshair;
+            transition: transform 0.1s;
+        }
+
+        .color-gold {
+            background-color: #ffd700 !important;
+            z-index: 2;
             box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
             border: 1px solid #fff;
         }
-        @media (hover: hover) { .day-cell:hover { transform: scale(1.4); z-index: 10; border: 1px solid #fff; } }
+
+        @media (hover: hover) {
+            .day-cell:hover {
+                transform: scale(1.4);
+                z-index: 10;
+                border: 1px solid #fff;
+            }
+        }
 
         /* --- [外掛] 消費抵銷 (Free Cash) --- */
-        .free-cash-box { 
-            width: 100%; margin-top: 15px; padding: 15px; 
-            background: rgba(31, 111, 235, 0.1); border: 1px solid rgba(31, 111, 235, 0.4); 
-            border-radius: 8px; text-align: center; box-sizing: border-box;
-            display: none; animation: fadeIn 0.5s ease;
+        .free-cash-box {
+            width: 100%;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(31, 111, 235, 0.1);
+            border: 1px solid rgba(31, 111, 235, 0.4);
+            border-radius: 8px;
+            text-align: center;
+            box-sizing: border-box;
+            display: none;
+            animation: fadeIn 0.5s ease;
         }
-        .free-cash-label { font-size: 0.9rem; color: #58a6ff; font-weight: bold; margin-bottom: 5px; }
-        .free-cash-val { font-size: 2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(88, 166, 255, 0.3); }
-        .free-cash-desc { font-size: 0.8rem; color: #8b949e; margin-top: 5px; }
-        .is-debt { background: rgba(218, 54, 51, 0.1) !important; border-color: rgba(218, 54, 51, 0.4) !important; }
-        .is-debt .free-cash-label { color: #f85149 !important; }
-        .is-debt .free-cash-val { color: #ff7b72 !important; }
+
+        .free-cash-label {
+            font-size: 0.9rem;
+            color: #58a6ff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .free-cash-val {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(88, 166, 255, 0.3);
+        }
+
+        .free-cash-desc {
+            font-size: 0.8rem;
+            color: #8b949e;
+            margin-top: 5px;
+        }
+
+        .is-debt {
+            background: rgba(218, 54, 51, 0.1) !important;
+            border-color: rgba(218, 54, 51, 0.4) !important;
+        }
+
+        .is-debt .free-cash-label {
+            color: #f85149 !important;
+        }
+
+        .is-debt .free-cash-val {
+            color: #ff7b72 !important;
+        }
 
         /* --- 週次導航 --- */
-        .weekly-container { width: 100%; margin-top: 15px; background: rgba(22, 27, 34, 0.8); border: 1px solid #30363d; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; animation: fadeIn 0.5s ease; }
-        .week-nav { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; background: #21262d; border-bottom: 1px solid #30363d; }
-        .nav-arrow { background: none; border: none; color: #8b949e; font-size: 18px; cursor: pointer; padding: 0 10px; transition: 0.2s; }
-        .nav-arrow:hover { color: #fff; transform: scale(1.2); }
-        .week-center-group { display: flex; align-items: center; gap: 8px; }
-        .week-label { font-size: 14px; font-weight: bold; color: #e6edf3; }
-        .nav-reset { background: rgba(48, 54, 61, 0.5); border: 1px solid #30363d; border-radius: 4px; color: #58a6ff; cursor: pointer; padding: 2px 8px; font-size: 12px; display: none; transition: 0.2s; }
-        .nav-reset:hover { background: #30363d; color: #fff; }
-        .weekly-insight-content { padding: 15px; text-align: center; color: #58a6ff; font-size: 1.1rem; font-weight: 600; line-height: 1.5; }
-        .insight-highlight { color: #fff; font-weight: 800; margin: 0 5px; }
+        .weekly-container {
+            width: 100%;
+            margin-top: 15px;
+            background: rgba(22, 27, 34, 0.8);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .week-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            background: #21262d;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .nav-arrow {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 10px;
+            transition: 0.2s;
+        }
+
+        .nav-arrow:hover {
+            color: #fff;
+            transform: scale(1.2);
+        }
+
+        .week-center-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .week-label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #e6edf3;
+        }
+
+        .nav-reset {
+            background: rgba(48, 54, 61, 0.5);
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #58a6ff;
+            cursor: pointer;
+            padding: 2px 8px;
+            font-size: 12px;
+            display: none;
+            transition: 0.2s;
+        }
+
+        .nav-reset:hover {
+            background: #30363d;
+            color: #fff;
+        }
+
+        .weekly-insight-content {
+            padding: 15px;
+            text-align: center;
+            color: #58a6ff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .insight-highlight {
+            color: #fff;
+            font-weight: 800;
+            margin: 0 5px;
+        }
 
         /* --- [外掛] 四象限筆記 --- */
-        .quadrant-section { width: 100%; max-width: 900px; margin-top: 30px; margin-bottom: 50px; animation: fadeIn 0.5s ease; }
-        .quadrant-title { color: #8b949e; font-size: 14px; font-weight: bold; margin-bottom: 10px; margin-left: 5px; }
-        .quadrant-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; height: 300px; }
-        .q-box { 
-            background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px; 
-            display: flex; flex-direction: column; transition: 0.3s;
+        .quadrant-section {
+            width: 100%;
+            max-width: 900px;
+            margin-top: 30px;
+            margin-bottom: 50px;
+            animation: fadeIn 0.5s ease;
         }
-        .q-box:focus-within { border-color: #58a6ff; box-shadow: 0 0 10px rgba(88, 166, 255, 0.1); }
-        .q-header { font-size: 12px; color: #8b949e; margin-bottom: 5px; font-weight: bold; user-select: none;}
-        .q-input { 
-            background: transparent; border: none; color: #c9d1d9; width: 100%; height: 100%; 
-            resize: none; font-size: 14px; font-family: inherit; outline: none; line-height: 1.4; 
+
+        .quadrant-title {
+            color: #8b949e;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            margin-left: 5px;
         }
-        .q-1 .q-header { color: #f85149; } /* 急/重 */
-        .q-2 .q-header { color: #d29922; } /* 重/不急 */
-        .q-3 .q-header { color: #2ea043; } /* 靈感 */
-        .q-4 .q-header { color: #58a6ff; } /* 備忘 */
+
+        .quadrant-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            height: 300px;
+        }
+
+        .q-box {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            transition: 0.3s;
+        }
+
+        .q-box:focus-within {
+            border-color: #58a6ff;
+            box-shadow: 0 0 10px rgba(88, 166, 255, 0.1);
+        }
+
+        .q-header {
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 5px;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .q-input {
+            background: transparent;
+            border: none;
+            color: #c9d1d9;
+            width: 100%;
+            height: 100%;
+            resize: none;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            line-height: 1.4;
+        }
+
+        .q-1 .q-header { color: #f85149; }
+        .q-2 .q-header { color: #d29922; }
+        .q-3 .q-header { color: #2ea043; }
+        .q-4 .q-header { color: #58a6ff; }
 
         /* --- 預算血條 --- */
-        .budget-bar-container { width: 100%; box-sizing: border-box; margin-bottom: 20px; display: none; flex-direction: column; gap: 8px; background: #161b22; padding: 15px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .budget-header { display: flex; justify-content: space-between; align-items: flex-end; }
-        .hp-track { width: 100%; height: 12px; background: #21262d; border-radius: 6px; overflow: hidden; position: relative; border: 1px solid #30363d; }
-        .hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #2ea043, #3fb950); transition: width 0.5s; }
-        .hp-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
+        .budget-bar-container {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            background: #161b22;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .budget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .hp-track {
+            width: 100%;
+            height: 12px;
+            background: #21262d;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #30363d;
+        }
+
+        .hp-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #2ea043, #3fb950);
+            transition: width 0.5s;
+        }
+
+        .hp-fill.danger {
+            background: linear-gradient(90deg, #da3633, #f85149);
+        }
 
         /* --- 獎勵 / 金句 頁面共用卡片 --- */
-        .reward-card { background: #161b22; border: 1px solid #a371f7; border-radius: 12px; padding: 20px; width: 100%; box-sizing: border-box; text-align: center; box-shadow: 0 0 20px rgba(163, 113, 247, 0.1); }
-        .reward-toggle-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
-        .sub-toggle-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; padding: 6px 15px; border-radius: 15px; cursor: pointer; font-size: 13px; }
-        .sub-toggle-btn.active-h { background: #238636; color: white; border-color: #238636; }
-        .sub-toggle-btn.active-m { background: #d29922; color: #1e1e1e; border-color: #d29922; }
-        .reward-period { font-size: 13px; color: #a371f7; margin-bottom: 5px; font-weight: bold; opacity: 0.8; }
-        .balance-info { font-size: 1rem; color: #8b949e; margin-bottom: 5px; }
-        .balance-amount { font-size: 2.5rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
-        .result-box { margin: 20px 0; height: 80px; display: flex; align-items: center; justify-content: center; background: #0d1117; border: 2px dashed #30363d; border-radius: 8px; font-size: 1.5rem; font-weight: bold; color: #fff; }
-        .result-box.win { border-color: #ffd700; color: #ffd700; animation: pop 0.3s; }
-        .spin-btn { background: linear-gradient(135deg, #a371f7, #7e22ce); color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(126, 34, 206, 0.4); transition: 0.2s; width: 100%; }
-        .spin-btn:active { transform: scale(0.95); }
-        .spin-btn:disabled { background: #30363d; cursor: not-allowed; box-shadow: none; }
-        .reward-list-area { width: 100%; background: #0d1117; border: 1px solid #30363d; color: #8b949e; padding: 10px; border-radius: 6px; margin-top: 20px; min-height: 100px; font-family: monospace; font-size: 14px; resize: vertical; box-sizing: border-box; }
+        .reward-card {
+            background: #161b22;
+            border: 1px solid #a371f7;
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(163, 113, 247, 0.1);
+        }
+
+        .reward-toggle-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .sub-toggle-btn {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            padding: 6px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .sub-toggle-btn.active-h {
+            background: #238636;
+            color: white;
+            border-color: #238636;
+        }
+
+        .sub-toggle-btn.active-m {
+            background: #d29922;
+            color: #1e1e1e;
+            border-color: #d29922;
+        }
+
+        .reward-period {
+            font-size: 13px;
+            color: #a371f7;
+            margin-bottom: 5px;
+            font-weight: bold;
+            opacity: 0.8;
+        }
+
+        .balance-info {
+            font-size: 1rem;
+            color: #8b949e;
+            margin-bottom: 5px;
+        }
+
+        .balance-amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .result-box {
+            margin: 20px 0;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0d1117;
+            border: 2px dashed #30363d;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .result-box.win {
+            border-color: #ffd700;
+            color: #ffd700;
+            animation: pop 0.3s;
+        }
+
+        .spin-btn {
+            background: linear-gradient(135deg, #a371f7, #7e22ce);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(126, 34, 206, 0.4);
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        .spin-btn:active {
+            transform: scale(0.95);
+        }
+
+        .spin-btn:disabled {
+            background: #30363d;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .reward-list-area {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 20px;
+            min-height: 100px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
 
         /* --- Modal 設定面板 --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; }
-        .modal-box { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 25px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
-        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #fff; }
-        .input-group { margin-bottom: 15px; }
-        .input-label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 5px; }
-        .input-field, .input-select { width: 100%; padding: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; box-sizing: border-box; font-size: 14px; }
-        .save-btn { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px;}
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-box {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 5px;
+        }
+
+        .input-field,
+        .input-select {
+            width: 100%;
+            padding: 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 12px;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 15px;
+        }
 
         /* --- 狀態警示卡片 --- */
-        .alert-box { 
-            width: 100%; max-width: 900px; 
-            background: rgba(210, 153, 34, 0.1); 
-            border: 1px solid rgba(210, 153, 34, 0.5); border-left: 5px solid #d29922; border-radius: 8px; 
-            padding: 15px; margin-top: 15px; 
-            display: flex; align-items: flex-start; gap: 15px; 
-            box-sizing: border-box; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+        .alert-box {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(210, 153, 34, 0.1);
+            border: 1px solid rgba(210, 153, 34, 0.5);
+            border-left: 5px solid #d29922;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
-        .alert-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
-        .alert-content { flex: 1; min-width: 0; }
-        .alert-title { 
-            color: #d29922; font-weight: bold; font-size: 1.1rem; 
-            margin-bottom: 8px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            flex-wrap: wrap; gap: 5px; 
+
+        .alert-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
-        .alert-desc { color: #eac54f; font-size: 0.95rem; line-height: 1.6; }
-        .recovery-tag { 
-            display: inline-block; background: #d29922; color: #0d1117; 
-            padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 800; 
-            margin: 2px 2px; white-space: nowrap; 
+
+        .alert-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .alert-title {
+            color: #d29922;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .alert-desc {
+            color: #eac54f;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .recovery-tag {
+            display: inline-block;
+            background: #d29922;
+            color: #0d1117;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 800;
+            margin: 2px 2px;
+            white-space: nowrap;
         }
 
         /* --- 戰報分享卡片 --- */
-        .share-card-container { position: fixed; left: -9999px; top: 0; }
-        .share-card {
-            width: 400px; height: 600px;
-            background-color: #161b22; position: relative; border-radius: 16px; overflow: hidden;
-            display: flex; flex-direction: column; justify-content: space-between;
-            font-family: serif; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        .share-card-container {
+            position: fixed;
+            left: -9999px;
+            top: 0;
         }
-        .sc-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(2px); z-index: 0; transition: background 0.5s;}
-        .sc-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(13,17,23,0.3) 0%, rgba(13,17,23,0.85) 60%, rgba(13,17,23,1) 100%); z-index: 1; }
-        
-        .sc-content-top { position: relative; z-index: 2; padding: 40px 30px; text-align: center; }
-        .sc-date { font-size: 1.1rem; color: #8b949e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; font-family: sans-serif; font-weight: bold; line-height: 1.4; white-space: pre-line; }
-        .sc-main-val { font-size: 3.5rem; font-weight: 800; color: #fff; margin-bottom: 10px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); font-family: sans-serif; }
-        .sc-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 1rem; font-weight: bold; margin-bottom: 20px; backdrop-filter: blur(5px); }
-        .sc-streak { font-size: 1.1rem; color: #e6edf3; font-weight: 500; }
-        
-        .sc-content-bottom { position: relative; z-index: 2; padding: 30px; }
-        .sc-quote { font-size: 1.1rem; color: #c9d1d9; line-height: 1.6; font-style: italic; border-left: 3px solid #58a6ff; padding-left: 15px; margin-bottom: 20px; }
-        .sc-footer { text-align: right; font-size: 0.8rem; color: #58a6ff; font-family: monospace; opacity: 0.8; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .share-card {
+            width: 400px;
+            height: 600px;
+            background-color: #161b22;
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: serif;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .sc-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(2px);
+            z-index: 0;
+            transition: background 0.5s;
+        }
+
+        .sc-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(13, 17, 23, 0.3) 0%, rgba(13, 17, 23, 0.85) 60%, rgba(13, 17, 23, 1) 100%);
+            z-index: 1;
+        }
+
+        .sc-content-top {
+            position: relative;
+            z-index: 2;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .sc-date {
+            font-size: 1.1rem;
+            color: #8b949e;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            font-family: sans-serif;
+            font-weight: bold;
+            line-height: 1.4;
+            white-space: pre-line;
+        }
+
+        .sc-main-val {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            font-family: sans-serif;
+        }
+
+        .sc-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .sc-streak {
+            font-size: 1.1rem;
+            color: #e6edf3;
+            font-weight: 500;
+        }
+
+        .sc-content-bottom {
+            position: relative;
+            z-index: 2;
+            padding: 30px;
+        }
+
+        .sc-quote {
+            font-size: 1.1rem;
+            color: #c9d1d9;
+            line-height: 1.6;
+            font-style: italic;
+            border-left: 3px solid #58a6ff;
+            padding-left: 15px;
+            margin-bottom: 20px;
+        }
+
+        .sc-footer {
+            text-align: right;
+            font-size: 0.8rem;
+            color: #58a6ff;
+            font-family: monospace;
+            opacity: 0.8;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
 
         /* --- 手機版專屬優化 (Mobile Optimized) --- */
         @media (max-width: 600px) {
-            body { 
-                padding: 10px 10px 40px 10px; /* 底部多留白，避免被手機手勢條擋住 */
-            } 
-            
-            /* 導航列：強迫不換行，縮小文字以塞入小螢幕 */
-            .nav-bar { gap: 6px; } 
-            .switch-container { padding: 2px; } 
-            .switch-btn { padding: 8px 4px; font-size: 12px; flex: 1; text-align: center; } 
-            .icon-btn { width: 36px; height: 36px; font-size: 18px; }
-
-            /* 數據區：縮小間距 */
-            .stats-container { gap: 5px; } 
-            .stat-val { font-size: 1.6rem; }
-            .stat-label { font-size: 0.7rem; }
-
-            /* 熱力圖：全寬滿版體驗 (Full Bleed) */
-            .graph-wrapper { 
-                padding: 10px 0; 
-                margin-left: -10px; margin-right: -10px; width: calc(100% + 20px); 
-                border-radius: 0; border-left: none; border-right: none;
+            body {
+                padding: 10px 10px 40px 10px;
             }
-            .graph-container { padding: 0 10px; /* 讓頭尾有點緩衝 */ }
-            
-            /* Alert 卡片修正 */
-            .alert-title { flex-direction: column; align-items: flex-start; gap: 2px; }
-            .alert-title span:last-child { font-size: 1.5rem; color: #ff9b5e; margin-top: 5px; margin-bottom: 5px; }
-            .alert-desc { margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(210, 153, 34, 0.3); }
 
-            /* 四象限筆記：拉高高度方便手機輸入 */
-            .quadrant-grid { height: 420px; }
-            
-            /* ★關鍵修正：防止 iPhone 輸入時畫面自動放大 (需 16px) */
-            .input-field, .input-select, .q-input, textarea { font-size: 16px !important; }
-            
-            /* Modal 設定視窗優化 */
-            .modal-box { width: 95%; padding: 20px; max-height: 85vh; }
+            .nav-bar {
+                gap: 6px;
+            }
+
+            .switch-container {
+                padding: 2px;
+            }
+
+            .switch-btn {
+                padding: 8px 4px;
+                font-size: 12px;
+                flex: 1;
+                text-align: center;
+            }
+
+            .icon-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+            }
+
+            .stats-container {
+                gap: 5px;
+            }
+
+            .stat-val {
+                font-size: 1.6rem;
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+            }
+
+            .graph-wrapper {
+                padding: 10px 0;
+                margin-left: -10px;
+                margin-right: -10px;
+                width: calc(100% + 20px);
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+
+            .graph-container {
+                padding: 0 10px;
+            }
+
+            .alert-title {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
+
+            .alert-title span:last-child {
+                font-size: 1.5rem;
+                color: #ff9b5e;
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+
+            .alert-desc {
+                margin-top: 8px;
+                padding-top: 8px;
+                border-top: 1px dashed rgba(210, 153, 34, 0.3);
+            }
+
+            .quadrant-grid {
+                height: 420px;
+            }
+
+            .input-field,
+            .input-select,
+            .q-input,
+            textarea {
+                font-size: 16px !important;
+            }
+
+            .modal-box {
+                width: 95%;
+                padding: 20px;
+                max-height: 85vh;
+            }
         }
     </style>
 </head>
@@ -475,7 +1220,7 @@
         // ★ 修正重點：調整顏色順序與亮度，讓顯示更直覺
         const THEMES = {
             health: { 
-                // 修正：顏色由暗到亮 (暗綠 -> 亮綠 -> 黑 -> 暗紅 -> 亮紅)
+                // 0:暗綠, 1:中綠, 2:亮綠(最好), 3:黑(無), 4:暗紅, 5:紅, 6:亮紅(最差)
                 colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], 
                 statLabels: ['連續紀錄 (天)', '今日赤字 (CAL)', '總紀錄天數'], 
                 isDeficitGood: true, 
@@ -485,6 +1230,7 @@
                 goldLimit: -500 // 赤字超過 500 (即 < -500) 獲得金牌
             },
             money: { 
+                // 0:暗綠, 1:亮綠(最好), 2:黑, 3:黃, 4:橘, 5:紅(最差)
                 colors: ['#0e4429', '#26a641', '#161b22', '#d29922', '#bd561d', '#ff4d4d'], 
                 statLabels: ['省錢達標 (天)', '今日花費 ($)', '總紀錄天數'], 
                 isDeficitGood: false, 
@@ -634,8 +1380,10 @@
             while(ptr <= endOfWeek) {
                 const dStr = formatLocalYMD(ptr);
                 if (globalDataMap[dStr]) {
-                    if (globalTheme.isDeficitGood) {
-                          if(globalDataMap[dStr].value !== 0) weeklySum += globalDataMap[dStr].value;
+                    if (currentMode === 'money') {
+                        weeklySum += globalDataMap[dStr].value;
+                    } else if (globalTheme.isDeficitGood) {
+                        if(globalDataMap[dStr].value !== 0) weeklySum += globalDataMap[dStr].value;
                     } else { weeklySum += globalDataMap[dStr].value; }
                 }
                 ptr.setDate(ptr.getDate() + 1);
@@ -676,13 +1424,12 @@
                     quoteBorder.style.borderLeftColor = "#d29922"; quoteBorder.style.color = "#fff"; quoteBorder.style.fontStyle = "normal";
                 }
             } else {
-                const weeklyBudget = CONFIG.monthlyBudget / 4;
-                const saved = weeklyBudget - weeklySum;
-                if (saved >= 0) { 
+                const netSavings = weeklySum; 
+                if (netSavings >= 0) { 
                     badgeText = "💰 預算控制佳"; badgeColor = "#3fb950"; quoteEl.innerText = document.getElementById('q-text').innerText;
                 } else { 
                     badgeText = "💸 超支警報"; badgeColor = "#ff4d4d"; 
-                    quoteEl.innerHTML = `本週已超支 ${Math.abs(Math.round(saved))} 元。<br>下週請減少非必要開支，平衡回來！`;
+                    quoteEl.innerHTML = `本週透支了 ${Math.abs(Math.round(netSavings))} 元。<br>下週請減少非必要開支，平衡回來！`;
                     quoteBorder.style.borderLeftColor = "#ff4d4d"; quoteBorder.style.color = "#fff"; quoteBorder.style.fontStyle = "normal";
                 }
             }
@@ -814,14 +1561,14 @@
                 updateRewardUI(Math.abs(weekSum), globalTheme.unit, !isSurplus);
             } else {
                 alertBox.classList.add('hidden');
-                const weeklyBudget = CONFIG.monthlyBudget / 4;
-                const saved = weeklyBudget - weekSum;
-                if (saved > 0) {
+                // Money Logic: weekSum is purely expense (negative).
+                const netSavings = weekSum; 
+                if (netSavings > 0) { 
                       const comparisons = [
-                        { text: '☕ 省下了', unit: '杯星巴克', val: Math.round(saved / 150) },
-                        { text: '🍱 省下了', unit: '個便當', val: Math.round(saved / 100) },
-                        { text: '🎬 省下了', unit: '張電影票', val: Math.round(saved / 300) },
-                        { text: '🎮 省下了', unit: '片遊戲', val: (saved / 1500).toFixed(1) }
+                        { text: '☕ 省下了', unit: '杯星巴克', val: Math.round(netSavings / 150) },
+                        { text: '🍱 省下了', unit: '個便當', val: Math.round(netSavings / 100) },
+                        { text: '🎬 省下了', unit: '張電影票', val: Math.round(netSavings / 300) },
+                        { text: '🎮 省下了', unit: '片遊戲', val: (netSavings / 1500).toFixed(1) }
                     ];
                     let cIndex = 0;
                     const updateBar = () => {
@@ -831,11 +1578,11 @@
                     };
                     updateBar(); comparisonTicker = setInterval(updateBar, 3000); weeklyBar.style.color = "#58a6ff";
                 } else {
-                      const over = Math.abs(saved);
-                      weeklyBar.innerHTML = `${label}戰績：💸 超支了 <span class="insight-highlight">${over}</span> 元 (少吃 ${Math.round(over/100)} 個便當)`;
-                      weeklyBar.style.color = "#58a6ff";
+                      const over = Math.abs(netSavings);
+                      weeklyBar.innerHTML = `${label}戰績：💸 本週透支了 <span class="insight-highlight">${over}</span> 元 (少吃 ${Math.round(over/100)} 個便當)`;
+                      weeklyBar.style.color = "#ff4d4d";
                 }
-                updateRewardUI(Math.round(saved), globalTheme.unit, saved >= 0);
+                updateRewardUI(Math.round(netSavings), globalTheme.unit, netSavings >= 0);
             }
         }
 
@@ -861,7 +1608,8 @@
             const grossBudget = CONFIG.weeklyBudget || 3000;
             const fixedCost = calculateWeeklyFixedCost();
             const netBudget = grossBudget - fixedCost; 
-            const remaining = netBudget - currentWeekSpending;
+            const remaining = netBudget + currentWeekSpending; 
+
             const valEl = document.getElementById('free-cash-val');
             const descEl = document.getElementById('free-cash-desc');
 
@@ -974,7 +1722,14 @@
             if (todayItem) {
                 const val = todayItem.value;
                 todayEl.innerText = val.toLocaleString();
-                todayEl.style.color = theme.isDeficitGood ? ((val < 0) ? '#3fb950' : '#ff4d4d') : ((val <= theme.budgetLimit) ? '#3fb950' : '#ff4d4d');
+                if (currentMode === 'health') {
+                    todayEl.style.color = (val < 0) ? '#3fb950' : '#ff4d4d'; 
+                } else {
+                    // Money: Positive/0 is Good, Small negative is OK, Large negative is Bad
+                    if (val >= 0) todayEl.style.color = '#3fb950';
+                    else if (val > -300) todayEl.style.color = '#3fb950'; // Safe
+                    else todayEl.style.color = '#ff4d4d'; // Expensive
+                }
             } else { todayEl.innerText = "待輸入"; todayEl.style.color = "#8b949e"; }
 
             document.getElementById('stat3-val').innerText = count.toLocaleString();
@@ -985,7 +1740,6 @@
             updateWeeklyInsight(0);
         }
 
-        // --- [外掛] 四象限筆記功能 ---
         function loadQuadrants() {
             for(let i=0; i<4; i++) {
                 const txt = localStorage.getItem(`q_note_plugin_${i}`);
@@ -997,7 +1751,6 @@
             localStorage.setItem(`q_note_plugin_${idx}`, val);
         }
 
-        // --- 繪圖函式 ---
         function updateWalletHP(spent, budget) {
             const hpFill = document.getElementById('hp-fill');
             const hpText = document.getElementById('wallet-hp');
@@ -1005,7 +1758,7 @@
             const theoryText = document.getElementById('theory-hp');
             if (!hpFill) return;
 
-            const remaining = budget - spent;
+            const remaining = budget + spent; // spent is negative
             const percentage = Math.max(0, Math.min(100, (remaining / budget) * 100));
             hpText.innerText = remaining.toLocaleString();
             maxText.innerText = budget.toLocaleString();
@@ -1019,7 +1772,7 @@
             theoryText.innerText = theoryLeft.toLocaleString();
         }
 
-        // ★ 核心繪圖邏輯修正：高亮顯示好表現，修復金牌覆蓋
+        // ★ 核心繪圖邏輯修正：針對「全負數」記帳邏輯優化
         function drawHeatmap(dataMap, theme) {
             const container = document.getElementById('heatmap');
             container.innerHTML = '';
@@ -1044,41 +1797,44 @@
 
                 if (dataItem) {
                     val = dataItem.value; hasData = true;
-                    // 金牌邏輯
+                    
                     if (theme.isDeficitGood) {
                          if (val <= theme.goldLimit) isGold = true;
                     } else {
-                         if (val > 0 && val <= theme.goldLimit) isGold = true;
+                         // Money: 花費極少 (例如 > -150) 給金牌
+                         if (val >= -150) isGold = true;
                     }
 
                     if (isGold) {
                         cell.classList.add('color-gold');
                     } else {
-                        // 顏色映射 (修正後)
-                        let colorHex = theme.colors[3]; // Default Black
+                        let colorHex = theme.colors[3]; // 預設黑色
+                        
                         if (theme.isDeficitGood) {
-                            // Health Mode: 赤字(負數)越多越好 -> 越亮綠
-                            if (val < -600) colorHex = theme.colors[2]; // 亮綠 (Best)
-                            else if (val < -300) colorHex = theme.colors[1]; // 中綠
-                            else if (val < 0) colorHex = theme.colors[0]; // 暗綠
-                            else if (val <= 100) colorHex = theme.colors[3]; // 黑色 (容許小幅誤差)
-                            else if (val < 400) colorHex = theme.colors[4]; // 暗紅
-                            else if (val < 800) colorHex = theme.colors[5]; // 紅
-                            else colorHex = theme.colors[6]; // 亮紅 (Worst)
+                            // Health Mode
+                            if (val < -600) colorHex = theme.colors[2]; // 亮綠
+                            else if (val < -300) colorHex = theme.colors[1]; 
+                            else if (val < 0) colorHex = theme.colors[0]; 
+                            else if (val <= 100) colorHex = theme.colors[3]; // 黑
+                            else if (val < 400) colorHex = theme.colors[4]; 
+                            else if (val < 800) colorHex = theme.colors[5]; 
+                            else colorHex = theme.colors[6]; // 亮紅
                         } else {
-                            // Money Mode: 
-                            // 1. 賺錢 (>0) = 亮綠 (收入)
-                            // 2. 省錢 (花費在 -300 以內) = 暗綠 (鼓勵低消費)
-                            // 3. 花大錢 (花費超過 -1500) = 紅色 (警示)
-                            
-                            if (val >= 0) {
-                                colorHex = theme.colors[1]; // 收入/沒花錢 -> 亮綠
-                            } else {
-                                // 負數 (花費)
-                                if (val > -300) colorHex = theme.colors[0]; // 小花費 (-1 ~ -299) -> 暗綠 (安全)
-                                else if (val > -800) colorHex = theme.colors[3]; // 中花費 (-300 ~ -799) -> 黃
-                                else if (val > -1500) colorHex = theme.colors[4]; // 大花費 (-800 ~ -1499) -> 橘
-                                else colorHex = theme.colors[5]; // 爆預算 (<-1500) -> 紅
+                            // Money Mode (全負數)
+                            if (val === 0) {
+                                colorHex = theme.colors[2]; // 沒花錢 -> 黑色
+                            } 
+                            else if (val > -300) {
+                                colorHex = theme.colors[1]; // 花費 0~300 -> 亮綠
+                            } 
+                            else if (val > -800) {
+                                colorHex = theme.colors[3]; // 花費 300~800 -> 黃
+                            } 
+                            else if (val > -1500) {
+                                colorHex = theme.colors[4]; // 花費 800~1500 -> 橘
+                            } 
+                            else {
+                                colorHex = theme.colors[5]; // 花費 > 1500 -> 紅
                             }
                         }
                         cell.style.backgroundColor = colorHex;
