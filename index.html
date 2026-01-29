@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Dashboard V27 (Strict Money Logic)</title>
+    <title>Life Dashboard V28 (Sync Reward Logic)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         /* =========================================
@@ -97,8 +97,8 @@
         .reward-card { background: #161b22; border: 1px solid #a371f7; border-radius: 12px; padding: 20px; width: 100%; box-sizing: border-box; text-align: center; box-shadow: 0 0 20px rgba(163, 113, 247, 0.1); }
         .reward-toggle-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
         .sub-toggle-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; padding: 6px 15px; border-radius: 15px; cursor: pointer; font-size: 13px; }
-        .sub-toggle-btn.active-h { background: #238636; color: white; border-color: #238636; }
-        .sub-toggle-btn.active-m { background: #d29922; color: #1e1e1e; border-color: #d29922; }
+        .sub-toggle-btn.active-h { background: #238636 !important; color: white !important; border-color: #238636 !important; }
+        .sub-toggle-btn.active-m { background: #d29922 !important; color: #1e1e1e !important; border-color: #d29922 !important; }
         .reward-period { font-size: 13px; color: #a371f7; margin-bottom: 5px; font-weight: bold; opacity: 0.8; }
         .balance-info { font-size: 1rem; color: #8b949e; margin-bottom: 5px; }
         .balance-amount { font-size: 2.5rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.2); }
@@ -391,16 +391,14 @@
         // ★ 主題設定 (顏色與邏輯)
         const THEMES = {
             health: { 
-                // 0:暗綠, 1:中綠, 2:亮綠(最好), 3:黑(無), 4:暗紅, 5:紅, 6:亮紅(最差)
                 colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], 
                 statLabels: ['連續紀錄 (天)', '今日赤字 (CAL)', '總紀錄天數'], 
                 isDeficitGood: true, 
                 thresholds: [-600, -300, 0, 300, 600], 
                 unit: 'cal',
-                goldLimit: -500 // 赤字超過 500 (即 < -500) 獲得金牌
+                goldLimit: -500
             },
             money: { 
-                // 0:暗綠, 1:亮綠(最好), 2:黑, 3:黃, 4:橘, 5:紅(最差)
                 colors: ['#0e4429', '#26a641', '#161b22', '#d29922', '#bd561d', '#ff4d4d'], 
                 statLabels: ['省錢達標 (天)', '今日花費 ($)', '總紀錄天數'], 
                 isDeficitGood: false, 
@@ -500,7 +498,9 @@
 
         function saveRewardList() {
             const content = document.getElementById('reward-list-input').value;
-            if (currentMode === 'health') CONFIG.rewardsHealth = content;
+            // 根據目前獎勵分頁顯示的子模式來存檔
+            const isHealthReward = document.getElementById('reward-health-btn').classList.contains('active-h');
+            if (isHealthReward) CONFIG.rewardsHealth = content;
             else CONFIG.rewardsMoney = content;
             localStorage.setItem('dashboard_config_v27', JSON.stringify(CONFIG));
         }
@@ -594,7 +594,6 @@
                     quoteBorder.style.borderLeftColor = "#d29922"; quoteBorder.style.color = "#fff"; quoteBorder.style.fontStyle = "normal";
                 }
             } else {
-                // Money Logic: WeeklySum is Total Spent (Positive)
                 const targetBudget = CONFIG.weeklyBudget; 
                 const spent = weeklySum;
                 const remaining = targetBudget - spent;
@@ -634,8 +633,12 @@
             dashView.classList.add('hidden'); rewardView.classList.add('hidden'); quoteView.classList.add('hidden');
 
             if (mode === 'reward') {
-                rewardView.classList.remove('hidden'); document.getElementById('app-title').innerText = "🎲 Reward Center";
-                if(lastActiveMode !== 'quote' && lastActiveMode !== 'reward') { switchRewardContext(lastActiveMode); }
+                rewardView.classList.remove('hidden'); 
+                document.getElementById('app-title').innerText = "🎲 Reward Center";
+                // 進入獎勵頁時，優先對應上一次在主儀表板使用的模式 (熱量或記帳)
+                if(lastActiveMode === 'health' || lastActiveMode === 'money') { 
+                    switchRewardContext(lastActiveMode); 
+                }
                 return;
             }
             if (mode === 'quote') {
@@ -643,7 +646,9 @@
                 return;
             }
 
-            lastActiveMode = mode; dashView.classList.remove('hidden');
+            // 進入主功能分頁
+            lastActiveMode = mode; 
+            dashView.classList.remove('hidden');
             globalTheme = THEMES[mode]; 
             const sheetId = (mode === 'health') ? CONFIG.healthId : CONFIG.moneyId;
             const sheetName = (mode === 'health') ? CONFIG.healthSheet : CONFIG.moneySheet;
@@ -691,9 +696,8 @@
             while(ptr <= endOfWeek) {
                 const dStr = formatLocalYMD(ptr);
                 if (globalDataMap[dStr]) {
-                    if (globalTheme.isDeficitGood) {
-                          if(globalDataMap[dStr].value !== 0) weekSum += globalDataMap[dStr].value;
-                    } else { weekSum += globalDataMap[dStr].value; }
+                    // 熱量邏輯: 赤字(負數)是好的。記帳邏輯: 花費(正數)。
+                    weekSum += globalDataMap[dStr].value;
                 }
                 ptr.setDate(ptr.getDate() + 1);
             }
@@ -701,11 +705,17 @@
             const weeklyBar = document.getElementById('weekly-equivalents');
             const alertBox = document.getElementById('health-alert-box'); 
             if (comparisonTicker) { clearInterval(comparisonTicker); comparisonTicker = null; }
+            
+            // 只有在錢包模式且 offset 為 0 時顯示 Free Cash
             renderFreeCashModule(weekSum, offset);
 
-            if (currentMode === 'health' || (currentMode === 'reward' && lastActiveMode === 'health')) {
+            // 更新獎勵統計顯示 (判斷當前或是子模式)
+            const activeSubMode = document.getElementById('reward-health-btn').classList.contains('active-h') ? 'health' : 'money';
+            const displayMode = (currentMode === 'reward') ? activeSubMode : currentMode;
+
+            if (displayMode === 'health') {
                 const isSurplus = weekSum > 0; 
-                if (isSurplus && offset === 0) {
+                if (isSurplus && offset === 0 && currentMode === 'health') {
                     alertBox.classList.remove('hidden');
                     document.getElementById('surplus-val').innerText = `+${weekSum} cal`;
                     const walkMins = Math.round(weekSum / 5); const riceBowls = (weekSum / 280).toFixed(1);
@@ -713,7 +723,7 @@
                         `本週熱量失控！<br>💡 <b>補救：</b>多走 <span class="recovery-tag">${walkMins} 分鐘</span> 或少吃 <span class="recovery-tag">${riceBowls} 碗飯</span>`;
                 } else { alertBox.classList.add('hidden'); }
 
-                if (!isSurplus && weekSum < 0) {
+                if (weekSum < 0) {
                     const weeklyDeficit = Math.abs(weekSum);
                     const comparisons = [
                         { text: '🥤 少喝了', unit: '杯珍奶', val: Math.round(weeklyDeficit / 650) },
@@ -727,19 +737,18 @@
                         weeklyBar.innerHTML = `${label}戰績：${item.text} <span class="insight-highlight">${item.val}</span> ${item.unit}`;
                         cIndex = (cIndex + 1) % comparisons.length;
                     };
-                    updateBar(); comparisonTicker = setInterval(updateBar, 3000); weeklyBar.style.color = "#58a6ff"; 
-                } else if (isSurplus) {
-                    weeklyBar.innerHTML = `${label}：⚠️ 熱量累積中...請參考上方補救建議`; weeklyBar.style.color = "#d29922";
+                    updateBar(); comparisonTicker = setInterval(updateBar, 3000); 
+                    weeklyBar.style.color = "#58a6ff"; 
                 } else {
-                    weeklyBar.innerHTML = `${label}：尚未累積赤字`; weeklyBar.style.color = "#58a6ff";
+                    weeklyBar.innerHTML = `${label}：尚未累積赤字`; weeklyBar.style.color = "#8b949e";
                 }
-                updateRewardUI(Math.abs(weekSum), globalTheme.unit, !isSurplus);
+                // 帶入獎勵數字
+                updateRewardUI(Math.abs(weekSum), 'cal', !isSurplus);
             } else {
-                alertBox.classList.add('hidden');
-                // Money Logic (Positive is Expense)
+                // Money Logic
                 const spent = weekSum; 
                 if (spent > 0) {
-                      const comparisons = [
+                    const comparisons = [
                         { text: '☕ 花了', unit: '杯星巴克', val: Math.round(spent / 150) },
                         { text: '🍱 花了', unit: '個便當', val: Math.round(spent / 100) },
                         { text: '🎬 花了', unit: '張電影票', val: Math.round(spent / 300) },
@@ -751,12 +760,14 @@
                         weeklyBar.innerHTML = `${label}總結：${item.text} <span class="insight-highlight">${item.val}</span> ${item.unit}`;
                         cIndex = (cIndex + 1) % comparisons.length;
                     };
-                    updateBar(); comparisonTicker = setInterval(updateBar, 3000); weeklyBar.style.color = "#ff4d4d"; // Red for spending
+                    updateBar(); comparisonTicker = setInterval(updateBar, 3000); 
+                    weeklyBar.style.color = "#ff4d4d"; 
                 } else {
-                      weeklyBar.innerHTML = `${label}總結：💰 本週尚未有消費`;
-                      weeklyBar.style.color = "#3fb950";
+                    weeklyBar.innerHTML = `${label}總結：💰 本週尚未有消費`;
+                    weeklyBar.style.color = "#3fb950";
                 }
-                updateRewardUI(Math.round(spent), globalTheme.unit, false); 
+                // 帶入獎勵數字 (錢模式下，有統計就是好的，因為這裡是顯示本週成果)
+                updateRewardUI(Math.round(spent), '$', true); 
             }
         }
 
@@ -782,7 +793,6 @@
             const grossBudget = CONFIG.weeklyBudget || 3000;
             const fixedCost = calculateWeeklyFixedCost();
             const netBudget = grossBudget - fixedCost; 
-            // FIX: Spending is positive, so Remaining = Budget - Spending
             const remaining = netBudget - currentWeekSpending; 
 
             const valEl = document.getElementById('free-cash-val');
@@ -801,17 +811,30 @@
         function updateRewardUI(val, unit, isGood) {
             const el = document.getElementById('reward-balance');
             if(el) {
-                el.innerText = `${val} ${unit}`;
+                el.innerText = `${val.toLocaleString()} ${unit}`;
                 el.style.color = isGood ? '#3fb950' : '#ff4d4d';
             }
         }
 
         function switchRewardContext(type) {
+            // 切換按鈕樣式
             document.getElementById('reward-health-btn').classList.toggle('active-h', type === 'health');
             document.getElementById('reward-money-btn').classList.toggle('active-m', type === 'money');
-            const title = (type === 'health') ? '🔥 該週熱量赤字' : '💰 該週累積花費';
+            
+            const title = (type === 'health') ? '🔥 該週累積熱量赤字' : '💰 該週累積花費';
             document.getElementById('reward-title').innerText = title;
             document.getElementById('reward-list-input').value = (type === 'health') ? CONFIG.rewardsHealth : CONFIG.rewardsMoney;
+            
+            // 重要：切換子模式時，去抓取該模式的資料
+            const targetTheme = THEMES[type];
+            const targetId = (type === 'health') ? CONFIG.healthId : CONFIG.moneyId;
+            const targetSheet = (type === 'health') ? CONFIG.healthSheet : CONFIG.moneySheet;
+
+            if (targetId) {
+                // 我們呼叫 fetchData，但內部完成後會執行 processData，
+                // processData 會呼叫 updateWeeklyInsight(0)，進而更新 Reward 頁面的數字。
+                fetchData(targetId, targetSheet, targetTheme);
+            }
         }
 
         function spinWheel() {
@@ -842,7 +865,8 @@
                 processData(data.table.rows, theme);
             } catch (error) { 
                 console.error(error); 
-                document.getElementById('heatmap').innerHTML = `讀取失敗: 請確認分頁名稱 "${sheetName}" 是否正確`; 
+                const heatmapEl = document.getElementById('heatmap');
+                if(heatmapEl) heatmapEl.innerHTML = `讀取失敗: 請確認分頁 "${sheetName}" 是否正確`; 
             }
         }
 
@@ -889,6 +913,7 @@
                 if (globalDataMap[checkStr]) { streak++; } else { break; }
             }
 
+            // 更新統計卡片 (只有在主分頁顯示時才看得到，但背後先更新)
             document.getElementById('stat1-val').innerText = streak;
             document.getElementById('stat1-val').style.color = theme.isDeficitGood ? '#ff9b5e' : '#d29922';
 
@@ -897,21 +922,18 @@
             if (todayItem) {
                 const val = todayItem.value;
                 todayEl.innerText = val.toLocaleString();
-                if (currentMode === 'health') {
-                    todayEl.style.color = (val < 0) ? '#3fb950' : '#ff4d4d'; 
-                } else {
-                    // Money (Positive is Expense): Small is Good, Big is Bad
-                    if (val === 0) todayEl.style.color = '#3fb950';
-                    else if (val < 300) todayEl.style.color = '#3fb950'; // Safe
-                    else todayEl.style.color = '#ff4d4d'; // Expensive
-                }
+                if (currentMode === 'health') todayEl.style.color = (val < 0) ? '#3fb950' : '#ff4d4d'; 
+                else todayEl.style.color = (val < 300) ? '#3fb950' : '#ff4d4d';
             } else { todayEl.innerText = "待輸入"; todayEl.style.color = "#8b949e"; }
 
             document.getElementById('stat3-val').innerText = count.toLocaleString();
             
             if (currentMode === 'money') { updateWalletHP(monthSpent, CONFIG.monthlyBudget); }
+            
+            // 重繪熱力圖
             drawHeatmap(globalDataMap, theme);
-            setTimeout(() => { const scroller = document.getElementById('graph-scroller'); if(scroller) scroller.scrollLeft = scroller.scrollWidth; }, 100);
+            
+            // 更新本週分析 (這一步會同時帶入獎勵頁的數字)
             updateWeeklyInsight(0);
         }
 
@@ -926,7 +948,6 @@
             localStorage.setItem(`q_note_plugin_${idx}`, val);
         }
 
-        // --- 繪圖函式 ---
         function updateWalletHP(spent, budget) {
             const hpFill = document.getElementById('hp-fill');
             const hpText = document.getElementById('wallet-hp');
@@ -934,7 +955,6 @@
             const theoryText = document.getElementById('theory-hp');
             if (!hpFill) return;
 
-            // FIX: Budget Logic for Positive Expenses
             const remaining = budget - spent; 
             const percentage = Math.max(0, Math.min(100, (remaining / budget) * 100));
             hpText.innerText = remaining.toLocaleString();
@@ -949,9 +969,9 @@
             theoryText.innerText = theoryLeft.toLocaleString();
         }
 
-        // ★ 核心繪圖邏輯修正：針對「正數花費」記帳邏輯優化
         function drawHeatmap(dataMap, theme) {
             const container = document.getElementById('heatmap');
+            if(!container) return;
             container.innerHTML = '';
             
             const startDate = new Date();
@@ -974,46 +994,30 @@
 
                 if (dataItem) {
                     val = dataItem.value; hasData = true;
-                    
                     if (theme.isDeficitGood) {
                          if (val <= theme.goldLimit) isGold = true;
                     } else {
-                         // Money: Spending (Positive) is small (e.g. 0-50) -> Gold
-                         // ADDED CHECK: val must be non-negative to avoid old data messing up
                          if (val >= 0 && val <= 50) isGold = true;
                     }
 
                     if (isGold) {
                         cell.classList.add('color-gold');
                     } else {
-                        let colorHex = theme.colors[3]; // Default Black
-                        
+                        let colorHex = theme.colors[3]; 
                         if (theme.isDeficitGood) {
-                            // Health Mode
-                            if (val < -600) colorHex = theme.colors[2]; // 亮綠
+                            if (val < -600) colorHex = theme.colors[2]; 
                             else if (val < -300) colorHex = theme.colors[1]; 
                             else if (val < 0) colorHex = theme.colors[0]; 
-                            else if (val <= 100) colorHex = theme.colors[3]; // 黑
+                            else if (val <= 100) colorHex = theme.colors[3]; 
                             else if (val < 400) colorHex = theme.colors[4]; 
                             else if (val < 800) colorHex = theme.colors[5]; 
-                            else colorHex = theme.colors[6]; // 亮紅
+                            else colorHex = theme.colors[6]; 
                         } else {
-                            // Money Mode (Positive Expense)
-                            if (val === 0) {
-                                colorHex = theme.colors[2]; // 沒花錢 -> 黑色
-                            } 
-                            else if (val <= 300) {
-                                colorHex = theme.colors[1]; // 花費 0~300 -> 亮綠
-                            } 
-                            else if (val <= 500) {
-                                colorHex = theme.colors[3]; // 花費 300~500 -> 黃
-                            } 
-                            else if (val <= 1000) {
-                                colorHex = theme.colors[4]; // 花費 500~1000 -> 橘
-                            } 
-                            else {
-                                colorHex = theme.colors[5]; // 花費 > 1000 -> 紅
-                            }
+                            if (val === 0) colorHex = theme.colors[2]; 
+                            else if (val <= 300) colorHex = theme.colors[1]; 
+                            else if (val <= 500) colorHex = theme.colors[3]; 
+                            else if (val <= 1000) colorHex = theme.colors[4]; 
+                            else colorHex = theme.colors[5]; 
                         }
                         cell.style.backgroundColor = colorHex;
                     }
@@ -1027,6 +1031,10 @@
                 resultFragment.appendChild(cell);
             }
             container.appendChild(resultFragment);
+            
+            // 自動滾動到底部 (最新日期)
+            const scroller = document.getElementById('graph-scroller');
+            if(scroller) scroller.scrollLeft = scroller.scrollWidth;
         }
     </script>
 </body>
