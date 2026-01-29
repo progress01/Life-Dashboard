@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Dashboard V27 (Ultimate)</title>
+    <title>Life Dashboard V28 (Auto-Fix)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         /* =========================================
@@ -549,8 +549,8 @@
                 const dStr = formatLocalYMD(ptr);
                 if (globalDataMap[dStr]) {
                     if (currentMode === 'money') {
-                        // Money Mode: Sum up positive expenses
-                        weeklySum += globalDataMap[dStr].value;
+                        // Money Mode: Sum up positive expenses (using Abs to fix mixed signs)
+                        weeklySum += Math.abs(globalDataMap[dStr].value);
                     } else if (globalTheme.isDeficitGood) {
                         if(globalDataMap[dStr].value !== 0) weeklySum += globalDataMap[dStr].value;
                     } else { weeklySum += globalDataMap[dStr].value; }
@@ -563,7 +563,10 @@
             document.getElementById('sc-date').innerText = `WEEKLY REPORT\n${fmt(startOfWeek)} - ${fmt(endOfWeek)}`;
             
             let displayVal = weeklySum.toLocaleString();
-            if (weeklySum > 0) displayVal = "+" + displayVal;
+            if (weeklySum > 0 && currentMode !== 'money') displayVal = "+" + displayVal;
+            // For money mode, display spent amount
+            if (currentMode === 'money') displayVal = "-" + weeklySum.toLocaleString();
+
             document.getElementById('sc-val').innerText = displayVal;
             document.getElementById('sc-streak-val').innerText = streakVal;
 
@@ -593,7 +596,7 @@
                     quoteBorder.style.borderLeftColor = "#d29922"; quoteBorder.style.color = "#fff"; quoteBorder.style.fontStyle = "normal";
                 }
             } else {
-                // Money Logic: WeeklySum is Positive Expense
+                // Money Logic: WeeklySum is TOTAL SPENT (always positive calculation)
                 const targetBudget = CONFIG.weeklyBudget; 
                 const spent = weeklySum;
                 const remaining = targetBudget - spent;
@@ -691,7 +694,7 @@
                 const dStr = formatLocalYMD(ptr);
                 if (globalDataMap[dStr]) {
                     if (currentMode === 'money') {
-                        weeklySum += globalDataMap[dStr].value;
+                        weeklySum += Math.abs(globalDataMap[dStr].value); // Always add absolute value
                     } else if (globalTheme.isDeficitGood) {
                           if(globalDataMap[dStr].value !== 0) weekSum += globalDataMap[dStr].value;
                     } else { weekSum += globalDataMap[dStr].value; }
@@ -737,7 +740,7 @@
                 updateRewardUI(Math.abs(weekSum), globalTheme.unit, !isSurplus);
             } else {
                 alertBox.classList.add('hidden');
-                // Money Logic (Positive is Expense)
+                // Money Logic (All positive)
                 const spent = weekSum; 
                 if (spent > 0) {
                       const comparisons = [
@@ -789,7 +792,7 @@
             const valEl = document.getElementById('free-cash-val');
             const descEl = document.getElementById('free-cash-desc');
 
-            // ★ 修改：顯示分母 (總預算)
+            // ★ 顯示：剩餘 / 總額 (Fixed)
             valEl.innerText = `$${remaining.toLocaleString()} / $${netBudget.toLocaleString()}`;
             if (remaining >= 0) {
                 box.className = "free-cash-box";
@@ -877,7 +880,10 @@
                 const item = globalDataMap[dateStr];
                 const value = item.value;
                 const itemDate = new Date(dateStr);
-                if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { monthSpent += value; }
+                if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { 
+                    if (currentMode === 'money') monthSpent += Math.abs(value); // Fix: Sum absolute for month spent
+                    else monthSpent += value; 
+                }
                 count++;
             });
 
@@ -903,9 +909,10 @@
                     todayEl.style.color = (val < 0) ? '#3fb950' : '#ff4d4d'; 
                 } else {
                     // Money (Positive is Expense): Small is Good, Big is Bad
-                    if (val === 0) todayEl.style.color = '#3fb950';
-                    else if (val < 300) todayEl.style.color = '#3fb950'; // Safe
-                    else todayEl.style.color = '#ff4d4d'; // Expensive
+                    const absVal = Math.abs(val);
+                    if (absVal === 0) todayEl.style.color = '#3fb950';
+                    else if (absVal <= 300) todayEl.style.color = '#3fb950'; 
+                    else todayEl.style.color = '#ff4d4d'; 
                 }
             } else { todayEl.innerText = "待輸入"; todayEl.style.color = "#8b949e"; }
 
@@ -1000,23 +1007,23 @@
                             else if (val < 800) colorHex = theme.colors[5]; 
                             else colorHex = theme.colors[6]; // 亮紅
                         } else {
-                            // Money Mode (Positive Expense)
-                            if (val === 0) {
+                            // Money Mode (Auto-Fix Logic: All values treated as Positive Expense)
+                            const absVal = Math.abs(val);
+                            
+                            if (absVal === 0) {
                                 colorHex = theme.colors[2]; // 沒花錢 -> 黑色
                             } 
-                            else if (val <= 300) {
+                            else if (absVal <= 300) {
                                 colorHex = theme.colors[1]; // 花費 0~300 -> 亮綠
                             } 
-                            else if (val <= 600) {
+                            else if (absVal <= 600) {
                                 colorHex = theme.colors[3]; // 花費 300~600 -> 黃
                             } 
-                            else if (val <= 1000) {
+                            else if (absVal <= 1000) {
                                 colorHex = theme.colors[4]; // 花費 600~1000 -> 橘
                             } 
                             else {
                                 colorHex = theme.colors[5]; // 花費 > 1000 -> 紅
-                                // 針對舊的負數資料 (如果存在)，也讓它變紅
-                                if (val < 0) colorHex = theme.colors[5];
                             }
                         }
                         cell.style.backgroundColor = colorHex;
