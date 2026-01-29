@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Dashboard V28 (Auto-Fix)</title>
+    <title>Life Dashboard V30 (Fixed)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         /* =========================================
@@ -548,8 +548,8 @@
             while(ptr <= endOfWeek) {
                 const dStr = formatLocalYMD(ptr);
                 if (globalDataMap[dStr]) {
+                    // ★ 戰報邏輯修正：記帳模式一律加總絕對值
                     if (currentMode === 'money') {
-                        // Money Mode: Sum up positive expenses (using Abs to fix mixed signs)
                         weeklySum += Math.abs(globalDataMap[dStr].value);
                     } else if (globalTheme.isDeficitGood) {
                         if(globalDataMap[dStr].value !== 0) weeklySum += globalDataMap[dStr].value;
@@ -564,7 +564,7 @@
             
             let displayVal = weeklySum.toLocaleString();
             if (weeklySum > 0 && currentMode !== 'money') displayVal = "+" + displayVal;
-            // For money mode, display spent amount
+            // 記帳模式顯示 "-" 代表花費
             if (currentMode === 'money') displayVal = "-" + weeklySum.toLocaleString();
 
             document.getElementById('sc-val').innerText = displayVal;
@@ -596,7 +596,7 @@
                     quoteBorder.style.borderLeftColor = "#d29922"; quoteBorder.style.color = "#fff"; quoteBorder.style.fontStyle = "normal";
                 }
             } else {
-                // Money Logic: WeeklySum is TOTAL SPENT (always positive calculation)
+                // Money Logic: weeklySum is now Absolute Total Expense
                 const targetBudget = CONFIG.weeklyBudget; 
                 const spent = weeklySum;
                 const remaining = targetBudget - spent;
@@ -694,7 +694,8 @@
                 const dStr = formatLocalYMD(ptr);
                 if (globalDataMap[dStr]) {
                     if (currentMode === 'money') {
-                        weeklySum += Math.abs(globalDataMap[dStr].value); // Always add absolute value
+                        // ★ 每週統計邏輯修正：記帳模式一律加總絕對值
+                        weekSum += Math.abs(globalDataMap[dStr].value); 
                     } else if (globalTheme.isDeficitGood) {
                           if(globalDataMap[dStr].value !== 0) weekSum += globalDataMap[dStr].value;
                     } else { weekSum += globalDataMap[dStr].value; }
@@ -740,7 +741,7 @@
                 updateRewardUI(Math.abs(weekSum), globalTheme.unit, !isSurplus);
             } else {
                 alertBox.classList.add('hidden');
-                // Money Logic (All positive)
+                // Money Logic (Absolute Spending)
                 const spent = weekSum; 
                 if (spent > 0) {
                       const comparisons = [
@@ -780,17 +781,17 @@
 
         function renderFreeCashModule(currentWeekSpending, offset) {
             const box = document.getElementById('free-cash-container');
+            const valEl = document.getElementById('free-cash-val');
+            const descEl = document.getElementById('free-cash-desc');
+
             if (currentMode !== 'money' || offset !== 0) { box.style.display = 'none'; return; }
             box.style.display = 'block';
             
             const grossBudget = CONFIG.weeklyBudget || 3000;
             const fixedCost = calculateWeeklyFixedCost();
             const netBudget = grossBudget - fixedCost; 
-            // FIX: Spending is positive, so Remaining = Budget - Spending
+            // ★ 消費抵銷修正：Budget - Absolute Spending
             const remaining = netBudget - currentWeekSpending; 
-
-            const valEl = document.getElementById('free-cash-val');
-            const descEl = document.getElementById('free-cash-desc');
 
             // ★ 顯示：剩餘 / 總額 (Fixed)
             valEl.innerText = `$${remaining.toLocaleString()} / $${netBudget.toLocaleString()}`;
@@ -838,16 +839,23 @@
 
         async function fetchData(id, sheetName, theme) {
             const encodedSheet = encodeURIComponent(sheetName);
-            const query = encodeURIComponent("SELECT B, C OFFSET 1");
+            // 修改：抓取 A, B, C 三欄 (SELECT A, B, C)，以免使用者日期放在 A 欄讀不到
+            const query = encodeURIComponent("SELECT A, B, C OFFSET 1");
             const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodedSheet}&tq=${query}&_=${Date.now()}`;
             try {
-                const res = await fetch(url); const text = await res.text();
-                const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
-                const data = JSON.parse(jsonString);
-                processData(data.table.rows, theme);
+                const res = await fetch(url); 
+                const text = await res.text();
+                // Google回傳的格式有時會包含奇怪的前綴，用正則表達式抓出 JSON
+                const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/);
+                if (match && match[1]) {
+                    const data = JSON.parse(match[1]);
+                    processData(data.table.rows, theme);
+                } else {
+                    throw new Error("JSON Parse failed");
+                }
             } catch (error) { 
                 console.error(error); 
-                document.getElementById('heatmap').innerHTML = `讀取失敗: 請確認分頁名稱 "${sheetName}" 是否正確`; 
+                document.getElementById('heatmap').innerHTML = `<div style="padding:20px;color:#f85149;">讀取失敗<br>請確認分頁名稱 "${sheetName}" 是否正確<br>或檢查權限是否公開</div>`; 
             }
         }
 
@@ -856,71 +864,130 @@
             let count = 0; let streak = 0; const now = new Date(); let monthSpent = 0;
             const todayStr = formatLocalYMD(now);
             
+            // --- 自動欄位偵測 ---
+            // 預設：假設 A欄(index 0) 是日期，C欄(index 2) 是金額
+            // 如果偵測不到，會嘗試 B欄(index 1) 當日期
+            let dateColIdx = 0; 
+            let valColIdx = 2; 
+
+            if (rows.length > 0) {
+                const r0 = rows[0];
+                // 檢查第一列，如果 Col 0 不是日期格式，嘗試 Col 1
+                if (r0.c[0] && (typeof r0.c[0].v === 'number' || (typeof r0.c[0].v === 'string' && !r0.c[0].v.includes('Date')))) {
+                     // 簡單判斷：如果第0欄看起來不像日期，轉移目標
+                     if (r0.c[1] && (String(r0.c[1].v).includes('Date') || String(r0.c[1].f).includes('-'))) {
+                        dateColIdx = 1; valColIdx = 2; // Health 模式常見 (B=日期, C=數值)
+                     }
+                }
+                // 如果是記帳模式，通常金額在 C (index 2) 或 B (index 1)
+                // 這裡做一個簡單的 fallback：如果 valColIdx 的值是字串，就試試看 index 1
+                if (r0.c[valColIdx] && typeof r0.c[valColIdx].v === 'string') {
+                    if (r0.c[1] && typeof r0.c[1].v === 'number') valColIdx = 1;
+                }
+            }
+
             rows.forEach(row => {
-                if (!row.c[0] || row.c[1] === null) return;
-                let dateStr = ""; let dateVal = row.c[0].v;
+                if (!row.c[dateColIdx]) return;
+                
+                // 1. 解析日期
+                let dateStr = ""; 
+                const rawDate = row.c[dateColIdx].v;
+                
                 try {
-                    if (typeof dateVal === 'string' && dateVal.includes("Date")) { 
-                        const parts = dateVal.match(/Date\((\d+),(\d+),(\d+)\)/); 
+                    if (typeof rawDate === 'string' && rawDate.includes("Date")) { 
+                        const parts = rawDate.match(/Date\((\d+),(\d+),(\d+)\)/); 
+                        // Google 的月份是 0-based
                         const d = new Date(parts[1], parts[2], parts[3]);
                         dateStr = formatLocalYMD(d);
                     } else { 
-                        const d = new Date(row.c[0].f || row.c[0].v);
+                        // 嘗試直接解析字串 (YYYY-MM-DD)
+                        const d = new Date(row.c[dateColIdx].f || rawDate);
                         if(isNaN(d.getTime())) return;
                         dateStr = formatLocalYMD(d);
                     }
                 } catch(e) { return; }
-                const value = row.c[1].v; 
+
+                // 2. 解析數值
+                let value = 0;
+                if (row.c[valColIdx] && row.c[valColIdx].v !== null) {
+                    value = parseFloat(row.c[valColIdx].v) || 0;
+                }
+
+                // 3. 存入 Map (累加當日數值)
                 if (globalDataMap[dateStr]) { globalDataMap[dateStr].value += value; } 
                 else { globalDataMap[dateStr] = { value: value }; }
             });
             
+            // --- 統計計算 ---
             const sortedDates = Object.keys(globalDataMap).sort();
             sortedDates.forEach(dateStr => {
-                const item = globalDataMap[dateStr];
-                const value = item.value;
+                const val = globalDataMap[dateStr].value;
                 const itemDate = new Date(dateStr);
+                
+                // 計算本月數據
                 if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) { 
-                    if (currentMode === 'money') monthSpent += Math.abs(value); // Fix: Sum absolute for month spent
-                    else monthSpent += value; 
+                    if (currentMode === 'money') monthSpent += Math.abs(val); 
+                    else monthSpent += val; 
                 }
                 count++;
             });
 
-            // Streak Logic
+            // 連續紀錄 (Streak) 計算
             let checkDate = new Date();
             let checkStr = formatLocalYMD(checkDate);
-            if (globalDataMap[checkStr]) { streak = 1; } else { streak = 0; }
-            while (true) {
+            // 如果今天有紀錄，Streak 從 1 開始，否則從 0 開始往回查
+            streak = globalDataMap[checkStr] ? 0 : 0; 
+            
+            // 修正 Streak 邏輯：從今天開始往回數，只要有中斷就停止
+            // 為了寬容度，如果今天還沒過完且沒紀錄，允許檢查昨天
+            if (!globalDataMap[checkStr]) {
                 checkDate.setDate(checkDate.getDate() - 1);
                 checkStr = formatLocalYMD(checkDate);
-                if (globalDataMap[checkStr]) { streak++; } else { break; }
+            }
+            
+            while (globalDataMap[checkStr]) {
+                streak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+                checkStr = formatLocalYMD(checkDate);
             }
 
+            // --- 更新 UI ---
             document.getElementById('stat1-val').innerText = streak;
             document.getElementById('stat1-val').style.color = theme.isDeficitGood ? '#ff9b5e' : '#d29922';
 
             const todayItem = globalDataMap[todayStr];
             const todayEl = document.getElementById('stat2-val');
+            
             if (todayItem) {
                 const val = todayItem.value;
-                todayEl.innerText = val.toLocaleString();
+                // 顯示邏輯：記帳模式顯示絕對值，熱量模式顯示正負
+                const displayVal = (currentMode === 'money') ? Math.abs(val) : val;
+                todayEl.innerText = displayVal.toLocaleString();
+                
                 if (currentMode === 'health') {
                     todayEl.style.color = (val < 0) ? '#3fb950' : '#ff4d4d'; 
                 } else {
-                    // Money (Positive is Expense): Small is Good, Big is Bad
                     const absVal = Math.abs(val);
-                    if (absVal === 0) todayEl.style.color = '#3fb950';
+                    if (absVal === 0) todayEl.style.color = '#3fb950'; // 0花費 = 綠色
                     else if (absVal <= 300) todayEl.style.color = '#3fb950'; 
                     else todayEl.style.color = '#ff4d4d'; 
                 }
-            } else { todayEl.innerText = "待輸入"; todayEl.style.color = "#8b949e"; }
+            } else { 
+                todayEl.innerText = "---"; 
+                todayEl.style.color = "#8b949e"; 
+            }
 
             document.getElementById('stat3-val').innerText = count.toLocaleString();
             
             if (currentMode === 'money') { updateWalletHP(monthSpent, CONFIG.monthlyBudget); }
             drawHeatmap(globalDataMap, theme);
-            setTimeout(() => { const scroller = document.getElementById('graph-scroller'); if(scroller) scroller.scrollLeft = scroller.scrollWidth; }, 100);
+            
+            // 自動捲動到最右邊 (最新日期)
+            setTimeout(() => { 
+                const scroller = document.getElementById('graph-scroller'); 
+                if(scroller) scroller.scrollLeft = scroller.scrollWidth; 
+            }, 100);
+            
             updateWeeklyInsight(0);
         }
 
@@ -943,7 +1010,7 @@
             const theoryText = document.getElementById('theory-hp');
             if (!hpFill) return;
 
-            // FIX: Budget Logic for Positive Expenses
+            // FIX: Budget Logic - Spending is absolute magnitude
             const remaining = budget - spent; 
             const percentage = Math.max(0, Math.min(100, (remaining / budget) * 100));
             hpText.innerText = remaining.toLocaleString();
@@ -958,7 +1025,6 @@
             theoryText.innerText = theoryLeft.toLocaleString();
         }
 
-        // ★ 核心繪圖邏輯修正：針對「正數花費」記帳邏輯優化
         function drawHeatmap(dataMap, theme) {
             const container = document.getElementById('heatmap');
             container.innerHTML = '';
@@ -966,11 +1032,11 @@
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - 365);
             const day = startDate.getDay(); 
-            startDate.setDate(startDate.getDate() - day);
+            startDate.setDate(startDate.getDate() - day); // 校正到週日開始
 
             const resultFragment = document.createDocumentFragment();
 
-            for (let i = 0; i <= 370; i++) {
+            for (let i = 0; i <= 375; i++) {
                 const curr = new Date(startDate);
                 curr.setDate(startDate.getDate() + i);
                 const dStr = formatLocalYMD(curr);
@@ -979,62 +1045,66 @@
                 cell.className = 'day-cell';
                 
                 const dataItem = dataMap[dStr];
-                let val = 0; let hasData = false; let isGold = false;
+                let val = 0; 
+                let hasData = false; 
+                let isGold = false;
+                let colorHex = '#21262d'; // 預設底色 (無資料)
 
                 if (dataItem) {
-                    val = dataItem.value; hasData = true;
+                    val = dataItem.value; 
+                    hasData = true;
                     
                     if (theme.isDeficitGood) {
-                         if (val <= theme.goldLimit) isGold = true;
+                        // --- 熱量模式邏輯 (維持原樣) ---
+                        if (val <= theme.goldLimit) isGold = true;
+                        
+                        if (val < -600) colorHex = theme.colors[2]; // 亮綠
+                        else if (val < -300) colorHex = theme.colors[1]; 
+                        else if (val < 0) colorHex = theme.colors[0]; 
+                        else if (val <= 100) colorHex = theme.colors[3]; // 黑
+                        else if (val < 400) colorHex = theme.colors[4]; 
+                        else if (val < 800) colorHex = theme.colors[5]; 
+                        else colorHex = theme.colors[6]; // 亮紅
+
                     } else {
-                         // Money: Spending (Positive) is small (e.g. 0-50) -> Gold
-                         // ADDED CHECK: val must be non-negative to avoid old data messing up
-                         if (val >= 0 && val <= 50) isGold = true;
+                        // --- 記帳模式邏輯 (修正版) ---
+                        const absVal = Math.abs(val);
+
+                        // 金牌判定：花費 < 50 或者是 0，都算金牌
+                        if (absVal <= 50) isGold = true;
+
+                        // 顏色判定 (由少到多)
+                        if (absVal === 0) colorHex = theme.colors[2];      // 黑色 (無花費)
+                        else if (absVal <= 300) colorHex = theme.colors[1]; // 綠色 (小額)
+                        else if (absVal <= 600) colorHex = theme.colors[3]; // 黃色
+                        else if (absVal <= 1000) colorHex = theme.colors[4]; // 橘色
+                        else colorHex = theme.colors[5];                    // 紅色 (大額)
                     }
 
+                    // 套用顏色
                     if (isGold) {
                         cell.classList.add('color-gold');
+                        // 金牌時強制背景色，避免視覺混亂
+                        cell.style.backgroundColor = '#ffd700'; 
                     } else {
-                        let colorHex = theme.colors[3]; // Default Black
-                        
-                        if (theme.isDeficitGood) {
-                            // Health Mode
-                            if (val < -600) colorHex = theme.colors[2]; // 亮綠
-                            else if (val < -300) colorHex = theme.colors[1]; 
-                            else if (val < 0) colorHex = theme.colors[0]; 
-                            else if (val <= 100) colorHex = theme.colors[3]; // 黑
-                            else if (val < 400) colorHex = theme.colors[4]; 
-                            else if (val < 800) colorHex = theme.colors[5]; 
-                            else colorHex = theme.colors[6]; // 亮紅
-                        } else {
-                            // Money Mode (Auto-Fix Logic: All values treated as Positive Expense)
-                            const absVal = Math.abs(val);
-                            
-                            if (absVal === 0) {
-                                colorHex = theme.colors[2]; // 沒花錢 -> 黑色
-                            } 
-                            else if (absVal <= 300) {
-                                colorHex = theme.colors[1]; // 花費 0~300 -> 亮綠
-                            } 
-                            else if (absVal <= 600) {
-                                colorHex = theme.colors[3]; // 花費 300~600 -> 黃
-                            } 
-                            else if (absVal <= 1000) {
-                                colorHex = theme.colors[4]; // 花費 600~1000 -> 橘
-                            } 
-                            else {
-                                colorHex = theme.colors[5]; // 花費 > 1000 -> 紅
-                            }
-                        }
                         cell.style.backgroundColor = colorHex;
                     }
                 }
 
-                cell.title = `${dStr}\n${hasData ? val : '無紀錄'} ${theme.unit}`;
+                // 設定 Tooltip
+                cell.title = `${dStr}\n${hasData ? (theme.isDeficitGood ? val : Math.abs(val)) : '無紀錄'} ${theme.unit}`;
+                
+                // 點擊互動
                 cell.onclick = () => {
-                     document.getElementById('stat2-val').innerText = hasData ? val.toLocaleString() : "---";
-                     document.getElementById('stat2-label').innerText = `${dStr} 數據`;
+                      const displayNum = hasData ? (theme.isDeficitGood ? val : Math.abs(val)).toLocaleString() : "---";
+                      document.getElementById('stat2-val').innerText = displayNum;
+                      document.getElementById('stat2-label').innerText = `${dStr} 數據`;
+                      // 點擊後短暫高亮當日數據
+                      const statVal = document.getElementById('stat2-val');
+                      statVal.style.transform = "scale(1.2)";
+                      setTimeout(()=>statVal.style.transform = "scale(1)", 200);
                 };
+                
                 resultFragment.appendChild(cell);
             }
             container.appendChild(resultFragment);
