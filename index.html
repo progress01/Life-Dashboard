@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Dashboard V27 (Final Expanded)</title>
+    <title>Life Dashboard V27 (Final Complete)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* --- 全域風格 --- */
+        /* =========================================
+           1. 全域與基礎設定
+           ========================================= */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             background-color: #0d1117;
@@ -20,7 +22,17 @@
             overflow-x: hidden;
         }
 
-        /* --- 導航列 --- */
+        h2 {
+            margin: 0 0 15px 0;
+            font-weight: 600;
+            letter-spacing: 1px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        /* =========================================
+           2. 導航列 (Navigation)
+           ========================================= */
         .nav-bar {
             width: 100%;
             max-width: 800px;
@@ -61,6 +73,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
+        /* 不同模式的按鈕顏色 */
         .switch-btn.active[data-mode="money"] {
             background: #d29922;
             color: #1e1e1e;
@@ -106,15 +119,9 @@
             transform: rotate(90deg);
         }
 
-        h2 {
-            margin: 0 0 15px 0;
-            font-weight: 600;
-            letter-spacing: 1px;
-            font-size: 1.5rem;
-            text-align: center;
-        }
-
-        /* --- 通用容器 --- */
+        /* =========================================
+           3. 主容器與金句卡片
+           ========================================= */
         .dashboard-view {
             width: 100%;
             max-width: 900px;
@@ -128,7 +135,6 @@
             display: none !important;
         }
 
-        /* --- 金句卡片 (共用樣式) --- */
         .quote-container {
             background-color: #161b22;
             background-size: cover;
@@ -194,7 +200,9 @@
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
 
-        /* --- 數據統計 --- */
+        /* =========================================
+           4. 數據統計區 (Stats)
+           ========================================= */
         .stats-container {
             display: flex;
             gap: 20px;
@@ -224,7 +232,9 @@
             text-transform: uppercase;
         }
 
-        /* --- 熱力圖 --- */
+        /* =========================================
+           5. 熱力圖 (Heatmap)
+           ========================================= */
         .hover-info-bar {
             height: 24px;
             margin-bottom: 5px;
@@ -282,7 +292,9 @@
             }
         }
 
-        /* --- [外掛] 消費抵銷 (Free Cash) --- */
+        /* =========================================
+           6. 消費抵銷外掛 (Free Cash)
+           ========================================= */
         .free-cash-box {
             width: 100%;
             margin-top: 15px;
@@ -329,7 +341,9 @@
             color: #ff7b72 !important;
         }
 
-        /* --- 週次導航 --- */
+        /* =========================================
+           7. 週次導航 (Weekly Nav)
+           ========================================= */
         .weekly-container {
             width: 100%;
             margin-top: 15px;
@@ -410,7 +424,9 @@
             margin: 0 5px;
         }
 
-        /* --- [外掛] 四象限筆記 --- */
+        /* =========================================
+           8. 四象限筆記 (Quadrants)
+           ========================================= */
         .quadrant-section {
             width: 100%;
             max-width: 900px;
@@ -471,12 +487,14 @@
             line-height: 1.4;
         }
 
-        .q-1 .q-header { color: #f85149; }
-        .q-2 .q-header { color: #d29922; }
-        .q-3 .q-header { color: #2ea043; }
-        .q-4 .q-header { color: #58a6ff; }
+        .q-1 .q-header { color: #f85149; } /* 急/重 - 紅 */
+        .q-2 .q-header { color: #d29922; } /* 重/不急 - 橘 */
+        .q-3 .q-header { color: #2ea043; } /* 靈感 - 綠 */
+        .q-4 .q-header { color: #58a6ff; } /* 備忘 - 藍 */
 
-        /* --- 預算血條 --- */
+        /* =========================================
+           9. 預算血條 (Wallet HP)
+           ========================================= */
         .budget-bar-container {
             width: 100%;
             box-sizing: border-box;
@@ -518,7 +536,9 @@
             background: linear-gradient(90deg, #da3633, #f85149);
         }
 
-        /* --- 獎勵 / 金句 頁面共用卡片 --- */
+        /* =========================================
+           10. 獎勵與轉盤 (Rewards)
+           ========================================= */
         .reward-card {
             background: #161b22;
             border: 1px solid #a371f7;
@@ -639,7 +659,9 @@
             box-sizing: border-box;
         }
 
-        /* --- Modal 設定面板 --- */
+        /* =========================================
+           11. 設定面板 (Settings Modal)
+           ========================================= */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -709,7 +731,9 @@
             font-size: 15px;
         }
 
-        /* --- 狀態警示卡片 --- */
+        /* =========================================
+           12. 狀態警示 (Alert Box)
+           ========================================= */
         .alert-box {
             width: 100%;
             max-width: 900px;
@@ -767,7 +791,9 @@
             white-space: nowrap;
         }
 
-        /* --- 戰報分享卡片 --- */
+        /* =========================================
+           13. 戰報截圖 (Share Card)
+           ========================================= */
         .share-card-container {
             position: fixed;
             left: -9999px;
@@ -893,7 +919,9 @@
             100% { transform: scale(1); }
         }
 
-        /* --- 手機版專屬優化 (Mobile Optimized) --- */
+        /* =========================================
+           14. 手機版優化 (Mobile Responsive)
+           ========================================= */
         @media (max-width: 600px) {
             body {
                 padding: 10px 10px 40px 10px;
@@ -1196,7 +1224,7 @@
     </div>
 
     <script>
-        // --- 設定與初始化 ---
+        // --- 1. 初始化與設定 ---
         let CONFIG = {
             healthId: '', healthSheet: '表單',
             moneyId: '', moneySheet: '表單',
@@ -1217,20 +1245,17 @@
         let comparisonTicker = null; 
         let currentBgUrl = ''; 
 
-        // ★ 修正重點：調整顏色順序與亮度，讓顯示更直覺
+        // ★ 主題設定 (顏色與邏輯)
         const THEMES = {
             health: { 
-                // 0:暗綠, 1:中綠, 2:亮綠(最好), 3:黑(無), 4:暗紅, 5:紅, 6:亮紅(最差)
                 colors: ['#0e4429', '#26a641', '#39d353', '#161b22', '#490c0c', '#a82020', '#ff4d4d'], 
                 statLabels: ['連續紀錄 (天)', '今日赤字 (CAL)', '總紀錄天數'], 
                 isDeficitGood: true, 
-                // 閾值邏輯調整
                 thresholds: [-600, -300, 0, 300, 600], 
                 unit: 'cal',
                 goldLimit: -500 // 赤字超過 500 (即 < -500) 獲得金牌
             },
             money: { 
-                // 0:暗綠, 1:亮綠(最好), 2:黑, 3:黃, 4:橘, 5:紅(最差)
                 colors: ['#0e4429', '#26a641', '#161b22', '#d29922', '#bd561d', '#ff4d4d'], 
                 statLabels: ['省錢達標 (天)', '今日花費 ($)', '總紀錄天數'], 
                 isDeficitGood: false, 
@@ -1255,6 +1280,8 @@
 
             loadQuadrants(); 
         }
+
+        // --- 2. 功能函式庫 ---
 
         function pickRandomQuoteFromList() {
             const rawText = CONFIG.quoteList || "";
@@ -1362,6 +1389,7 @@
 
         function refreshBanner() { refreshQuotePreview(); }
 
+        // --- 3. 戰報生成 (Share Card) ---
         function captureShareCard() {
             const btn = document.querySelector('.icon-btn[title="製作本週戰報"]');
             const originalText = btn.innerText;
@@ -1424,12 +1452,18 @@
                     quoteBorder.style.borderLeftColor = "#d29922"; quoteBorder.style.color = "#fff"; quoteBorder.style.fontStyle = "normal";
                 }
             } else {
-                const netSavings = weeklySum; 
-                if (netSavings >= 0) { 
-                    badgeText = "💰 預算控制佳"; badgeColor = "#3fb950"; quoteEl.innerText = document.getElementById('q-text').innerText;
+                // Money Logic: WeeklySum is Total Spent (Positive)
+                // Budget is weeklyBudget (e.g. 3000)
+                const targetBudget = CONFIG.weeklyBudget; 
+                const spent = weeklySum;
+                const remaining = targetBudget - spent;
+                
+                if (remaining >= 0) { 
+                    badgeText = "💰 預算控制佳"; badgeColor = "#3fb950"; 
+                    quoteEl.innerText = document.getElementById('q-text').innerText;
                 } else { 
                     badgeText = "💸 超支警報"; badgeColor = "#ff4d4d"; 
-                    quoteEl.innerHTML = `本週透支了 ${Math.abs(Math.round(netSavings))} 元。<br>下週請減少非必要開支，平衡回來！`;
+                    quoteEl.innerHTML = `本週已超支 ${Math.abs(remaining).toLocaleString()} 元。<br>下週請減少非必要開支，平衡回來！`;
                     quoteBorder.style.borderLeftColor = "#ff4d4d"; quoteBorder.style.color = "#fff"; quoteBorder.style.fontStyle = "normal";
                 }
             }
@@ -1516,8 +1550,10 @@
             while(ptr <= endOfWeek) {
                 const dStr = formatLocalYMD(ptr);
                 if (globalDataMap[dStr]) {
-                    if (globalTheme.isDeficitGood) {
-                          if(globalDataMap[dStr].value !== 0) weekSum += globalDataMap[dStr].value;
+                    if (currentMode === 'money') {
+                        weeklySum += globalDataMap[dStr].value;
+                    } else if (globalTheme.isDeficitGood) {
+                          if(globalDataMap[dStr].value !== 0) weeklySum += globalDataMap[dStr].value;
                     } else { weekSum += globalDataMap[dStr].value; }
                 }
                 ptr.setDate(ptr.getDate() + 1);
@@ -1561,28 +1597,27 @@
                 updateRewardUI(Math.abs(weekSum), globalTheme.unit, !isSurplus);
             } else {
                 alertBox.classList.add('hidden');
-                // Money Logic: weekSum is purely expense (negative).
-                const netSavings = weekSum; 
-                if (netSavings > 0) { 
+                // Money Logic (Positive is Expense)
+                const spent = weekSum; 
+                if (spent > 0) {
                       const comparisons = [
-                        { text: '☕ 省下了', unit: '杯星巴克', val: Math.round(netSavings / 150) },
-                        { text: '🍱 省下了', unit: '個便當', val: Math.round(netSavings / 100) },
-                        { text: '🎬 省下了', unit: '張電影票', val: Math.round(netSavings / 300) },
-                        { text: '🎮 省下了', unit: '片遊戲', val: (netSavings / 1500).toFixed(1) }
+                        { text: '☕ 花了', unit: '杯星巴克', val: Math.round(spent / 150) },
+                        { text: '🍱 花了', unit: '個便當', val: Math.round(spent / 100) },
+                        { text: '🎬 花了', unit: '張電影票', val: Math.round(spent / 300) },
+                        { text: '🎮 花了', unit: '片遊戲', val: (spent / 1500).toFixed(1) }
                     ];
                     let cIndex = 0;
                     const updateBar = () => {
                         const item = comparisons[cIndex];
-                        weeklyBar.innerHTML = `${label}戰績：${item.text} <span class="insight-highlight">${item.val}</span> ${item.unit}`;
+                        weeklyBar.innerHTML = `${label}總結：${item.text} <span class="insight-highlight">${item.val}</span> ${item.unit}`;
                         cIndex = (cIndex + 1) % comparisons.length;
                     };
-                    updateBar(); comparisonTicker = setInterval(updateBar, 3000); weeklyBar.style.color = "#58a6ff";
+                    updateBar(); comparisonTicker = setInterval(updateBar, 3000); weeklyBar.style.color = "#ff4d4d"; // Red for spending
                 } else {
-                      const over = Math.abs(netSavings);
-                      weeklyBar.innerHTML = `${label}戰績：💸 本週透支了 <span class="insight-highlight">${over}</span> 元 (少吃 ${Math.round(over/100)} 個便當)`;
-                      weeklyBar.style.color = "#ff4d4d";
+                      weeklyBar.innerHTML = `${label}總結：💰 本週尚未有消費`;
+                      weeklyBar.style.color = "#3fb950";
                 }
-                updateRewardUI(Math.round(netSavings), globalTheme.unit, netSavings >= 0);
+                updateRewardUI(Math.round(spent), globalTheme.unit, false); 
             }
         }
 
@@ -1608,7 +1643,8 @@
             const grossBudget = CONFIG.weeklyBudget || 3000;
             const fixedCost = calculateWeeklyFixedCost();
             const netBudget = grossBudget - fixedCost; 
-            const remaining = netBudget + currentWeekSpending; 
+            // FIX: Spending is positive, so Remaining = Budget - Spending
+            const remaining = netBudget - currentWeekSpending; 
 
             const valEl = document.getElementById('free-cash-val');
             const descEl = document.getElementById('free-cash-desc');
@@ -1634,7 +1670,7 @@
         function switchRewardContext(type) {
             document.getElementById('reward-health-btn').classList.toggle('active-h', type === 'health');
             document.getElementById('reward-money-btn').classList.toggle('active-m', type === 'money');
-            const title = (type === 'health') ? '🔥 該週熱量赤字' : '💰 該週剩餘預算';
+            const title = (type === 'health') ? '🔥 該週熱量赤字' : '💰 該週累積花費';
             document.getElementById('reward-title').innerText = title;
             document.getElementById('reward-list-input').value = (type === 'health') ? CONFIG.rewardsHealth : CONFIG.rewardsMoney;
         }
@@ -1725,9 +1761,9 @@
                 if (currentMode === 'health') {
                     todayEl.style.color = (val < 0) ? '#3fb950' : '#ff4d4d'; 
                 } else {
-                    // Money: Positive/0 is Good, Small negative is OK, Large negative is Bad
-                    if (val >= 0) todayEl.style.color = '#3fb950';
-                    else if (val > -300) todayEl.style.color = '#3fb950'; // Safe
+                    // Money (Positive is Expense): Small is Good, Big is Bad
+                    if (val === 0) todayEl.style.color = '#3fb950';
+                    else if (val < 300) todayEl.style.color = '#3fb950'; // Safe
                     else todayEl.style.color = '#ff4d4d'; // Expensive
                 }
             } else { todayEl.innerText = "待輸入"; todayEl.style.color = "#8b949e"; }
@@ -1751,6 +1787,7 @@
             localStorage.setItem(`q_note_plugin_${idx}`, val);
         }
 
+        // --- 繪圖函式 ---
         function updateWalletHP(spent, budget) {
             const hpFill = document.getElementById('hp-fill');
             const hpText = document.getElementById('wallet-hp');
@@ -1758,7 +1795,8 @@
             const theoryText = document.getElementById('theory-hp');
             if (!hpFill) return;
 
-            const remaining = budget + spent; // spent is negative
+            // FIX: Budget Logic for Positive Expenses
+            const remaining = budget - spent; 
             const percentage = Math.max(0, Math.min(100, (remaining / budget) * 100));
             hpText.innerText = remaining.toLocaleString();
             maxText.innerText = budget.toLocaleString();
@@ -1772,7 +1810,7 @@
             theoryText.innerText = theoryLeft.toLocaleString();
         }
 
-        // ★ 核心繪圖邏輯修正：針對「全負數」記帳邏輯優化
+        // ★ 核心繪圖邏輯修正：針對「正數花費」記帳邏輯優化
         function drawHeatmap(dataMap, theme) {
             const container = document.getElementById('heatmap');
             container.innerHTML = '';
@@ -1801,14 +1839,14 @@
                     if (theme.isDeficitGood) {
                          if (val <= theme.goldLimit) isGold = true;
                     } else {
-                         // Money: 花費極少 (例如 > -150) 給金牌
-                         if (val >= -150) isGold = true;
+                         // Money: Spending (Positive) is small (e.g. < 150) -> Gold
+                         if (val <= 150) isGold = true;
                     }
 
                     if (isGold) {
                         cell.classList.add('color-gold');
                     } else {
-                        let colorHex = theme.colors[3]; // 預設黑色
+                        let colorHex = theme.colors[3]; // Default Black
                         
                         if (theme.isDeficitGood) {
                             // Health Mode
@@ -1820,17 +1858,17 @@
                             else if (val < 800) colorHex = theme.colors[5]; 
                             else colorHex = theme.colors[6]; // 亮紅
                         } else {
-                            // Money Mode (全負數)
+                            // Money Mode (Positive Expense)
                             if (val === 0) {
                                 colorHex = theme.colors[2]; // 沒花錢 -> 黑色
                             } 
-                            else if (val > -300) {
+                            else if (val <= 300) {
                                 colorHex = theme.colors[1]; // 花費 0~300 -> 亮綠
                             } 
-                            else if (val > -800) {
+                            else if (val <= 800) {
                                 colorHex = theme.colors[3]; // 花費 300~800 -> 黃
                             } 
-                            else if (val > -1500) {
+                            else if (val <= 1500) {
                                 colorHex = theme.colors[4]; // 花費 800~1500 -> 橘
                             } 
                             else {
